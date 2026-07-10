@@ -62,12 +62,16 @@ beforeAll(async () => {
   })
   process.env['DATABASE_URL'] = databaseUrl
 
-  // Cross-package import: the api's boot seam via a relative specifier so
-  // the Vitest resolver maps the NodeNext-style .js specifier onto the .ts
-  // source (the api's own e2e harness pattern). Typed locally (see
-  // ApiBootstrapModule) rather than via `typeof import(...)`, so this
-  // package's typecheck never has to resolve the api's module graph.
-  const bootstrap = (await import('../../../api/src/bootstrap.js')) as ApiBootstrapModule
+  // Cross-package import of the api's boot seam. The specifier is built at
+  // runtime ON PURPOSE: a static relative import would pull the api's whole
+  // source graph into this package's typecheck (incompatible compiler
+  // settings), while the runtime path keeps the graphs separate. Vitest's
+  // runner still maps the .js specifier onto the .ts source, which this
+  // integration run itself proves on every execution. Typed locally (see
+  // ApiBootstrapModule) rather than via `typeof import(...)`.
+  const bootstrap = (await import(
+    /* @vite-ignore */ path.join(API_ROOT, 'src/bootstrap.js')
+  )) as ApiBootstrapModule
   app = await bootstrap.createApp()
   await app.listen(0)
 
