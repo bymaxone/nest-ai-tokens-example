@@ -48,24 +48,30 @@ the registry check applies and the sibling checks are skipped.
 | phases 1+, `file:` link mode only | `test -d ../nest-ai-tokens/dist` (only after the existence check above passes)          | mark P<N> ⛔ blocked on "sibling library not built", STOP; operator runs `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`, then relaunches |
 | phases 1+, registry mode only     | `npm view @bymax-one/nest-ai-tokens version`                                            | mark P<N> ⛔ blocked on "library not published", STOP; operator publishes the package (autopilot never publishes)                                                |
 
-> **⚠ Launch-blocking design decision: resolve BEFORE the first `run`.**
-> The library dependency is `file:../../../nest-ai-tokens` (relative to
-> `apps/api/package.json`). Implementers run under `isolation: "worktree"`, so
-> their working copy lives in a temporary worktree, NOT beside
-> `../nest-ai-tokens`; the relative `file:` path will **not** resolve there,
-> and the same is true in GitHub Actions CI (which checks out only this repo).
-> Phase 01's Definition of Done ("subpath probe passes in CI") cannot hold as
-> written under either condition. **Pick one before running:**
+> **Link-mode decision (operator, 2026-07-10): local `file:` link, family
+> convention.** The library is NOT published for now; the dependency stays
+> `file:../../../nest-ai-tokens` exactly as in the sibling reference apps
+> (`nest-storage-example` is the model to follow). The registry-mode row above
+> stays dormant until a future publish. How each environment resolves the link:
 >
-> 1. **Publish** `@bymax-one/nest-ai-tokens@0.1.0` to a registry (private
->    GitHub Packages) and switch the dep to `^0.1.0`; worktrees and CI then
->    resolve it by version. (Recommended; matches the plan's post-publish mode.)
-> 2. **Vendor / absolute link**: resolve the library to an absolute path or a
->    pnpm global link that survives the worktree relocation, and have phase 01's
->    probe skip in CI with the link mode documented (the plan's fallback).
+> - **Local checkout**: the sibling lives beside this repo and must be built
+>   (`pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`);
+>   the precondition rows above verify exactly that.
+> - **CI**: the family thin-caller pattern. `ci.yml` calls the org reusable
+>   `bymaxone/.github/.github/workflows/node-ci.yml@v1` with
+>   `library-repo: bymaxone/nest-ai-tokens` (a public repo); its shared
+>   `setup-node-pnpm@v1` action checks the library out beside the workspace and
+>   builds it before `pnpm install`, so the `file:` dependency resolves with no
+>   pipeline edits when the dep later becomes a registry range.
+> - **Implementer worktrees** (`.claude/worktrees/agent-*`): the orchestrator
+>   maintains a gitignored symlink `.claude/worktrees/nest-ai-tokens` pointing
+>   at the real sibling, so `file:../../../nest-ai-tokens` resolves from inside
+>   any agent worktree. Never committed (`.claude/` is gitignored); re-create it
+>   after a clean checkout.
 >
-> Until this is settled, leave npm/registry publication as a manual operator
-> step; autopilot does not publish packages.
+> The repo is private today and goes public later; the visibility-gated
+> workflows (CodeQL, Scorecard, dependency review) activate automatically at
+> that flip, matching the sibling examples.
 
 ## Model policy
 
@@ -245,3 +251,8 @@ public.
 - **One PR per phase**, branch `feat/phase-NN-<slug>`; the last task opens the
   PR, requests the Copilot review, and the orchestrator merges only on the full
   gate.
+- **CI follows the family thin-caller pattern**: `ci.yml` delegates to the org
+  reusable `bymaxone/.github/.github/workflows/node-ci.yml@v1`
+  (`library-repo: bymaxone/nest-ai-tokens`), mirroring `nest-storage-example`;
+  repo-specific jobs stay in the caller, and inputs toggle stages on as the
+  phases deliver them.
