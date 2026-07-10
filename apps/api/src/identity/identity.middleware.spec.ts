@@ -127,6 +127,22 @@ describe('IdentityMiddleware', () => {
   })
 
   /**
+   * Blank override falls back to the registry tenant.
+   *
+   * An empty or whitespace-only x-tenant-id counts as absent: it must not
+   * mint an empty-string tenant (which would dodge the strict-tenancy
+   * null check) and the registry default applies instead.
+   */
+  it.each([[''], ['   ']])('treats a blank x-tenant-id (%j) as absent', (blank) => {
+    const req = requestWith({ 'x-demo-user': 'ada', 'x-tenant-id': blank })
+    const { next } = makeNext()
+
+    middleware.use(req, response, next)
+
+    expect(req.user).toEqual({ id: 'ada', tenantId: 'acme' })
+  })
+
+  /**
    * Null-tenant admin.
    *
    * The global admin resolves with a null tenant, exercising the identity

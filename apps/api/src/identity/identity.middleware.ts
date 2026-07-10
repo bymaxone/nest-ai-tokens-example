@@ -90,12 +90,16 @@ export class IdentityMiddleware implements NestMiddleware {
 
 /**
  * Build the effective identity: the header tenant (when present) overrides
- * the registry default.
+ * the registry default. A blank or whitespace-only header counts as absent,
+ * so it can neither mint an empty-string tenant nor sneak past the
+ * strict-tenancy check.
  *
  * @param user The registered demo user.
  * @param tenantHeader The raw `x-tenant-id` header value, if any.
  * @returns The identity to attach to the request.
  */
 function resolveIdentity(user: DemoUser, tenantHeader: string | undefined): DemoIdentity {
-  return { id: user.id, tenantId: tenantHeader ?? user.tenantId }
+  const trimmed = tenantHeader?.trim()
+  const override = trimmed === undefined || trimmed === '' ? undefined : trimmed
+  return { id: user.id, tenantId: override ?? user.tenantId }
 }
