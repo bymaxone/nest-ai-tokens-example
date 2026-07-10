@@ -197,8 +197,10 @@ export class MockAiProvider {
     const rawInputs = typeof request.input === 'string' ? [request.input] : request.input
     const detections = rawInputs.map((text) => detectMarker(text))
     // Degrade modes are chat semantics (truncation, JSON shape); embedding
-    // inputs honor throw markers and silently strip the rest.
-    throwIfThrowMarker(detections.find((d) => d.marker !== undefined)?.marker)
+    // inputs honor throw markers and silently strip the rest, so the scan
+    // targets throw markers specifically: a degrade marker earlier in the
+    // batch must not shadow a throw marker later in it.
+    throwIfThrowMarker(detections.find((d) => d.marker?.behavior.kind === 'throw')?.marker)
     const inputs = detections.map((d) => d.cleanInput)
     const data: MockEmbeddingVector[] = inputs.map((text, index) => ({
       index,

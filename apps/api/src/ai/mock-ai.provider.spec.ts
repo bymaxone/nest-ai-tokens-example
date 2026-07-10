@@ -289,6 +289,21 @@ describe('failure injection', () => {
   })
 
   /**
+   * Throw markers win over earlier degrade markers in a batch.
+   *
+   * A degrade marker on an earlier input must not shadow a throw marker on
+   * a later one: the batch still aborts with the throw marker's error.
+   */
+  it('embed honors a throw marker that follows a degrade marker in the batch', async () => {
+    await expect(
+      provider().embed({
+        model: 'mock-embed',
+        input: ['a @@fail:truncate@@', 'b @@fail:rate_limited@@'],
+      }),
+    ).rejects.toMatchObject({ code: 'provider.rate_limited' })
+  })
+
+  /**
    * Marker stripping keeps token math stable (spec §12).
    *
    * The marked prompt must count exactly the tokens of its unmarked twin:
