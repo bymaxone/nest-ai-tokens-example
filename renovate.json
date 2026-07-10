@@ -11,11 +11,9 @@
     {
       "matchManagers": ["dockerfile", "docker-compose"],
       "groupName": "docker"
-    },
-    {
-      "matchManagers": ["github-actions"],
-      "groupName": "github-actions",
-      "pinDigests": true
     }
-  ]
+  ],
+  "github-actions": {
+    "enabled": false
+  }
 }
