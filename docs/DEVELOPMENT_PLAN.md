@@ -30,11 +30,11 @@
 > same commit.
 >
 > **Overall progress: 0 / 55 tasks (0%) · 0 / 10 phases done**
-> **Active phase:** 00 (Repository Foundation & CI) · **Blockers:** none
+> **Active phase:** 00 (Repository Foundation & CI, PR open, review requested) · **Blockers:** none
 
 | #   | Phase                                | Tasks file                                | Size | Done / Total | %   | Status |
 | --- | ------------------------------------ | ----------------------------------------- | ---- | ------------ | --- | ------ |
-| 00  | Repository Foundation & CI           | `phase-00-repo-foundation.md`             | M    | 4 / 5        | 80% | 🔄     |
+| 00  | Repository Foundation & CI           | `phase-00-repo-foundation.md`             | M    | 4 / 5        | 80% | 👀     |
 | 01  | Postgres, Prisma & Library Link      | `phase-01-database-library-link.md`       | M    | 0 / 5        | 0%  | 📋     |
 | 02  | API Skeleton & Module Wiring         | `phase-02-api-skeleton-wiring.md`         | L    | 0 / 5        | 0%  | 📋     |
 | 03  | Repositories, Ledger & Pricing API   | `phase-03-repositories-ledger-pricing.md` | L    | 0 / 6        | 0%  | 📋     |
