@@ -17,10 +17,13 @@ module.exports = {
   rootDir: '.',
   testMatch: ['<rootDir>/test/e2e/**/*.e2e-spec.ts'],
   extensionsToTreatAsEsm: ['.ts'],
-  // emitDecoratorMetadata off under test for the same reasons as the unit
-  // config: explicit @Inject everywhere and branch-accurate coverage.
+  // emitDecoratorMetadata stays ON here, matching the production build: the
+  // global ZodValidationPipe discovers DTO schemas through the emitted
+  // design:paramtypes metatype, and this tier must exercise the exact
+  // request-validation semantics that ship. (The unit config disables the
+  // emit for branch-accurate coverage; unit specs call handlers directly.)
   transform: {
-    '^.+\\.(t|j)s$': ['ts-jest', { useESM: true, tsconfig: { emitDecoratorMetadata: false } }],
+    '^.+\\.(t|j)s$': ['ts-jest', { useESM: true }],
   },
   // Strip the .js extension from relative imports so ts-jest resolves the
   // TypeScript sources (NodeNext emits .js specifiers).

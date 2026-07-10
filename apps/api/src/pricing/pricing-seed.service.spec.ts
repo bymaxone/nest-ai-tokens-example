@@ -9,6 +9,7 @@
  * Mocks: a Prisma client double whose $transaction hands the callback a
  * recording transaction client; no database is touched.
  */
+import { Logger } from '@nestjs/common'
 import { describe, expect, it, jest } from '@jest/globals'
 import { MODEL_PRICES_SEED } from '@bymax-one/nest-ai-tokens/prices'
 
@@ -16,6 +17,7 @@ import { MOCK_MODEL_PRICES, MOCK_PRICE_SOURCE } from './mock-model-prices.js'
 import {
   PRICING_SEED_LOCK_KEY,
   PricingSeedService,
+  describeSeedError,
   SEED_EFFECTIVE_FROM,
   SEED_SOURCES,
   buildPricingSeedRows,
@@ -137,6 +139,42 @@ describe('PricingSeedService.onApplicationBootstrap', () => {
 
     await expect(service.onApplicationBootstrap()).resolves.toBeUndefined()
     expect(double.createManyMock).not.toHaveBeenCalled()
+  })
+
+  /**
+   * Boot hook resilience on database outage.
+   *
+   * This app boots without a reachable database (readiness surfaces the
+   * outage), so a failing seed must be logged and swallowed at the boot
+   * hook, never aborting application startup.
+   */
+  it('logs and survives a seed failure', async () => {
+    const prisma = {
+      $transaction: () => Promise.reject(new Error('database unreachable')),
+    } as unknown as PrismaService
+    const service = new PricingSeedService(prisma)
+    const errorLog = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined)
+
+    await expect(service.onApplicationBootstrap()).resolves.toBeUndefined()
+
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('Pricing seed failed'))
+    errorLog.mockRestore()
+  })
+})
+
+describe('describeSeedError', () => {
+  /**
+   * Log-line rendering for both rejection shapes.
+   *
+   * Error instances surface their message; anything else (driver layers can
+   * reject with plain values) renders a fixed, value-free marker so foreign
+   * payloads never leak into logs.
+   */
+  it.each([
+    ['an Error instance', new Error('database unreachable'), 'database unreachable'],
+    ['a non-Error value', 'boom', 'unknown error'],
+  ])('renders %s', (_label, value, expected) => {
+    expect(describeSeedError(value)).toBe(expected)
   })
 })
 

@@ -97,6 +97,17 @@ export function buildPricingSeedRows(): Prisma.AiModelPriceCreateManyInput[] {
   return [...MODEL_PRICES_SEED, ...MOCK_MODEL_PRICES].map(toPriceCreateInput)
 }
 
+/**
+ * Render an unknown boot-seed failure for the log line without assuming an
+ * Error instance (driver layers can reject with plain values).
+ *
+ * @param error The rejection value.
+ * @returns The message to log.
+ */
+export function describeSeedError(error: unknown): string {
+  return error instanceof Error ? error.message : 'unknown error'
+}
+
 /** Seeds the price registry exactly once per database. */
 @Injectable()
 export class PricingSeedService implements OnApplicationBootstrap {
@@ -107,10 +118,20 @@ export class PricingSeedService implements OnApplicationBootstrap {
    */
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  /** Run the seed when the application finishes bootstrapping. */
+  /**
+   * Run the seed when the application finishes bootstrapping. Best-effort
+   * by design: this app boots without a reachable database (the readiness
+   * probe surfaces the outage), so a seed failure is logged and boot
+   * continues; the seed re-runs on the next boot and strict pricing keeps
+   * any resulting rate misses loud.
+   */
   async onApplicationBootstrap(): Promise<void> {
-    const inserted = await this.seed()
-    if (inserted > 0) this.logger.log(`Seeded ${inserted} price rows`)
+    try {
+      const inserted = await this.seed()
+      if (inserted > 0) this.logger.log(`Seeded ${inserted} price rows`)
+    } catch (error) {
+      this.logger.error(`Pricing seed failed: ${describeSeedError(error)}`)
+    }
   }
 
   /**

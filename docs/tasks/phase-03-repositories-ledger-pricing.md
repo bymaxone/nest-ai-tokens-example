@@ -1,6 +1,6 @@
 # Phase 03: Repositories, Ledger & Pricing API
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 03
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16, §11 (ledger/pricing routes), §7.2-7.3 (matrix rows 13-36)
 
@@ -64,7 +64,7 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 | 3.1 | Branch + `PrismaTokenTransactionRepository` (8 methods, SQL aggregation)       | ✅     | P0       | L    | none       |
 | 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | ✅     | P0       | M    | 3.1        |
 | 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | ✅     | P0       | S    | 3.2        |
-| 3.4 | `ledger/` REST: list, detail, filters, pagination                              | 📋     | P0       | M    | 3.1        |
+| 3.4 | `ledger/` REST: list, detail, filters, pagination                              | ✅     | P0       | M    | 3.1        |
 | 3.5 | `pricing/` REST: current, history, update, flush-cache                         | 📋     | P0       | M    | 3.2        |
 | 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | 📋     | P0       | S    | 3.1..3.5   |
 
@@ -292,25 +292,35 @@ Completion Protocol: standard steps; commit `test(api): prove pricing seed idemp
 
 ## Task 3.4: `ledger/` REST
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 3.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 3.1
 
 #### Description
 
 `GET /ledger/transactions` (Zod query: type single/array, from/to, onlyDebits/onlyCredits,
 limit/offset, order; scoped to `req.user` + tenant) and `GET /ledger/transactions/:id` (owner
 check, full metadata payload) built on `AiTokenTransactionService.getUserTransactions` and the
-repository. Credits/refund arrive in phase 05.
+repository. Credits/refund arrive in phase 05. _Reconciled (see the phase note): the list rides
+`LedgerService.query` + `sumCost` and the query DTO mirrors the shipped `LedgerFilter` (feature,
+features, provider, model, operation, serviceTier, status list, isSystemCost,
+systemCostCategory, from/to, bounded limit/offset; no signed-amount or order options exist)._
 
 #### Acceptance criteria
 
-- [ ] List honors every filter and returns `{ items, total, limit, offset }`.
-- [ ] Detail 404s cleanly on unknown id; 403 on another user's row (owner check in the app,
-      documented as app-level policy).
-- [ ] E2E covers filters against the seed; unit covers controller/service branches; 100%.
+- [x] List honors every shipped filter and returns `{ items, total, limit, offset }`; the total
+      is the SQL `COUNT` from `sumCost`, never the fetched page length; pagination is bounded
+      (limit 1..100) and money renders JSON-safe (bigint as decimal strings via `toJsonSafe`).
+- [x] Detail 404s cleanly on unknown id; 403 on another user's (or tenant's, or a tenant-scoped
+      system) row: the owner check lives in the app and is documented as app-level policy.
+- [x] E2E covers filter permutations, tenant isolation, pagination, validation rejections, and
+      404/403 against the deterministic seed; unit covers every controller/service/DTO branch;
+      unit coverage stays 100%.
 
 #### Files to create / modify
 
-- `apps/api/src/ledger/**` (module, controller, service, DTOs), e2e spec
+- `apps/api/src/ledger/**` (module, controller, read service, query DTO),
+  `src/identity/require-identity.ts`, `src/app.module.ts`, unit specs,
+  `test/e2e/ledger-pricing-api.e2e-spec.ts`, `jest.e2e.config.cjs` (production-parity decorator
+  metadata so the global Zod pipe sees DTO metatypes)
 
 #### Agent prompt
 
@@ -474,3 +484,4 @@ Completion Protocol: append `- 3.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 3.1 ✅ 2026-07-10: bound the shipped `PrismaAiTokensStore` (ledger half proven vs the seed plan), deleted the placeholder store
 - 3.2 ✅ 2026-07-10: proved the pricing half (window predicate, overlap resolution, gapless history, concurrent-upsert race safety, bigint round-trips)
 - 3.3 ✅ 2026-07-10: app-owned idempotent boot pricing seed (snapshot + 3 mock models) with double-boot and concurrent-boot e2e proofs
+- 3.4 ✅ 2026-07-10: ledger read endpoints (filtered, paginated list + owner-checked detail) with plan-exact e2e and 100% unit coverage
