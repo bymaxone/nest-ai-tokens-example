@@ -8,14 +8,12 @@
 
 import { useId, useState } from 'react'
 
-import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { api } from '@/lib/api'
 import type { SummarizeBody } from '@/lib/api-types'
 import { useApiMutation } from '@/lib/use-api-mutation'
 
+import { CommandCardFooter, CommandCardOutcome } from './CommandCardChrome'
 import { FailureHelperSelect } from './FailureHelperSelect'
-import { ModelPicker } from './ModelPicker'
-import { ResultPanel } from './ResultPanel'
 import { useCommandForm } from './use-command-form'
 
 /** The summary styles the command accepts. */
@@ -34,21 +32,20 @@ export function SummarizeCard({ models }: SummarizeCardProps): React.JSX.Element
   const mutation = useApiMutation(api.summarize.bind(api))
   const modelId = useId()
 
+  function handleSubmit(event: React.FormEvent): void {
+    event.preventDefault()
+    void mutation.run({
+      text: form.text,
+      style,
+      model: form.effectiveModel(models),
+      resourceId: form.resourceId,
+    })
+  }
+
   return (
     <div className="card">
       <div className="card__title">Summarize</div>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          void mutation.run({
-            text: form.text,
-            style,
-            model: form.effectiveModel(models),
-            resourceId: form.resourceId,
-          })
-        }}
-        style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-      >
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div>
           <label className="label" htmlFor="summarize-text">
             Text
@@ -81,20 +78,18 @@ export function SummarizeCard({ models }: SummarizeCardProps): React.JSX.Element
             ))}
           </select>
         </div>
-        <ModelPicker models={models} value={form.model} onChange={form.setModel} id={modelId} />
-        <button
-          type="submit"
-          className="btn btn--primary btn--sm"
-          disabled={mutation.state.status === 'pending' || models.length === 0}
-        >
-          {mutation.state.status === 'pending' ? 'Summarizing…' : 'Summarize'}
-        </button>
+        <CommandCardFooter
+          models={models}
+          model={form.model}
+          onModelChange={form.setModel}
+          modelId={modelId}
+          pending={mutation.state.status === 'pending'}
+          idleLabel="Summarize"
+          pendingLabel="Summarizing…"
+        />
       </form>
 
-      {mutation.state.status === 'error' && <ErrorBanner error={mutation.state.error} />}
-      {mutation.state.status === 'success' && (
-        <ResultPanel content={mutation.state.data.summary} usage={mutation.state.data.usage} />
-      )}
+      <CommandCardOutcome mutationState={mutation.state} renderContent={(data) => data.summary} />
 
       <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
     </div>

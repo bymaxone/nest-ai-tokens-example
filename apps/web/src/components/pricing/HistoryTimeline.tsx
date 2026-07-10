@@ -29,6 +29,29 @@ function windowRange(row: PriceRowView): string {
   return `${from} → ${to}`
 }
 
+/** The windows list: each an effective-dated range, the open window highlighted. */
+function TimelineList(props: { readonly versions: readonly PriceRowView[] }): React.JSX.Element {
+  return (
+    <ul
+      style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}
+    >
+      {props.versions.map((version) => (
+        <li
+          key={version.id}
+          className={version.effectiveTo === null ? 'chip role-pill' : 'chip'}
+          style={{ display: 'flex', gap: 10, alignItems: 'center' }}
+        >
+          <span className="mono">{windowRange(version)}</span>
+          <span>
+            {formatMoney(version.inputNanoUsdPerMillion)} in /{' '}
+            {formatMoney(version.outputNanoUsdPerMillion)} out
+          </span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 /** The per-model price history timeline. */
 export function HistoryTimeline({ row }: HistoryTimelineProps): React.JSX.Element {
   const key = `${row.provider}:${row.model}:${row.operation}:${row.serviceTier}`
@@ -57,31 +80,7 @@ export function HistoryTimeline({ row }: HistoryTimelineProps): React.JSX.Elemen
 
       {state.status === 'error' && <ErrorBanner error={state.error} />}
 
-      {state.status === 'ready' && (
-        <ul
-          style={{
-            listStyle: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-            marginTop: 10,
-          }}
-        >
-          {state.data.items.map((version) => (
-            <li
-              key={version.id}
-              className={version.effectiveTo === null ? 'chip role-pill' : 'chip'}
-              style={{ display: 'flex', gap: 10, alignItems: 'center' }}
-            >
-              <span className="mono">{windowRange(version)}</span>
-              <span>
-                {formatMoney(version.inputNanoUsdPerMillion)} in /{' '}
-                {formatMoney(version.outputNanoUsdPerMillion)} out
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {state.status === 'ready' && <TimelineList versions={state.data.items} />}
     </div>
   )
 }

@@ -17,6 +17,7 @@ import { useState } from 'react'
 import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { api } from '@/lib/api'
 import { ApiError, isCode } from '@/lib/api-client'
+import type { ApiMutationState } from '@/lib/use-api-mutation'
 import { useApiMutation } from '@/lib/use-api-mutation'
 
 /** Hard cap on drain iterations, in case the balance never runs out. */
@@ -38,6 +39,62 @@ function toApiError(error: unknown): ApiError {
     : new ApiError('client_error', 0, 'Something went wrong running the lab.')
 }
 
+/** A lab action button: idle/pending label, wired to a mutation's `run`. */
+function LabActionButton<T>(props: {
+  readonly ghost?: boolean
+  readonly mutationState: ApiMutationState<T>
+  readonly idleLabel: string
+  readonly pendingLabel: string
+  readonly onRun: () => void
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      className={`btn ${props.ghost === true ? 'btn--ghost' : 'btn--outline'} btn--sm`}
+      disabled={props.mutationState.status === 'pending'}
+      onClick={props.onRun}
+    >
+      {props.mutationState.status === 'pending' ? props.pendingLabel : props.idleLabel}
+    </button>
+  )
+}
+
+/** A mutation's success/error outcome, rendered as a success toast or the canonical envelope. */
+function MutationOutcome<T>(props: {
+  readonly mutationState: ApiMutationState<T>
+  readonly renderSuccess: (data: T) => React.ReactNode
+}): React.JSX.Element | null {
+  if (props.mutationState.status === 'success') {
+    return (
+      <div className="toast toast--success" style={{ maxWidth: 'none', marginTop: 10 }}>
+        {props.renderSuccess(props.mutationState.data)}
+      </div>
+    )
+  }
+  if (props.mutationState.status === 'error') {
+    return <ErrorBanner error={props.mutationState.error} />
+  }
+  return null
+}
+
+/** The drain shortcut's outcome: how many calls it took and whether it hit the quota wall. */
+function DrainOutcome(props: {
+  readonly outcome: ApiError
+  readonly calls: number
+}): React.JSX.Element {
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="card__desc">
+        Drained after {props.calls} call(s):{' '}
+        {isCode(props.outcome, 'AI_TOKENS_INSUFFICIENT_CREDITS')
+          ? 'hit the quota wall as expected.'
+          : 'stopped on an unexpected error.'}
+      </div>
+      <ErrorBanner error={props.outcome} />
+    </div>
+  )
+}
+
 /** The Quota Lab's estimator buttons and drain/top-up shortcuts. */
 export function LabRunner({ onBalanceChanged }: LabRunnerProps): React.JSX.Element {
   const constant = useApiMutation(() => api.runLabConstant())
@@ -45,13 +102,13 @@ export function LabRunner({ onBalanceChanged }: LabRunnerProps): React.JSX.Eleme
   const topUp = useApiMutation(() =>
     api.credit({ amountNanoUsd: TOP_UP_AMOUNT_NANO_USD, type: 'purchase' }),
   )
-  const [draining, setDraining] = useState(false)
+  const [isDraining, setIsDraining] = useState(false)
   const [drainOutcome, setDrainOutcome] = useState<ApiError | undefined>(undefined)
   const [drainCalls, setDrainCalls] = useState(0)
 
-  /** Repeats the constant lab call until it hits `402 quota.insufficient_balance` or the cap. */
+  /** Repeats the constant lab call until it hits `AI_TOKENS_INSUFFICIENT_CREDITS` or the cap. */
   async function drain(): Promise<void> {
-    setDraining(true)
+    setIsDraining(true)
     setDrainOutcome(undefined)
     let calls = 0
     for (; calls < MAX_DRAIN_CALLS; calls += 1) {
@@ -63,93 +120,65 @@ export function LabRunner({ onBalanceChanged }: LabRunnerProps): React.JSX.Eleme
       }
     }
     setDrainCalls(calls + 1)
-    setDraining(false)
+    setIsDraining(false)
     onBalanceChanged()
+  }
+
+  /** Runs a mutation and, on success, tells the parent the balance may have changed. */
+  function runAndReport<T>(run: () => Promise<T | undefined>): void {
+    void run().then((result) => {
+      if (result !== undefined) onBalanceChanged()
+    })
   }
 
   return (
     <div className="card">
       <div className="card__title">Estimator lab</div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-        <button
-          type="button"
-          className="btn btn--outline btn--sm"
-          disabled={constant.state.status === 'pending'}
-          onClick={() =>
-            void constant.run().then((result) => {
-              if (result !== undefined) onBalanceChanged()
-            })
-          }
-        >
-          {constant.state.status === 'pending' ? 'Running…' : 'Run constant estimate'}
-        </button>
-        <button
-          type="button"
-          className="btn btn--outline btn--sm"
-          disabled={modelBased.state.status === 'pending'}
-          onClick={() =>
-            void modelBased.run().then((result) => {
-              if (result !== undefined) onBalanceChanged()
-            })
-          }
-        >
-          {modelBased.state.status === 'pending' ? 'Running…' : 'Run model-based estimate'}
-        </button>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          disabled={draining}
-          onClick={() => void drain()}
-        >
-          {draining ? 'Draining…' : 'Drain balance'}
-        </button>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          disabled={topUp.state.status === 'pending'}
-          onClick={() =>
-            void topUp.run().then((result) => {
-              if (result !== undefined) onBalanceChanged()
-            })
-          }
-        >
-          {topUp.state.status === 'pending' ? 'Crediting…' : 'Top up $10'}
-        </button>
+        <LabActionButton
+          mutationState={constant.state}
+          idleLabel="Run constant estimate"
+          pendingLabel="Running…"
+          onRun={() => runAndReport(constant.run)}
+        />
+        <LabActionButton
+          mutationState={modelBased.state}
+          idleLabel="Run model-based estimate"
+          pendingLabel="Running…"
+          onRun={() => runAndReport(modelBased.run)}
+        />
+        <LabActionButton
+          ghost
+          mutationState={{ status: isDraining ? 'pending' : 'idle' }}
+          idleLabel="Drain balance"
+          pendingLabel="Draining…"
+          onRun={() => void drain()}
+        />
+        <LabActionButton
+          ghost
+          mutationState={topUp.state}
+          idleLabel="Top up $10"
+          pendingLabel="Crediting…"
+          onRun={() => runAndReport(topUp.run)}
+        />
       </div>
 
-      {constant.state.status === 'success' && (
-        <div className="toast toast--success" style={{ maxWidth: 'none', marginTop: 10 }}>
-          Constant estimate settled: {constant.state.data.usage.total_tokens} tokens.
-        </div>
-      )}
-      {constant.state.status === 'error' && <ErrorBanner error={constant.state.error} />}
+      <MutationOutcome
+        mutationState={constant.state}
+        renderSuccess={(data) => `Constant estimate settled: ${data.usage.total_tokens} tokens.`}
+      />
+      <MutationOutcome
+        mutationState={modelBased.state}
+        renderSuccess={(data) =>
+          `Model-based estimate settled: ${data.totalTokens} tokens, billed ${data.billedNanoUsd} nano-USD.`
+        }
+      />
+      <MutationOutcome
+        mutationState={topUp.state}
+        renderSuccess={(data) => `Credited $10. New balance: ${data.balance.formatted}.`}
+      />
 
-      {modelBased.state.status === 'success' && (
-        <div className="toast toast--success" style={{ maxWidth: 'none', marginTop: 10 }}>
-          Model-based estimate settled: {modelBased.state.data.totalTokens} tokens, billed{' '}
-          {modelBased.state.data.billedNanoUsd} nano-USD.
-        </div>
-      )}
-      {modelBased.state.status === 'error' && <ErrorBanner error={modelBased.state.error} />}
-
-      {topUp.state.status === 'success' && (
-        <div className="toast toast--success" style={{ maxWidth: 'none', marginTop: 10 }}>
-          Credited $10. New balance: {topUp.state.data.balance.formatted}.
-        </div>
-      )}
-      {topUp.state.status === 'error' && <ErrorBanner error={topUp.state.error} />}
-
-      {drainOutcome !== undefined && (
-        <div style={{ marginTop: 10 }}>
-          <div className="card__desc">
-            Drained after {drainCalls} call(s):{' '}
-            {isCode(drainOutcome, 'AI_TOKENS_INSUFFICIENT_CREDITS')
-              ? 'hit the quota wall as expected.'
-              : 'stopped on an unexpected error.'}
-          </div>
-          <ErrorBanner error={drainOutcome} />
-        </div>
-      )}
+      {drainOutcome !== undefined && <DrainOutcome outcome={drainOutcome} calls={drainCalls} />}
     </div>
   )
 }

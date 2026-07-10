@@ -8,19 +8,54 @@
 
 import { useId, useState } from 'react'
 
-import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { api } from '@/lib/api'
 import { useApiMutation } from '@/lib/use-api-mutation'
 
+import { CommandCardFooter, CommandCardOutcome } from './CommandCardChrome'
 import { FailureHelperSelect } from './FailureHelperSelect'
-import { ModelPicker } from './ModelPicker'
-import { ResultPanel } from './ResultPanel'
 import { useCommandForm } from './use-command-form'
 
 /** RewriteCard props. */
 export interface RewriteCardProps {
   /** The command models catalog (empty while still loading). */
   readonly models: readonly string[]
+}
+
+/** The optional style and language fields. */
+function RewriteOptionalFields(props: {
+  readonly style: string
+  readonly onStyleChange: (value: string) => void
+  readonly language: string
+  readonly onLanguageChange: (value: string) => void
+}): React.JSX.Element {
+  return (
+    <div className="grid-2">
+      <div>
+        <label className="label" htmlFor="rewrite-style">
+          Style (optional)
+        </label>
+        <input
+          id="rewrite-style"
+          className="input"
+          value={props.style}
+          onChange={(event) => props.onStyleChange(event.target.value)}
+          placeholder="formal"
+        />
+      </div>
+      <div>
+        <label className="label" htmlFor="rewrite-language">
+          Language (optional)
+        </label>
+        <input
+          id="rewrite-language"
+          className="input"
+          value={props.language}
+          onChange={(event) => props.onLanguageChange(event.target.value)}
+          placeholder="en"
+        />
+      </div>
+    </div>
+  )
 }
 
 /** The Rewrite command card. */
@@ -31,22 +66,21 @@ export function RewriteCard({ models }: RewriteCardProps): React.JSX.Element {
   const mutation = useApiMutation(api.rewrite.bind(api))
   const modelId = useId()
 
+  function handleSubmit(event: React.FormEvent): void {
+    event.preventDefault()
+    void mutation.run({
+      text: form.text,
+      ...(style.length > 0 ? { style } : {}),
+      ...(language.length > 0 ? { language } : {}),
+      model: form.effectiveModel(models),
+      resourceId: form.resourceId,
+    })
+  }
+
   return (
     <div className="card">
       <div className="card__title">Rewrite</div>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault()
-          void mutation.run({
-            text: form.text,
-            ...(style.length > 0 ? { style } : {}),
-            ...(language.length > 0 ? { language } : {}),
-            model: form.effectiveModel(models),
-            resourceId: form.resourceId,
-          })
-        }}
-        style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-      >
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div>
           <label className="label" htmlFor="rewrite-text">
             Text
@@ -60,46 +94,24 @@ export function RewriteCard({ models }: RewriteCardProps): React.JSX.Element {
             required
           />
         </div>
-        <div className="grid-2">
-          <div>
-            <label className="label" htmlFor="rewrite-style">
-              Style (optional)
-            </label>
-            <input
-              id="rewrite-style"
-              className="input"
-              value={style}
-              onChange={(event) => setStyle(event.target.value)}
-              placeholder="formal"
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="rewrite-language">
-              Language (optional)
-            </label>
-            <input
-              id="rewrite-language"
-              className="input"
-              value={language}
-              onChange={(event) => setLanguage(event.target.value)}
-              placeholder="en"
-            />
-          </div>
-        </div>
-        <ModelPicker models={models} value={form.model} onChange={form.setModel} id={modelId} />
-        <button
-          type="submit"
-          className="btn btn--primary btn--sm"
-          disabled={mutation.state.status === 'pending' || models.length === 0}
-        >
-          {mutation.state.status === 'pending' ? 'Rewriting…' : 'Rewrite'}
-        </button>
+        <RewriteOptionalFields
+          style={style}
+          onStyleChange={setStyle}
+          language={language}
+          onLanguageChange={setLanguage}
+        />
+        <CommandCardFooter
+          models={models}
+          model={form.model}
+          onModelChange={form.setModel}
+          modelId={modelId}
+          pending={mutation.state.status === 'pending'}
+          idleLabel="Rewrite"
+          pendingLabel="Rewriting…"
+        />
       </form>
 
-      {mutation.state.status === 'error' && <ErrorBanner error={mutation.state.error} />}
-      {mutation.state.status === 'success' && (
-        <ResultPanel content={mutation.state.data.rewritten} usage={mutation.state.data.usage} />
-      )}
+      <CommandCardOutcome mutationState={mutation.state} renderContent={(data) => data.rewritten} />
 
       <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
     </div>

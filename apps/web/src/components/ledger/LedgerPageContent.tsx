@@ -1,10 +1,9 @@
 /**
- * @fileoverview The Ledger page's interactive content: filters (status
- * chips doubling as the debit/credit toggle, operation select, date
- * range), the paginated transactions table, the `?focus=` deep-linked row
- * inspector, and the top-up dialog. Kept out of `app/**` (route shells
- * are thin composition only, per the coverage config) so it is unit
- * tested directly.
+ * @fileoverview The Ledger page's interactive content: filters, the
+ * paginated transactions table, the `?focus=` deep-linked row inspector,
+ * and the top-up dialog. Kept out of `app/**` (route shells are thin
+ * composition only, per the coverage config) so it is unit tested
+ * directly.
  *
  * @layer components/ledger
  */
@@ -18,144 +17,140 @@ import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { api } from '@/lib/api'
 import { useApiQuery } from '@/lib/use-api-query'
 
-import { LEDGER_PAGE_SIZE, OPERATIONS } from './ledger-constants'
+import { ALL_OPERATIONS, LedgerFilters } from './LedgerFilters'
+import { LEDGER_PAGE_SIZE } from './ledger-constants'
 import { RowInspector } from './RowInspector'
-import { StatusChips } from './StatusChips'
 import { TopUpDialog } from './TopUpDialog'
 import { TransactionsTable } from './TransactionsTable'
 
-/** The empty-string sentinel the operation `<select>` uses for "all operations". */
-const ALL_OPERATIONS = ''
+/** The Ledger's filter state, each setter resetting pagination back to the first page. */
+function useLedgerFilterState(): {
+  readonly statuses: readonly UsageStatus[]
+  readonly setStatuses: (value: readonly UsageStatus[]) => void
+  readonly operation: AiOperation | typeof ALL_OPERATIONS
+  readonly setOperation: (value: AiOperation | typeof ALL_OPERATIONS) => void
+  readonly from: string
+  readonly setFrom: (value: string) => void
+  readonly to: string
+  readonly setTo: (value: string) => void
+  readonly offset: number
+  readonly setOffset: (value: number) => void
+} {
+  const [statuses, setStatusesRaw] = useState<readonly UsageStatus[]>([])
+  const [operation, setOperationRaw] = useState<AiOperation | typeof ALL_OPERATIONS>(ALL_OPERATIONS)
+  const [from, setFromRaw] = useState('')
+  const [to, setToRaw] = useState('')
+  const [offset, setOffset] = useState(0)
 
-/** The Ledger page's filters, table, inspector, and top-up dialog. */
-export function LedgerPageContent(): React.JSX.Element {
+  /** Applies a filter change and resets pagination back to the first page. */
+  function withPageReset<T>(setter: (value: T) => void): (value: T) => void {
+    return (value) => {
+      setter(value)
+      setOffset(0)
+    }
+  }
+
+  return {
+    statuses,
+    setStatuses: withPageReset(setStatusesRaw),
+    operation,
+    setOperation: withPageReset(setOperationRaw),
+    from,
+    setFrom: withPageReset(setFromRaw),
+    to,
+    setTo: withPageReset(setToRaw),
+    offset,
+    setOffset,
+  }
+}
+
+/** Deep-links the row inspector into the `?focus=` query param. */
+function useFocusNavigation(): {
+  readonly focusId: string | undefined
+  readonly openInspector: (id: string) => void
+  readonly closeInspector: () => void
+} {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const focusId = searchParams.get('focus') ?? undefined
 
-  const [statuses, setStatuses] = useState<readonly UsageStatus[]>([])
-  const [operation, setOperation] = useState<AiOperation | typeof ALL_OPERATIONS>(ALL_OPERATIONS)
-  const [from, setFrom] = useState('')
-  const [to, setTo] = useState('')
-  const [offset, setOffset] = useState(0)
-  const [showTopUp, setShowTopUp] = useState(false)
+  return {
+    focusId: searchParams.get('focus') ?? undefined,
+    openInspector: (id) => router.replace(`${pathname}?focus=${encodeURIComponent(id)}`),
+    closeInspector: () => router.replace(pathname),
+  }
+}
 
-  const queryKey = JSON.stringify({ statuses, operation, from, to, offset })
+/** The transactions table area: loading, error, or the ready table. */
+function TransactionsSection(props: {
+  readonly state: ReturnType<
+    typeof useApiQuery<Awaited<ReturnType<typeof api.listTransactions>>>
+  >['state']
+  readonly offset: number
+  readonly onOffsetChange: (offset: number) => void
+  readonly onSelect: (id: string) => void
+}): React.JSX.Element {
+  if (props.state.status === 'loading') {
+    return (
+      <div role="status" aria-label="Loading transactions">
+        <div className="skeleton" style={{ height: 240 }} />
+      </div>
+    )
+  }
+  if (props.state.status === 'error') {
+    return <ErrorBanner error={props.state.error} />
+  }
+  return (
+    <TransactionsTable
+      items={props.state.data.items}
+      total={props.state.data.total}
+      offset={props.offset}
+      onOffsetChange={props.onOffsetChange}
+      onSelect={props.onSelect}
+    />
+  )
+}
+
+/** The Ledger page's filters, table, inspector, and top-up dialog. */
+export function LedgerPageContent(): React.JSX.Element {
+  const filters = useLedgerFilterState()
+  const { focusId, openInspector, closeInspector } = useFocusNavigation()
+  const [isTopUpOpen, setIsTopUpOpen] = useState(false)
+
+  const queryKey = JSON.stringify(filters)
   const { state, refetch } = useApiQuery(
     () =>
       api.listTransactions({
-        ...(statuses.length > 0 ? { status: [...statuses] } : {}),
-        ...(operation !== ALL_OPERATIONS ? { operation } : {}),
-        ...(from.length > 0 ? { from } : {}),
-        ...(to.length > 0 ? { to } : {}),
+        ...(filters.statuses.length > 0 ? { status: [...filters.statuses] } : {}),
+        ...(filters.operation !== ALL_OPERATIONS ? { operation: filters.operation } : {}),
+        ...(filters.from.length > 0 ? { from: filters.from } : {}),
+        ...(filters.to.length > 0 ? { to: filters.to } : {}),
         limit: LEDGER_PAGE_SIZE,
-        offset,
+        offset: filters.offset,
       }),
     queryKey,
   )
 
-  /** Opens the inspector on `id`, deep-linking it into the URL. */
-  function openInspector(id: string): void {
-    router.replace(`${pathname}?focus=${encodeURIComponent(id)}`)
-  }
-
-  /** Closes the inspector, clearing the deep link. */
-  function closeInspector(): void {
-    router.replace(pathname)
-  }
-
   return (
     <>
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <StatusChips
-            value={statuses}
-            onChange={(next) => {
-              setStatuses(next)
-              setOffset(0)
-            }}
-          />
-          <button
-            type="button"
-            className="btn btn--primary btn--sm"
-            onClick={() => setShowTopUp(true)}
-          >
-            Top up
-          </button>
-        </div>
-        <div className="grid-2" style={{ marginTop: 12 }}>
-          <div>
-            <label className="label" htmlFor="ledger-operation">
-              Operation
-            </label>
-            <select
-              id="ledger-operation"
-              className="input"
-              value={operation}
-              onChange={(event) => {
-                setOperation(event.target.value as AiOperation | typeof ALL_OPERATIONS)
-                setOffset(0)
-              }}
-            >
-              <option value={ALL_OPERATIONS}>All operations</option>
-              {OPERATIONS.map((op) => (
-                <option key={op} value={op}>
-                  {op}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid-2">
-            <div>
-              <label className="label" htmlFor="ledger-from">
-                From
-              </label>
-              <input
-                id="ledger-from"
-                className="input"
-                type="date"
-                value={from}
-                onChange={(event) => {
-                  setFrom(event.target.value)
-                  setOffset(0)
-                }}
-              />
-            </div>
-            <div>
-              <label className="label" htmlFor="ledger-to">
-                To
-              </label>
-              <input
-                id="ledger-to"
-                className="input"
-                type="date"
-                value={to}
-                onChange={(event) => {
-                  setTo(event.target.value)
-                  setOffset(0)
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <LedgerFilters
+        statuses={filters.statuses}
+        onStatusesChange={filters.setStatuses}
+        operation={filters.operation}
+        onOperationChange={filters.setOperation}
+        from={filters.from}
+        onFromChange={filters.setFrom}
+        to={filters.to}
+        onToChange={filters.setTo}
+        onTopUp={() => setIsTopUpOpen(true)}
+      />
 
-      {state.status === 'loading' && (
-        <div role="status" aria-label="Loading transactions">
-          <div className="skeleton" style={{ height: 240 }} />
-        </div>
-      )}
-      {state.status === 'error' && <ErrorBanner error={state.error} />}
-      {state.status === 'ready' && (
-        <TransactionsTable
-          items={state.data.items}
-          total={state.data.total}
-          offset={offset}
-          onOffsetChange={setOffset}
-          onSelect={openInspector}
-        />
-      )}
+      <TransactionsSection
+        state={state}
+        offset={filters.offset}
+        onOffsetChange={filters.setOffset}
+        onSelect={openInspector}
+      />
 
       {focusId !== undefined && (
         <RowInspector
@@ -166,11 +161,11 @@ export function LedgerPageContent(): React.JSX.Element {
         />
       )}
 
-      {showTopUp && (
+      {isTopUpOpen && (
         <TopUpDialog
-          onClose={() => setShowTopUp(false)}
+          onClose={() => setIsTopUpOpen(false)}
           onCredited={() => {
-            setShowTopUp(false)
+            setIsTopUpOpen(false)
             refetch()
           }}
         />

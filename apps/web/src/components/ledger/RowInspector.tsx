@@ -11,6 +11,8 @@
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { api } from '@/lib/api'
+import type { RefundResponse, UsageRecordView } from '@/lib/api-types'
+import type { UseApiMutationResult } from '@/lib/use-api-mutation'
 import { useApiMutation } from '@/lib/use-api-mutation'
 import { useApiQuery } from '@/lib/use-api-query'
 
@@ -26,6 +28,68 @@ export interface RowInspectorProps {
   readonly onNavigate: (transactionId: string) => void
   /** Called after a successful refund, so the table can refresh. */
   readonly onRefunded: () => void
+}
+
+/** The loaded row's content: status chips, reversal back-links, the JSON viewer, and refund. */
+function RowInspectorBody(props: {
+  readonly data: UsageRecordView
+  readonly onNavigate: (transactionId: string) => void
+  readonly refund: UseApiMutationResult<[{ transactionId: string }], RefundResponse>
+  readonly onRefunded: () => void
+  readonly refetch: () => void
+}): React.JSX.Element {
+  const { data } = props
+  // Extracted (rather than narrowed inline) so the value stays a plain
+  // `string | undefined` local: TS narrowing on `data.<field>` does not
+  // survive into the button's nested onClick closure below.
+  const reversesId = data.reversesRecordId
+  const reversedById = data.reversedByRecordId
+
+  return (
+    <>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <span className="chip">{data.status}</span>
+        <span className="chip mono">{data.model}</span>
+        {data.isSystemCost && <span className="badge">system cost</span>}
+      </div>
+
+      {reversesId !== undefined && (
+        <button
+          type="button"
+          className="btn btn--outline btn--sm"
+          onClick={() => props.onNavigate(reversesId)}
+        >
+          View refunded transaction
+        </button>
+      )}
+      {reversedById !== undefined && (
+        <button
+          type="button"
+          className="btn btn--outline btn--sm"
+          onClick={() => props.onNavigate(reversedById)}
+        >
+          View refund
+        </button>
+      )}
+
+      <pre className="mono" style={{ fontSize: 11, whiteSpace: 'pre-wrap', overflow: 'auto' }}>
+        {JSON.stringify(data, null, 2)}
+      </pre>
+
+      <RefundButton
+        row={data}
+        mutationState={props.refund.state}
+        onConfirm={() =>
+          void props.refund.run({ transactionId: data.id }).then((result) => {
+            if (result !== undefined) {
+              props.refetch()
+              props.onRefunded()
+            }
+          })
+        }
+      />
+    </>
+  )
 }
 
 /** The row inspector drawer. */
@@ -57,52 +121,13 @@ export function RowInspector({
         {state.status === 'error' && <ErrorBanner error={state.error} />}
 
         {state.status === 'ready' && (
-          <>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <span className="chip">{state.data.status}</span>
-              <span className="chip mono">{state.data.model}</span>
-              {state.data.isSystemCost && <span className="badge">system cost</span>}
-            </div>
-
-            {state.data.reversesRecordId !== undefined && (
-              <button
-                type="button"
-                className="btn btn--outline btn--sm"
-                onClick={() => onNavigate(state.data.reversesRecordId!)}
-              >
-                View refunded transaction
-              </button>
-            )}
-            {state.data.reversedByRecordId !== undefined && (
-              <button
-                type="button"
-                className="btn btn--outline btn--sm"
-                onClick={() => onNavigate(state.data.reversedByRecordId!)}
-              >
-                View refund
-              </button>
-            )}
-
-            <pre
-              className="mono"
-              style={{ fontSize: 11, whiteSpace: 'pre-wrap', overflow: 'auto' }}
-            >
-              {JSON.stringify(state.data, null, 2)}
-            </pre>
-
-            <RefundButton
-              row={state.data}
-              mutationState={refund.state}
-              onConfirm={() =>
-                void refund.run({ transactionId: state.data.id }).then((result) => {
-                  if (result !== undefined) {
-                    refetch()
-                    onRefunded()
-                  }
-                })
-              }
-            />
-          </>
+          <RowInspectorBody
+            data={state.data}
+            onNavigate={onNavigate}
+            refund={refund}
+            onRefunded={onRefunded}
+            refetch={refetch}
+          />
         )}
       </div>
     </div>

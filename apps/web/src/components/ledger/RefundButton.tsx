@@ -27,7 +27,7 @@ export function RefundButton({
   mutationState,
   onConfirm,
 }: RefundButtonProps): React.JSX.Element | null {
-  const [confirming, setConfirming] = useState(false)
+  const [isConfirming, setIsConfirming] = useState(false)
 
   if (row.status !== 'posted') return null
 
@@ -39,7 +39,7 @@ export function RefundButton({
     )
   }
 
-  if (confirming) {
+  if (isConfirming) {
     return (
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <span className="card__desc">Refund this transaction?</span>
@@ -54,7 +54,7 @@ export function RefundButton({
         <button
           type="button"
           className="btn btn--ghost btn--sm"
-          onClick={() => setConfirming(false)}
+          onClick={() => setIsConfirming(false)}
         >
           Cancel
         </button>
@@ -68,7 +68,7 @@ export function RefundButton({
       <button
         type="button"
         className="btn btn--outline btn--sm"
-        onClick={() => setConfirming(true)}
+        onClick={() => setIsConfirming(true)}
       >
         Refund
       </button>

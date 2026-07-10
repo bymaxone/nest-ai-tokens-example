@@ -40,6 +40,41 @@ function trailingWindow(): { from: string; to: string } {
   return { from: from.toISOString(), to: to.toISOString() }
 }
 
+/** The area chart itself: gradient fill, tooltip, and the billed-cost area. */
+function SparklineChart(props: { readonly points: readonly SparklinePoint[] }): React.JSX.Element {
+  return (
+    <div style={{ height: 140, marginTop: 8 }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={[...props.points]} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id="sparklineFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ff6224" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#ff6224" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <Tooltip
+            contentStyle={{
+              background: 'rgba(15,15,15,0.95)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8,
+            }}
+            labelStyle={{ color: 'rgba(255,255,255,0.6)' }}
+          />
+          <Area
+            type="monotone"
+            dataKey="usd"
+            name="USD"
+            stroke="#ff6224"
+            strokeWidth={2}
+            fill="url(#sparklineFill)"
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 /** The Overview page's 30-day daily spend sparkline. */
 export function UsageSparkline(): React.JSX.Element {
   const { state } = useApiQuery(() => {
@@ -86,35 +121,7 @@ export function UsageSparkline(): React.JSX.Element {
     <div className="card">
       <div className="card__title">30-day spend</div>
       <div className="card__desc">Billed cost per day, {points.length} day(s) with usage</div>
-      <div style={{ height: 140, marginTop: 8 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-            <defs>
-              <linearGradient id="sparklineFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ff6224" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#ff6224" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <Tooltip
-              contentStyle={{
-                background: 'rgba(15,15,15,0.95)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 8,
-              }}
-              labelStyle={{ color: 'rgba(255,255,255,0.6)' }}
-            />
-            <Area
-              type="monotone"
-              dataKey="usd"
-              name="USD"
-              stroke="#ff6224"
-              strokeWidth={2}
-              fill="url(#sparklineFill)"
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <SparklineChart points={points} />
     </div>
   )
 }
