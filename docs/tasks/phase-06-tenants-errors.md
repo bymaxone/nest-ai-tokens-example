@@ -1,6 +1,6 @@
 # Phase 06: Multi-Tenant & Error Catalog
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 06
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §18 (Multi-Tenant), §19 (Error Handling), §7.7 (matrix rows 2, 10-12, 60-62, 75, 77-83)
 
@@ -81,7 +81,7 @@ this phase every row of the coverage matrix that belongs to the backend is demon
 | 6.1 | Branch + tenant isolation proofs (both modes)                          | ✅     | P0       | M    | none       |
 | 6.2 | `errors-demo/` triggers: ledger, pricing, embedding/command codes      | ✅     | P0       | M    | none       |
 | 6.3 | `errors-demo/` provider codes + backdate helper                        | ✅     | P0       | S    | 6.2        |
-| 6.4 | Module boot variants (sync, ledger-only, invalid configs, missing key) | 📋     | P0       | M    | 6.1        |
+| 6.4 | Module boot variants (sync, ledger-only, invalid configs, missing key) | ✅     | P0       | M    | 6.1        |
 | 6.5 | Phase close: audit, dashboards, PR + Copilot review                    | 📋     | P0       | S    | 6.1..6.4   |
 
 ---
@@ -289,7 +289,7 @@ helper (6.3)`.
 
 ## Task 6.4: Module boot variants
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 6.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 6.1
 
 #### Description
 
@@ -301,12 +301,16 @@ failures (rows 10-11); `provider.api_key_missing` with `strategy: 'openai-defaul
 
 #### Acceptance criteria
 
-- [ ] Each variant is an isolated testing module; assertions on container resolution or boot
-      rejection with the exact error code.
-- [ ] Ledger-only variant: resolving `AiCommandService` throws Nest's unknown-provider error
-      while `AiTokenTransactionService` resolves.
-- [ ] The two config codes + api_key_missing complete the 24/24 catalog count (asserted in a
-      summary spec).
+- [x] Each variant is an isolated testing module (or an isolated variant app boot); assertions on
+      container resolution or registration-time rejection with the exact error code.
+- [x] Ledger-only variant: resolving `WalletService`/`BudgetService` throws Nest's
+      unknown-provider error while `LedgerService`/`PricingService` resolve (reconciled: no
+      `AiCommandService`/`AiTokenTransactionService` exist); the `QUOTA_ENABLED=false` app boot
+      proves the 503 `quota.disabled` guards and a working ledger-only metered call.
+- [x] The config codes complete the catalog (reconciled): `AI_TOKENS_FX_REQUIRED` + the boot face
+      of `AI_TOKENS_INVALID_CONFIG` at registration time, `AI_TOKENS_HOLD_EXPIRED` via the
+      backdated-hold proof; the summary spec accounts for all 26 codes (25 raised + 1 reserved).
+      No `provider.api_key_missing` exists (no provider-strategy surface in v0.1.0).
 
 #### Files to create / modify
 
@@ -417,3 +421,6 @@ Completion Protocol: append `- 6.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 6.3 ✅ 2026-07-10: 8 marker-driven provider triggers (billing semantics proven both ways) +
   `POST /errors-demo/helpers/backdated-cost` with point-in-time pricing e2e and the 21/26
   catalog summary.
+- 6.4 ✅ 2026-07-10: sync-forRoot variants (boot + ledger-only resolution), registration-time
+  rejections (INVALID_CONFIG, FX_REQUIRED), ledger-only app boot (503 guards + HOLD_EXPIRED),
+  26-code completion summary.
