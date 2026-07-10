@@ -24,15 +24,21 @@
 import { createHash } from 'node:crypto'
 
 import { Inject, Injectable } from '@nestjs/common'
+import { z } from 'zod'
 
+import { detectMarker } from './failure-markers.js'
+import type { DegradeMode, DetectedMarker } from './failure-markers.js'
 import { synthesizeChatContent } from './mock-content.js'
 import type {
+  MockChatMessage,
   MockChatRequest,
   MockChatResponse,
   MockEmbeddingRequest,
   MockEmbeddingResponse,
   MockEmbeddingVector,
+  MockFinishReason,
 } from './mock-ai.types.js'
+import { ApiException } from '../common/api-exception.js'
 
 /** DI token under which the provider options are provided. */
 export const MOCK_AI_PROVIDER_OPTIONS = Symbol('MOCK_AI_PROVIDER_OPTIONS')
@@ -153,15 +159,22 @@ export class MockAiProvider {
    */
   async chatCompletion(request: MockChatRequest): Promise<MockChatResponse> {
     await this.delay()
+    const { messages, marker } = cleanChatMessages(request.messages)
+    throwIfThrowMarker(marker)
     const format = request.responseFormat ?? 'text'
-    const promptChars = request.messages.reduce((sum, message) => sum + message.content.length, 0)
-    const content = synthesizeChatContent(request.model, lastUserContent(request), format)
+    const promptChars = messages.reduce((sum, message) => sum + message.content.length, 0)
+    const cleanRequest: MockChatRequest = { ...request, messages }
+    const synthesized = synthesizeChatContent(request.model, lastUserContent(cleanRequest), format)
+    const { content, finishReason } = applyDegrade(
+      synthesized,
+      marker?.behavior.kind === 'degrade' ? marker.behavior.mode : undefined,
+    )
     const promptTokens = tokensForChars(promptChars)
     const completionTokens = tokensForChars(content.length)
     return {
       id: responseIdFor(request),
       model: request.model,
-      choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
+      choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: finishReason }],
       usage: {
         prompt_tokens: promptTokens,
         completion_tokens: completionTokens,
@@ -181,7 +194,12 @@ export class MockAiProvider {
    */
   async embed(request: MockEmbeddingRequest): Promise<MockEmbeddingResponse> {
     await this.delay()
-    const inputs = typeof request.input === 'string' ? [request.input] : request.input
+    const rawInputs = typeof request.input === 'string' ? [request.input] : request.input
+    const detections = rawInputs.map((text) => detectMarker(text))
+    // Degrade modes are chat semantics (truncation, JSON shape); embedding
+    // inputs honor throw markers and silently strip the rest.
+    throwIfThrowMarker(detections.find((d) => d.marker !== undefined)?.marker)
+    const inputs = detections.map((d) => d.cleanInput)
     const data: MockEmbeddingVector[] = inputs.map((text, index) => ({
       index,
       embedding: unitVectorFor(text),
@@ -214,4 +232,98 @@ export class MockAiProvider {
 export function lastUserContent(request: MockChatRequest): string {
   const lastUser = [...request.messages].reverse().find((message) => message.role === 'user')
   return lastUser?.content ?? ''
+}
+
+/** The cleaned conversation plus the first marker found across it. */
+interface CleanedMessages {
+  /** The messages with the detected marker stripped everywhere. */
+  readonly messages: readonly MockChatMessage[]
+  /** The first marker found in message order, if any. */
+  readonly marker?: DetectedMarker | undefined
+}
+
+/**
+ * Strip failure markers from a conversation. The first marker found (in
+ * message order) decides the behavior; stripping every occurrence keeps
+ * marker characters out of the token math (spec §12).
+ *
+ * @param messages The raw conversation.
+ * @returns The cleaned conversation and the detected marker.
+ */
+export function cleanChatMessages(messages: readonly MockChatMessage[]): CleanedMessages {
+  let marker: DetectedMarker | undefined
+  const cleaned = messages.map((message) => {
+    const detection = detectMarker(message.content)
+    marker ??= detection.marker
+    return { ...message, content: detection.cleanInput }
+  })
+  return { messages: cleaned, marker }
+}
+
+/**
+ * Raise the app-owned provider error for a throw-kind marker; degrade
+ * kinds and marker-free input pass through. Thrown BEFORE any usage
+ * exists, so a failed call can never produce a ledger row.
+ *
+ * @param marker The detected marker, if any.
+ * @throws {ApiException} The marker's documented code and HTTP status.
+ */
+export function throwIfThrowMarker(marker: DetectedMarker | undefined): void {
+  if (marker !== undefined && marker.behavior.kind === 'throw') {
+    const { code, httpStatus, message } = marker.behavior
+    throw new ApiException(code, httpStatus, message, { marker: marker.token })
+  }
+}
+
+/** A degraded (or untouched) completion: its content and finish reason. */
+interface DegradedContent {
+  readonly content: string
+  readonly finishReason: MockFinishReason
+}
+
+/**
+ * Apply a degrade mode to synthesized content (spec §12):
+ * - `truncate`: keep the first half (rounded up) and finish with
+ *   `'length'` — a real-but-cut response whose usage reflects what was
+ *   actually produced;
+ * - `bad_json`: replace the content with an unparseable fragment while
+ *   keeping normal usage semantics;
+ * - `partial_translations`: drop the LAST language from a translations
+ *   payload (non-translation content passes through untouched).
+ *
+ * @param content The synthesized content.
+ * @param mode The degrade mode, if a degrade marker was detected.
+ * @returns The final content and finish reason.
+ */
+export function applyDegrade(content: string, mode: DegradeMode | undefined): DegradedContent {
+  if (mode === 'truncate') {
+    return { content: content.slice(0, Math.ceil(content.length / 2)), finishReason: 'length' }
+  }
+  if (mode === 'bad_json') return { content: 'not-json{', finishReason: 'stop' }
+  if (mode === 'partial_translations') {
+    return { content: dropLastTranslation(content), finishReason: 'stop' }
+  }
+  return { content, finishReason: 'stop' }
+}
+
+/**
+ * Remove the last language from a `{ translations: { ... } }` payload so
+ * the command layer can surface `command.missing_translations`. Content
+ * that is not a translations payload is returned unchanged (the degrade
+ * marker is then a no-op by design).
+ *
+ * @param content The synthesized JSON content.
+ * @returns The content with the last translation dropped.
+ */
+export function dropLastTranslation(content: string): string {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(content)
+  } catch {
+    return content
+  }
+  const shape = z.object({ translations: z.record(z.string(), z.string()) }).safeParse(parsed)
+  if (!shape.success) return content
+  const entries = Object.entries(shape.data.translations)
+  return JSON.stringify({ translations: Object.fromEntries(entries.slice(0, -1)) })
 }

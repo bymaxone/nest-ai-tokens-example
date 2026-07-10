@@ -1,6 +1,6 @@
 # Phase 04: Mock Provider, Commands & Embeddings
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 04
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §12 (Mock Provider), §11 (workspace routes), §4.3 (behavioral contracts 1, 3, 5), §7.4 (matrix rows 37-52, 73-76)
 
@@ -66,7 +66,7 @@ batch), proving the library's transaction guarantees with e2e ledger assertions.
 | ID  | Task                                                                            | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 4.1 | Branch + `MockAiProvider` core (token math, canned content, latency knob)       | ✅     | P0       | M    | none       |
-| 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error)        | 📋     | P0       | M    | 4.1        |
+| 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error)        | ✅     | P0       | M    | 4.1        |
 | 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | 📋     | P0       | L    | 4.1        |
 | 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | 📋     | P0       | M    | 4.1        |
 | 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | 📋     | P0       | M    | 4.2..4.4   |
@@ -153,7 +153,7 @@ Completion Protocol: standard steps; commit `feat(api): deterministic mock ai pr
 
 ## Task 4.2: Failure injection
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 4.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 4.1
 
 #### Description
 
@@ -166,11 +166,14 @@ costs stay stable.
 
 #### Acceptance criteria
 
-- [ ] Every marker maps to its documented outcome; a table-driven unit spec walks all of them.
-- [ ] Thrown failures use the library's `AiTokensException` + `AI_TOKENS_ERROR_CODES` constants
-      (imported, not re-declared).
-- [ ] Degraded responses keep valid `UsageInfo` (the guarantees suite in 4.5 depends on it).
-- [ ] 100% coverage.
+- [x] Every marker maps to its documented outcome; a table-driven unit spec walks all of them.
+- [x] Thrown failures use the library's `AiTokensException` + `AI_TOKENS_ERROR_CODES` constants
+      (imported, not re-declared). (Reconciled: the shipped catalog has NO provider-failure
+      codes, so thrown failures use the app-owned `ApiException` producing the library's exact
+      envelope shape; see the phase Reconciliation note.)
+- [x] Degraded responses keep valid `UsageInfo` (the guarantees suite in 4.5 depends on it).
+      (Reconciled: valid OpenAI-compatible `usage` blocks the app normalizers read.)
+- [x] 100% coverage.
 
 #### Files to create / modify
 
@@ -466,3 +469,5 @@ Completion Protocol: append `- 4.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 
 - 4.1 ✅ 2026-07-10: deterministic mock inference core (MockAiProvider + content protocol +
   app-owned presets + latency knob wired from MOCK_LATENCY_MS), 100% coverage.
+- 4.2 ✅ 2026-07-10: failure-injection engine (9 markers: 6 throw with pinned HTTP statuses, 3
+  degrade modes), marker-stripped token math, table-driven spec, 100% coverage.

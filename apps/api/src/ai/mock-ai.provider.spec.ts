@@ -10,16 +10,21 @@
  */
 import { afterEach, describe, expect, it, jest } from '@jest/globals'
 
+import { FAILURE_MARKERS } from './failure-markers.js'
 import {
   MOCK_EMBEDDING_DIMENSIONS,
   MockAiProvider,
+  applyDegrade,
   charCodeHash,
+  cleanChatMessages,
+  dropLastTranslation,
   lastUserContent,
   responseIdFor,
   tokensForChars,
   unitVectorFor,
 } from './mock-ai.provider.js'
 import type { MockChatRequest } from './mock-ai.types.js'
+import { ApiException } from '../common/api-exception.js'
 
 /** A zero-latency provider (the configuration every test tier uses). */
 function provider(latencyMs?: number): MockAiProvider {
@@ -242,6 +247,193 @@ describe('lastUserContent', () => {
       }),
     ).toBe('second')
     expect(lastUserContent({ model: 'm', messages: [{ role: 'system', content: 's' }] })).toBe('')
+  })
+})
+
+describe('failure injection', () => {
+  const throwCases = Object.entries(FAILURE_MARKERS).flatMap(([token, behavior]) =>
+    behavior.kind === 'throw' ? [[token, behavior.code, behavior.httpStatus] as const] : [],
+  )
+
+  /**
+   * Table-driven throw markers (chat).
+   *
+   * Every throw-kind marker anywhere in the conversation must raise the
+   * app-owned provider error with its documented code and HTTP status,
+   * BEFORE any usage exists.
+   */
+  it.each(throwCases)('chat with %s throws %s (%i)', async (token, code, status) => {
+    expect.assertions(3)
+    try {
+      await provider().chatCompletion({
+        model: 'mock-chat-pro',
+        messages: [{ role: 'user', content: `hello ${token}` }],
+      })
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiException)
+      expect((error as ApiException).code).toBe(code)
+      expect((error as ApiException).getStatus()).toBe(status)
+    }
+  })
+
+  /**
+   * Throw markers reach embeddings too.
+   *
+   * A throw marker inside any batch input aborts the whole embed call
+   * with the same documented error.
+   */
+  it('embed input with a throw marker throws the documented error', async () => {
+    await expect(
+      provider().embed({ model: 'mock-embed', input: ['ok', 'x @@fail:rate_limited@@'] }),
+    ).rejects.toMatchObject({ code: 'provider.rate_limited' })
+  })
+
+  /**
+   * Marker stripping keeps token math stable (spec §12).
+   *
+   * The marked prompt must count exactly the tokens of its unmarked twin:
+   * marker characters never reach the char math.
+   */
+  it('strips the marker from prompt-token math', async () => {
+    const unmarked = await provider().chatCompletion({
+      model: 'mock-chat-pro',
+      messages: [{ role: 'user', content: 'abcd' }],
+    })
+    const marked = await provider().chatCompletion({
+      model: 'mock-chat-pro',
+      messages: [{ role: 'user', content: 'abcd@@fail:truncate@@' }],
+    })
+
+    expect(marked.usage.prompt_tokens).toBe(unmarked.usage.prompt_tokens)
+  })
+
+  /**
+   * Truncation degrade (contract 5 groundwork).
+   *
+   * The content is cut to its first half (rounded up), the finish reason
+   * flips to 'length', and the usage reflects the TRUNCATED content — a
+   * real-but-cut response that still debits downstream.
+   */
+  it('truncate returns half the content with finish_reason length', async () => {
+    const full = await provider().chatCompletion({
+      model: 'mock-chat-pro',
+      messages: [{ role: 'user', content: 'abcd' }],
+    })
+    const truncated = await provider().chatCompletion({
+      model: 'mock-chat-pro',
+      messages: [{ role: 'user', content: 'abcd@@fail:truncate@@' }],
+    })
+    const fullContent = full.choices[0].message.content
+    const expected = fullContent.slice(0, Math.ceil(fullContent.length / 2))
+
+    expect(truncated.choices[0].message.content).toBe(expected)
+    expect(truncated.choices[0].finish_reason).toBe('length')
+    expect(truncated.usage.completion_tokens).toBe(tokensForChars(expected.length))
+  })
+
+  /**
+   * Bad-JSON degrade (contract 5 groundwork).
+   *
+   * The content becomes a deterministic unparseable fragment while the
+   * usage stays valid — downstream must reject WITHOUT debiting.
+   */
+  it('bad_json returns unparseable content with valid usage', async () => {
+    const response = await provider().chatCompletion({
+      model: 'mock-chat-pro',
+      messages: [{ role: 'user', content: 'analyze this @@fail:bad_json@@' }],
+      responseFormat: 'json_object',
+    })
+    const content = response.choices[0].message.content
+
+    expect(content).toBe('not-json{')
+    expect(() => {
+      JSON.parse(content)
+    }).toThrow()
+    expect(response.usage.completion_tokens).toBe(tokensForChars(content.length))
+    expect(response.choices[0].finish_reason).toBe('stop')
+  })
+
+  /**
+   * Partial-translations degrade.
+   *
+   * A translate directive answered under the marker loses its LAST
+   * requested language, so the command layer can surface
+   * command.missing_translations deterministically.
+   */
+  it('partial_translations drops the last requested language', async () => {
+    const directive = JSON.stringify({
+      task: 'translate',
+      text: 'Hi @@fail:partial_translations@@',
+      targetLanguages: ['pt', 'es'],
+    })
+    const response = await provider().chatCompletion({
+      model: 'mock-chat-pro',
+      messages: [{ role: 'user', content: directive }],
+      responseFormat: 'json_object',
+    })
+
+    expect(JSON.parse(response.choices[0].message.content)).toEqual({
+      translations: { pt: '[pt] HI' },
+    })
+  })
+
+  /**
+   * Degrade markers are chat-only for embeddings.
+   *
+   * An embedding input carrying a degrade marker embeds its CLEANED text
+   * (identical vector and token math to the unmarked input) instead of
+   * failing or degrading.
+   */
+  it('embed strips degrade markers and proceeds', async () => {
+    const response = await provider().embed({
+      model: 'mock-embed',
+      input: 'abc@@fail:truncate@@',
+    })
+
+    expect(response.data[0]?.embedding).toEqual(unitVectorFor('abc'))
+    expect(response.usage.prompt_tokens).toBe(1)
+  })
+})
+
+describe('marker helpers', () => {
+  /**
+   * First-marker precedence across messages.
+   *
+   * When several messages carry markers, the FIRST in message order
+   * decides the behavior; every message still gets its own stripping.
+   */
+  it('cleanChatMessages picks the first marker in message order', () => {
+    const { messages, marker } = cleanChatMessages([
+      { role: 'system', content: 'sys @@fail:timeout@@' },
+      { role: 'user', content: 'user @@fail:rate_limited@@' },
+    ])
+
+    expect(marker?.token).toBe('@@fail:timeout@@')
+    expect(messages.map((m) => m.content)).toEqual(['sys ', 'user '])
+  })
+
+  /**
+   * Degrade passthrough without a mode.
+   *
+   * Marker-free calls flow through applyDegrade untouched with the
+   * normal finish reason.
+   */
+  it('applyDegrade passes content through when no mode is set', () => {
+    expect(applyDegrade('abc', undefined)).toEqual({ content: 'abc', finishReason: 'stop' })
+  })
+
+  /**
+   * Partial-translation edge shapes.
+   *
+   * Non-JSON and non-translation JSON pass through unchanged: the degrade
+   * only rewrites the canonical translations payload.
+   */
+  it('dropLastTranslation leaves non-translation content untouched', () => {
+    expect(dropLastTranslation('[mock:m] plain')).toBe('[mock:m] plain')
+    expect(dropLastTranslation('{"echo":"x"}')).toBe('{"echo":"x"}')
+    expect(dropLastTranslation('{"translations":{"pt":"[pt] A","es":"[es] A"}}')).toBe(
+      '{"translations":{"pt":"[pt] A"}}',
+    )
   })
 })
 
