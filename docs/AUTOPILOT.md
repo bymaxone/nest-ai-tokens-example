@@ -57,7 +57,9 @@ the registry check applies and the sibling checks are skipped.
 > - **Local checkout**: the sibling lives beside this repo and must be built
 >   (`pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`);
 >   the precondition rows above verify exactly that.
-> - **CI**: the family thin-caller pattern. `ci.yml` calls the org reusable
+> - **CI (delivered by phase 01, which reconciles task 1.4)**: the family
+>   thin-caller pattern. Phase 01 replaces the phase-00 hand-rolled pipeline
+>   with a `ci.yml` that calls the org reusable
 >   `bymaxone/.github/.github/workflows/node-ci.yml@v1` with
 >   `library-repo: bymaxone/nest-ai-tokens` (a public repo); its shared
 >   `setup-node-pnpm@v1` action checks the library out beside the workspace and
@@ -70,8 +72,9 @@ the registry check applies and the sibling checks are skipped.
 >   after a clean checkout.
 >
 > The repo is private today and goes public later; the visibility-gated
-> workflows (CodeQL, Scorecard, dependency review) activate automatically at
-> that flip, matching the sibling examples.
+> workflows (CodeQL and Scorecard today, plus dependency review once the
+> family security caller lands with the thin-caller CI) activate automatically
+> at that flip, matching the sibling examples.
 
 ## Model policy
 
@@ -251,8 +254,9 @@ public.
 - **One PR per phase**, branch `feat/phase-NN-<slug>`; the last task opens the
   PR, requests the Copilot review, and the orchestrator merges only on the full
   gate.
-- **CI follows the family thin-caller pattern**: `ci.yml` delegates to the org
-  reusable `bymaxone/.github/.github/workflows/node-ci.yml@v1`
+- **CI adopts the family thin-caller pattern from phase 01 onward** (phase 00
+  shipped a hand-rolled pipeline; phase 01 replaces it): `ci.yml` delegates to
+  the org reusable `bymaxone/.github/.github/workflows/node-ci.yml@v1`
   (`library-repo: bymaxone/nest-ai-tokens`), mirroring `nest-storage-example`;
   repo-specific jobs stay in the caller, and inputs toggle stages on as the
   phases deliver them.
