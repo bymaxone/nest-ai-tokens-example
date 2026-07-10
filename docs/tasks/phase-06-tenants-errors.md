@@ -363,7 +363,7 @@ catalog (6.4)`.
 ## Task 6.5: Phase close: audit, dashboards, PR + Copilot review
 
 - **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 6.1..6.4
-- **Note**: gates replayed green (unit 422 tests at 100% on all four metrics; e2e 157 tests across
+- **Note**: gates replayed green (unit 424 tests at 100% on all four metrics after the review-round specs; e2e 157 tests across
   14 Testcontainers suites), every 6.1-6.4 acceptance criterion audited against the tree, code and
   security reviews iterated to zero findings. The backend coverage-matrix sweep follows the repo
   precedent: spec §7 rows stay as drafted and the shipped-surface mappings live in the phase
