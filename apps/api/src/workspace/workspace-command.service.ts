@@ -1,24 +1,24 @@
 /**
  * @fileoverview The five workspace commands (translate, summarize,
- * rewrite, analyze, custom). Each call is exactly: build the task
- * directive, run the mock inference, apply the billing semantics, meter
- * the raw response through `MeteringService.record` with the app's mock
- * preset, and return the content plus the usage view: the same shape a
- * real consumer's service has around a live SDK.
+ * rewrite, analyze, custom). Each call runs the library's full enforcement
+ * lifecycle: a body-size estimator (scaled by the host `QUOTA_TOLERANCE`)
+ * sizes a spend hold, so a wallet/budget shortfall rejects with the
+ * canonical 402 BEFORE the mock inference runs and writes NO ledger row;
+ * the provider response then settles the hold with its actual usage.
  *
  * Billing semantics per response (spec §4.3 contracts 1 and 5):
- * - happy path: record once, return content + usage (ONE ledger row);
- * - truncated (`finish_reason: 'length'`): record FIRST (the produced
+ * - happy path: settle once, return content + usage (ONE posted row);
+ * - truncated (`finish_reason: 'length'`): settle FIRST (the produced
  *   tokens are real), then raise `provider.response_truncated`;
- * - unparseable JSON result: never record, raise `provider.invalid_json`;
- * - partial translations: record (real tokens arrived), then raise
+ * - unparseable JSON result: abandon the hold (never bills), raise
+ *   `provider.invalid_json`;
+ * - partial translations: settle (real tokens arrived), then raise
  *   `command.missing_translations` naming the absent languages.
  *
  * @layer workspace
  */
 import { Inject, Injectable } from '@nestjs/common'
 import { MeteringService } from '@bymax-one/nest-ai-tokens'
-import type { UsageRecord } from '@bymax-one/nest-ai-tokens'
 import { z } from 'zod'
 
 import type { AnalyzeBody } from './dto/analyze.body.js'
@@ -26,6 +26,13 @@ import type { CustomBody } from './dto/custom.body.js'
 import type { RewriteBody } from './dto/rewrite.body.js'
 import type { SummarizeBody } from './dto/summarize.body.js'
 import type { TranslateBody } from './dto/translate.body.js'
+import { runWithHold } from './metered-call.js'
+import type { MeteredCall } from './metered-call.js'
+import {
+  chatHoldEstimate,
+  estimateTextTokens,
+  estimateTranslateTokens,
+} from './workspace-estimators.js'
 import {
   invalidJsonError,
   missingTranslationsError,
@@ -39,6 +46,8 @@ import { DEFAULT_CHAT_MODEL } from '../ai/mock-models.js'
 import { MockAiProvider } from '../ai/mock-ai.provider.js'
 import type { MockChatMessage, MockChatResponse, MockResponseFormat } from '../ai/mock-ai.types.js'
 import { MOCK_CHAT_PRESET } from '../ai/mock-usage.presets.js'
+import { ENV_CONFIG } from '../config/env.js'
+import type { EnvConfig } from '../config/env.js'
 import type { DemoIdentity } from '../identity/identity.middleware.js'
 
 /** The feature label each command meters under. */
@@ -88,6 +97,24 @@ export interface CustomResult extends WorkspaceCommandResult {
   readonly content: string
 }
 
+/** The shared shape of one metered command invocation. */
+interface CommandCallInput {
+  /** The request identity (payer scope). */
+  readonly identity: DemoIdentity
+  /** The feature label the call meters under. */
+  readonly feature: string
+  /** The request's document reference (correlation tag). */
+  readonly resourceId: string
+  /** The per-call model override, when present. */
+  readonly model: string | undefined
+  /** The conversation handed to the mock. */
+  readonly messages: readonly MockChatMessage[]
+  /** The requested output format. */
+  readonly format: MockResponseFormat
+  /** The raw (pre-tolerance) body-size token estimate. */
+  readonly rawTokens: number
+}
+
 /** The translations payload shape a translate response must carry. */
 const translationsShape = z.object({ translations: z.record(z.string(), z.string()) })
 
@@ -100,14 +127,21 @@ const analysisShape = z.object({
 /** Serves the five workspace commands. */
 @Injectable()
 export class WorkspaceCommandService {
+  /** The host-side estimation headroom applied to every spend hold. */
+  private readonly tolerance: number
+
   /**
    * @param provider The deterministic mock inference layer.
    * @param metering The library's metering facade (container-resolved).
+   * @param env The typed environment (supplies `QUOTA_TOLERANCE`).
    */
   constructor(
     @Inject(MockAiProvider) private readonly provider: MockAiProvider,
     @Inject(MeteringService) private readonly metering: MeteringService,
-  ) {}
+    @Inject(ENV_CONFIG) env: EnvConfig,
+  ) {
+    this.tolerance = env.QUOTA_TOLERANCE
+  }
 
   /**
    * Translate text into one or more languages.
@@ -125,16 +159,21 @@ export class WorkspaceCommandService {
       targetLanguages: body.targetLanguages,
       ...(body.sourceLanguage === undefined ? {} : { sourceLanguage: body.sourceLanguage }),
     }
-    const response = await this.complete(body.model, [userMessage(directive)], 'json_object')
-    await this.debitIfTruncated(identity, WORKSPACE_FEATURES.translate, body.resourceId, response)
-    const translations = parseTranslations(contentOf(response))
-    const missing = body.targetLanguages.filter((language) => !(language in translations))
-    const record = await this.record(
+    const call = await this.begin({
       identity,
-      WORKSPACE_FEATURES.translate,
-      body.resourceId,
-      response,
+      feature: WORKSPACE_FEATURES.translate,
+      resourceId: body.resourceId,
+      model: body.model,
+      messages: [userMessage(directive)],
+      format: 'json_object',
+      rawTokens: estimateTranslateTokens(body.text, body.targetLanguages.length),
+    })
+    await settleIfTruncated(call)
+    const translations = await parseOrAbandon(call, () =>
+      parseTranslations(contentOf(call.response)),
     )
+    const missing = body.targetLanguages.filter((language) => !(language in translations))
+    const record = await call.settle()
     if (missing.length > 0) throw missingTranslationsError(missing, record.id)
     return { resourceId: body.resourceId, translations, usage: usageViewOf(record) }
   }
@@ -154,15 +193,22 @@ export class WorkspaceCommandService {
       ...(body.maxLength === undefined ? {} : { maxWords: body.maxLength }),
       ...(body.style === undefined ? {} : { style: body.style }),
     }
-    const response = await this.complete(body.model, [userMessage(directive)], 'text')
-    await this.debitIfTruncated(identity, WORKSPACE_FEATURES.summarize, body.resourceId, response)
-    const record = await this.record(
+    const call = await this.begin({
       identity,
-      WORKSPACE_FEATURES.summarize,
-      body.resourceId,
-      response,
-    )
-    return { resourceId: body.resourceId, summary: contentOf(response), usage: usageViewOf(record) }
+      feature: WORKSPACE_FEATURES.summarize,
+      resourceId: body.resourceId,
+      model: body.model,
+      messages: [userMessage(directive)],
+      format: 'text',
+      rawTokens: estimateTextTokens(body.text),
+    })
+    await settleIfTruncated(call)
+    const record = await call.settle()
+    return {
+      resourceId: body.resourceId,
+      summary: contentOf(call.response),
+      usage: usageViewOf(record),
+    }
   }
 
   /**
@@ -180,17 +226,20 @@ export class WorkspaceCommandService {
       ...(body.style === undefined ? {} : { style: body.style }),
       ...(body.language === undefined ? {} : { language: body.language }),
     }
-    const response = await this.complete(body.model, [userMessage(directive)], 'text')
-    await this.debitIfTruncated(identity, WORKSPACE_FEATURES.rewrite, body.resourceId, response)
-    const record = await this.record(
+    const call = await this.begin({
       identity,
-      WORKSPACE_FEATURES.rewrite,
-      body.resourceId,
-      response,
-    )
+      feature: WORKSPACE_FEATURES.rewrite,
+      resourceId: body.resourceId,
+      model: body.model,
+      messages: [userMessage(directive)],
+      format: 'text',
+      rawTokens: estimateTextTokens(body.text),
+    })
+    await settleIfTruncated(call)
+    const record = await call.settle()
     return {
       resourceId: body.resourceId,
-      rewritten: contentOf(response),
+      rewritten: contentOf(call.response),
       usage: usageViewOf(record),
     }
   }
@@ -205,16 +254,18 @@ export class WorkspaceCommandService {
    *   debited: spec §4.3 contract 5).
    */
   async analyze(identity: DemoIdentity, body: AnalyzeBody): Promise<AnalyzeResult> {
-    const directive = { task: 'analyze', text: body.text }
-    const response = await this.complete(body.model, [userMessage(directive)], 'json_object')
-    await this.debitIfTruncated(identity, WORKSPACE_FEATURES.analyze, body.resourceId, response)
-    const analysis = parseAnalysis(contentOf(response))
-    const record = await this.record(
+    const call = await this.begin({
       identity,
-      WORKSPACE_FEATURES.analyze,
-      body.resourceId,
-      response,
-    )
+      feature: WORKSPACE_FEATURES.analyze,
+      resourceId: body.resourceId,
+      model: body.model,
+      messages: [userMessage({ task: 'analyze', text: body.text })],
+      format: 'json_object',
+      rawTokens: estimateTextTokens(body.text),
+    })
+    await settleIfTruncated(call)
+    const analysis = await parseOrAbandon(call, () => parseAnalysis(contentOf(call.response)))
+    const record = await call.settle()
     return { resourceId: body.resourceId, analysis, usage: usageViewOf(record) }
   }
 
@@ -234,58 +285,77 @@ export class WorkspaceCommandService {
         : [{ role: 'system', content: body.systemPrompt } as const]),
       { role: 'user', content: body.userPrompt } as const,
     ]
-    const response = await this.complete(body.model, messages, body.responseFormat)
-    await this.debitIfTruncated(identity, WORKSPACE_FEATURES.custom, body.resourceId, response)
-    const content = contentOf(response)
-    if (body.responseFormat === 'json_object') assertParseableJson(content)
-    const record = await this.record(identity, WORKSPACE_FEATURES.custom, body.resourceId, response)
+    const call = await this.begin({
+      identity,
+      feature: WORKSPACE_FEATURES.custom,
+      resourceId: body.resourceId,
+      model: body.model,
+      messages,
+      format: body.responseFormat,
+      rawTokens: estimateTextTokens(body.userPrompt) + estimateTextTokens(body.systemPrompt ?? ''),
+    })
+    await settleIfTruncated(call)
+    const content = contentOf(call.response)
+    if (body.responseFormat === 'json_object') {
+      await parseOrAbandon(call, () => assertParseableJson(content))
+    }
+    const record = await call.settle()
     return { resourceId: body.resourceId, content, usage: usageViewOf(record) }
   }
 
-  /** Run the mock inference with the resolved model. */
-  private complete(
-    model: string | undefined,
-    messages: readonly MockChatMessage[],
-    responseFormat: MockResponseFormat,
-  ): Promise<MockChatResponse> {
-    return this.provider.chatCompletion({
-      model: model ?? DEFAULT_CHAT_MODEL,
-      messages,
-      responseFormat,
-    })
-  }
-
   /**
-   * Meter one response exactly once: the raw provider payload goes to the
-   * library with the mock preset; the resource reference travels as a tag.
+   * Reserve the tolerance-scaled spend hold, then run the mock inference:
+   * a shortfall rejects before the provider is reached (no ledger row);
+   * a provider failure releases the hold and propagates.
    */
-  private record(
-    identity: DemoIdentity,
-    feature: string,
-    resourceId: string,
-    response: MockChatResponse,
-  ): Promise<UsageRecord> {
-    return this.metering.record({
-      usage: response,
-      preset: MOCK_CHAT_PRESET,
-      context: buildMeteringContext(identity, feature, [resourceTag(resourceId)]),
-    })
+  private begin(input: CommandCallInput): Promise<MeteredCall<MockChatResponse>> {
+    const context = buildMeteringContext(input.identity, input.feature, [
+      resourceTag(input.resourceId),
+    ])
+    const estimate = chatHoldEstimate(
+      input.model ?? DEFAULT_CHAT_MODEL,
+      input.rawTokens,
+      this.tolerance,
+    )
+    return runWithHold(this.metering, context, estimate, MOCK_CHAT_PRESET, () =>
+      this.provider.chatCompletion({
+        model: input.model ?? DEFAULT_CHAT_MODEL,
+        messages: input.messages,
+        responseFormat: input.format,
+      }),
+    )
   }
+}
 
-  /**
-   * The truncation contract: a cut response still debits what it reports
-   * (record FIRST), then surfaces `provider.response_truncated` carrying
-   * the transaction id as proof of the debit.
-   */
-  private async debitIfTruncated(
-    identity: DemoIdentity,
-    feature: string,
-    resourceId: string,
-    response: MockChatResponse,
-  ): Promise<void> {
-    if (response.choices[0].finish_reason !== 'length') return
-    const record = await this.record(identity, feature, resourceId, response)
-    throw responseTruncatedError(record.id)
+/**
+ * The truncation contract: a cut response still debits what it reports
+ * (settle FIRST), then surfaces `provider.response_truncated` carrying
+ * the transaction id as proof of the debit.
+ *
+ * @param call The metered call to inspect.
+ * @throws {ApiException} `provider.response_truncated` (502) after settling.
+ */
+async function settleIfTruncated(call: MeteredCall<MockChatResponse>): Promise<void> {
+  if (call.response.choices[0].finish_reason !== 'length') return
+  const record = await call.settle()
+  throw responseTruncatedError(record.id)
+}
+
+/**
+ * Run a parse step under the never-bill contract: a parse failure abandons
+ * the hold (the response is worthless, so nothing debits) and rethrows the
+ * parse outcome.
+ *
+ * @param call The metered call whose hold backs the parse.
+ * @param parse The synchronous parse step.
+ * @returns The parsed value.
+ */
+async function parseOrAbandon<T>(call: MeteredCall<unknown>, parse: () => T): Promise<T> {
+  try {
+    return parse()
+  } catch (error) {
+    await call.abandon('unparseable response content')
+    throw error
   }
 }
 

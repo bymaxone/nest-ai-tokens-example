@@ -1,8 +1,51 @@
 # Phase 05: Quota, Credits & Aggregations
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-06
+> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 05
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §17 (Quota), §11 (usage/quota/system-jobs routes), §7.5-7.6 (matrix rows 53-72, 84-85)
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the quota surface drafted
+> here and in spec §17/§11 (same rule as the phase 01-04 notes). There is NO `TokenQuotaGuard`,
+> `@ConsumeTokens`, `@SkipQuota`, `IQuotaPolicy`, `BYMAX_AI_TOKENS_QUOTA_POLICY`,
+> `UsageAggregatorService`, `recordCredit`, or `quota.*` error code family. The real enforcement
+> surface is the opt-in `wallets`/`budgets` feature blocks (`WalletService`, `BudgetService`,
+> `BudgetGuard`), the host `scopeResolver`, the metering lifecycle
+> (`MeteringService.hold/capture/release/record({ enforce })`), and the `@Meter`/`@RequireBudget`/
+> `@AiFeature` decorators consumed by `BudgetGuard`/`MeteringInterceptor`. Mappings applied:
+> `balanceResolver` + `QuotaBalanceService.sumAmount` -> `WalletService.getBalance(ref)` (the
+> materialized balance kept transactionally consistent with the append-only entry ledger;
+> `reconcile` recomputes from the entries, so the ledger stays the source of truth and there is
+> nothing app-side to write); guard on workspace -> the app's null-tolerant `EnforcementGuard`
+> over `BudgetGuard` on the seven metered handlers (the library binds `BudgetGuard` as `null` when
+> budgets are disabled), with the 401 no-user rejection raised by the module `scopeResolver`;
+> `@ConsumeTokens(estimator)` -> app-owned pure estimators sizing a rated `HoldEstimate`
+> (`{ provider, model, operation, inputTokens, maxOutputTokens }`) scaled by the host
+> `QUOTA_TOLERANCE` knob, run through hold -> provider -> capture/release so a wallet/budget
+> shortfall rejects BEFORE the provider runs and writes NO ledger row; `@SkipQuota` -> metadata
+> absence (`MeteringInterceptor` passes through handlers without `@Meter`; unguarded handlers skip
+> the guard), proven on `GET /workspace/models` and `GET /usage/balance`; 402
+> `quota.insufficient_balance` -> `AI_TOKENS_INSUFFICIENT_CREDITS` (canonical envelope); 402
+> `quota.below_minimum`/`minimumBalance` -> no such option; `QUOTA_MINIMUM_BALANCE` maps to
+> `wallets.overdraftNanoUsd` and the below-floor rejection IS the insufficient-credits rejection;
+> lab `constant` -> the declarative `@RequireBudget({ estimate })` static-hold path settled by
+> `MeteringInterceptor`; lab `model-based` -> a service-level estimator branching on `body.model`;
+> lab `resolvers` (`userIdResolver`/`tenantIdResolver`) -> NOT implementable (identity mapping is
+> owned by the single module-level `scopeResolver`); class-based `IQuotaPolicy` variant -> NOT
+> implementable (no policy port; the equivalent hard-stop is a `'block'` budget row created via
+> the budgets admin surface and enforced pre-handler by the guard); `recordCredit` with
+> `purchase`/`monthly_allocation`/`trial_allocation` -> `WalletService.grant` with the type as the
+> entry `reason` (matching the phase-01 seed grants); refund with `metadata.refundOf` ->
+> `MeteringService.reverse(transactionId, reason)` (compensating record linked via
+> `reversesRecordId`/`reversedByRecordId`, original amounts untouched, wallet refunded and budget
+> released for enforced originals); `UsageAggregatorService` -> `UsageReportService.summarize`
+> (`groupBy` day|week|month|feature|model|scope|systemCostCategory; by-type reconciles to the
+> `feature` dimension, top consumers to a tenant-wide `scope` grouping sorted host-side);
+> `EmbeddingService.generateBatch(isSystemCost)` -> the app embedding path metered with
+> `MeteringContext.isSystemCost`/`systemCostCategory` (the documented reserved fields);
+> `type: 'agent_decision_assist'` with `metadata` -> a `record()` of a deterministic 25-token
+> usage under feature `agent.decision-assist` with `correlationId: decisionId` and
+> `strategy:`/`confidence:` tags (the immutable ledger stores no free text, so `reasoning` is
+> echoed in the response, never persisted).
 
 ## Context
 
@@ -34,7 +77,7 @@ metadata). After this phase the drain-then-402 scenario is walkable.
 
 | ID  | Task                                                                                       | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------------------------ | ------ | -------- | ---- | ---------- |
-| 5.1 | Branch + ledger-backed balance resolver + guard on workspace                               | 📋     | P0       | M    | none       |
+| 5.1 | Branch + ledger-backed balance resolver + guard on workspace                               | ✅     | P0       | M    | none       |
 | 5.2 | Estimators: body-size on commands, constant + model-based + resolver overrides in `quota/` | 📋     | P0       | M    | 5.1        |
 | 5.3 | Credits + refund endpoints (`purchase`, allocations, `refund`)                             | 📋     | P0       | S    | 5.1        |
 | 5.4 | `usage/` REST: balance, by-period/type/model, top consumers, system costs                  | 📋     | P0       | M    | 5.1        |
@@ -45,25 +88,30 @@ metadata). After this phase the drain-then-402 scenario is walkable.
 
 ## Task 5.1: Branch + balance resolver + guard wiring
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
-Replace the phase 02 `QuotaBalancePort` placeholder with the real ledger-backed resolver
-(delegates to `UsageAggregatorService.getBalance` semantics via the repository `sumAmount`), apply
-`TokenQuotaGuard` to the workspace controller with `@SkipQuota` on read routes, and add the
-body-size estimator to the five command endpoints and embeds.
+(Reconciled onto v0.1.0; see the phase note.) Move the workspace commands and embeds from
+observe-only `record()` onto the full enforcement lifecycle: app-owned pure body-size estimators
+scaled by `QUOTA_TOLERANCE` size a spend hold, the provider response settles it, and the
+null-tolerant `EnforcementGuard` (over the library's `BudgetGuard`) covers the seven metered
+handlers while `GET /workspace/models` stays the unguarded inert path.
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-05-quota-aggregations` created with `git switch -c`.
-- [ ] `balanceResolver(userId, tenantId)` returns the net ledger sum; unit-tested against the
-      seed values.
-- [ ] Guard active on workspace: request without `x-demo-user` -> 401 `quota.no_user`;
-      `/workspace/models` (unmarked) passes; `@SkipQuota` proven on a read route.
-- [ ] Drain scenario e2e: repeated commands until 402 `quota.insufficient_balance` with
-      `{ balance, estimated, tolerance }` details.
-- [ ] 100% coverage on changed files.
+- [x] Branch `feat/phase-05-quota-aggregations` created with `git switch -c`.
+- [x] Balance is the library's ledger-backed wallet balance (`WalletService.getBalance` over the
+      append-only entry ledger); the drained/credited transitions are proven e2e against the
+      seeded grants.
+- [x] Guard active on workspace: request without `x-demo-user` -> 401 raised by the module
+      `scopeResolver` BEFORE body validation; `/workspace/models` (unguarded) passes; skip
+      semantics are metadata absence, proven on the models route.
+- [x] Drain scenario e2e: a drained wallet rejects the next command 402
+      `AI_TOKENS_INSUFFICIENT_CREDITS` (canonical envelope, `balanceNanoUsd`/`requestedNanoUsd`
+      details) BEFORE the provider runs, with NO ledger row in any status and NO wallet entry; a
+      credit grant unblocks the identical call; a passing call debits exactly the billed cost.
+- [x] 100% coverage on changed files.
 
 #### Files to create / modify
 
@@ -426,3 +474,5 @@ Completion Protocol: append `- 5.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 5.1 ✅ 2026-07-10: hold-based enforcement on all seven metered workspace handlers (tolerance-scaled estimators, EnforcementGuard, drain-then-blocked e2e)

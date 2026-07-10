@@ -22,7 +22,9 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
 import type { App } from 'supertest/types.js'
 
+import { runSeed } from '../../prisma/seed-runner.js'
 import { createApp } from '../../src/bootstrap.js'
+import { PrismaService } from '../../src/prisma/prisma.service.js'
 
 /** The image every tier of this project pins for Postgres. */
 const POSTGRES_IMAGE = 'postgres:17-alpine'
@@ -48,6 +50,9 @@ beforeAll(async () => {
   process.env.DATABASE_URL = databaseUrl
   process.env.PORT = '0'
   app = await createApp()
+  // Seed the demo domain: enforcement is live, so the exercised demo users
+  // need their seeded wallets (and grants) to fund the metered calls.
+  await runSeed(app.get(PrismaService))
   server = app.getHttpServer() as App
 })
 
