@@ -58,6 +58,21 @@ describe('usageWindowQuerySchema', () => {
     ).toBe(false)
     expect(usageWindowQuerySchema.safeParse({ scope: 'everyone' }).success).toBe(false)
   })
+
+  /**
+   * Open-ended windows are bounded too.
+   *
+   * With `to` omitted the window resolves against now, so a `from` further
+   * back than the cap is rejected instead of driving an unbounded report,
+   * while a recent open-ended `from` stays accepted.
+   */
+  it('caps an open-ended from against the resolved window', () => {
+    const farPast = new Date(Date.now() - (MAX_WINDOW_DAYS + 1) * MS_PER_DAY)
+    expect(usageWindowQuerySchema.safeParse({ from: farPast.toISOString() }).success).toBe(false)
+
+    const recent = new Date(Date.now() - MS_PER_DAY)
+    expect(usageWindowQuerySchema.safeParse({ from: recent.toISOString() }).success).toBe(true)
+  })
 })
 
 describe('byPeriodQuerySchema', () => {

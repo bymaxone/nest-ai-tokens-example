@@ -43,11 +43,16 @@ const windowShape = {
   scope: z.enum(['me', 'tenant']).default('me'),
 }
 
-/** Reject inverted windows and windows wider than the documented cap. */
+/**
+ * Reject inverted windows and windows wider than the documented cap. The
+ * check runs on the RESOLVED window (missing bounds defaulted exactly as
+ * the report will default them), so an open-ended `from` far in the past
+ * cannot bypass the cap and drive an unbounded report.
+ */
 function boundedWindow(query: { from?: Date | undefined; to?: Date | undefined }): boolean {
-  if (query.from === undefined || query.to === undefined) return true
-  if (query.from > query.to) return false
-  return query.to.getTime() - query.from.getTime() <= MAX_WINDOW_DAYS * MS_PER_DAY
+  const { from, to } = resolveWindow(query)
+  if (from > to) return false
+  return to.getTime() - from.getTime() <= MAX_WINDOW_DAYS * MS_PER_DAY
 }
 
 /** The refinement message for an invalid window. */
