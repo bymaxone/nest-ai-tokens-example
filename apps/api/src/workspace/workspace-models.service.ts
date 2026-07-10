@@ -9,7 +9,7 @@
  *
  * @layer workspace
  */
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common'
 import { PricingService, toJsonSafe } from '@bymax-one/nest-ai-tokens'
 import type { AiOperation, JsonSafe, PriceVersion } from '@bymax-one/nest-ai-tokens'
 
@@ -75,9 +75,13 @@ export class WorkspaceModelsService {
       at: new Date(),
     })
     // Strict pricing throws on a miss, so a null can only mean the module
-    // was reconfigured non-strict without seeding; keep that loud too.
+    // was reconfigured non-strict without seeding; keep that loud too, and
+    // as an HttpException so clients still get the standard error shape
+    // (the tuple is catalog data, safe to include).
     if (rate === null) {
-      throw new Error(`No current price row for ${MOCK_PROVIDER_ID}/${model}/${operation}`)
+      throw new InternalServerErrorException(
+        `No current price row for ${MOCK_PROVIDER_ID}/${model}/${operation}`,
+      )
     }
     return toJsonSafe(rate)
   }

@@ -7,6 +7,7 @@
  * strings), and that a missing rate stays loud in both failure shapes.
  * Mocks: the library PricingService (resolveRate double).
  */
+import { InternalServerErrorException } from '@nestjs/common'
 import { describe, expect, it, jest } from '@jest/globals'
 import type { PriceVersion, PricingService } from '@bymax-one/nest-ai-tokens'
 
@@ -70,12 +71,14 @@ describe('describeModels', () => {
    * Loud rate miss.
    *
    * If rate resolution returns null (non-strict misconfiguration), the
-   * service still fails loudly instead of serving a price-less payload.
+   * service still fails loudly, and as an HttpException so the client
+   * receives the standard error shape instead of a bare 500.
    */
-  it('throws when a catalog model has no open price row', async () => {
+  it('throws an InternalServerErrorException when a catalog model has no open price row', async () => {
     const resolveRate = jest.fn<PricingService['resolveRate']>().mockResolvedValue(null)
     const service = new WorkspaceModelsService({ resolveRate } as unknown as PricingService)
 
+    await expect(service.describeModels()).rejects.toThrow(InternalServerErrorException)
     await expect(service.describeModels()).rejects.toThrow('No current price row')
   })
 })
