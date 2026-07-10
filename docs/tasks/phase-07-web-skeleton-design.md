@@ -1,6 +1,6 @@
 # Phase 07: Web Skeleton & Design System
 
-> **Status**: 👀 Review · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: ✅ Done · **Progress**: 5 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 07
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (Frontend Design), §15 (Design System), §8.2 (shared subpath)
 
@@ -74,7 +74,7 @@ may be mocked until 03-06 endpoints land).
 | 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | ✅     | P0       | M    | 7.1        |
 | 7.3 | Typed api client on the shared subpath + error narrowing  | ✅     | P0       | M    | 7.1        |
 | 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | ✅     | P0       | M    | 7.2, 7.3   |
-| 7.5 | Phase close: audit, dashboards, PR + Copilot review       | 👀     | P0       | S    | 7.1..7.4   |
+| 7.5 | Phase close: audit, dashboards, PR + Copilot review       | ✅     | P0       | S    | 7.1..7.4   |
 
 ---
 
@@ -355,7 +355,7 @@ Completion Protocol: standard steps; commit `feat(web): identity switcher, vites
 
 ## Task 7.5: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 7.1..7.4
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 7.1..7.4
 - **Note**: gates replayed green (root `lint`/`typecheck`/`format:check`/`build`; `web test:cov`
   94 tests at 100% on all four metrics on `lib/**` + `components/**`; `web test:integration`
   Testcontainers round-trip; `api test:cov` unaffected, still 424 tests at 100%); every 7.1-7.4
@@ -425,5 +425,8 @@ Completion Protocol: append `- 7.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
   Overview's live balance round trip; full Vitest/Testing Library setup (94 tests, 100% coverage
   on `lib/**` + `components/**`); a Testcontainers integration smoke; CI `has-web: true` plus the
   `web-import-guard` job.
-- 7.5 👀 2026-07-10: gates green, criteria audited, code/security reviews at zero findings, PR
-  opened and the Copilot review requested; merge owned by the orchestrator.
+- 7.5 ✅ 2026-07-10: gates green, criteria audited, code/security reviews at zero findings; PR #18
+  carried the Copilot review through six fix rounds (client body hardening, env inlining, origin
+  CSP, shell and skeleton recipes ported verbatim, identity-switch refetch, shared unions),
+  squash-merged as `a666277`, branch deleted, CI green with the web stages (97 web tests at 100%,
+  integration round trip 1/1).
