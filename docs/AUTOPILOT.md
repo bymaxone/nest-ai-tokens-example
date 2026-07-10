@@ -129,8 +129,9 @@ public.
 # process.env confined to the config/env layer (ai-tokens.config.ts + env schema)
 [ ! -d apps ] || ! { grep -rn "process\.env" apps --include='*.ts' | grep -vE 'ai-tokens\.config\.ts|env\.(ts|schema\.ts)|\.spec\.ts|\.e2e-spec\.ts'; }
 
-# No placeholder files (user-global rule + plan Guiding Principle 9)
-! { find . -path ./node_modules -prune -o \( -name '.gitkeep' -o -name '.keep' \) -print | grep .; }
+# No placeholder files (user-global rule + plan Guiding Principle 9);
+# prunes .git and node_modules at ANY depth (pnpm workspaces nest them)
+! { find . \( -name .git -o -name node_modules \) -prune -o \( -name '.gitkeep' -o -name '.keep' \) -print | grep .; }
 
 # No real provider secret committed anywhere (whole repo, not just apps/)
 ! { grep -rnE 'sk-[A-Za-z0-9]{20,}' . --exclude-dir=.git --exclude-dir=node_modules; }
