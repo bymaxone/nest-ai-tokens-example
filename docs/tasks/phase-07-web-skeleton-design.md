@@ -74,7 +74,7 @@ may be mocked until 03-06 endpoints land).
 | 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | ✅     | P0       | M    | 7.1        |
 | 7.3 | Typed api client on the shared subpath + error narrowing  | ✅     | P0       | M    | 7.1        |
 | 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | ✅     | P0       | M    | 7.2, 7.3   |
-| 7.5 | Phase close: audit, dashboards, PR + Copilot review       | 📋     | P0       | S    | 7.1..7.4   |
+| 7.5 | Phase close: audit, dashboards, PR + Copilot review       | 👀     | P0       | S    | 7.1..7.4   |
 
 ---
 
@@ -355,7 +355,15 @@ Completion Protocol: standard steps; commit `feat(web): identity switcher, vites
 
 ## Task 7.5: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 7.1..7.4
+- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 7.1..7.4
+- **Note**: gates replayed green (root `lint`/`typecheck`/`format:check`/`build`; `web test:cov`
+  94 tests at 100% on all four metrics on `lib/**` + `components/**`; `web test:integration`
+  Testcontainers round-trip; `api test:cov` unaffected, still 424 tests at 100%); every 7.1-7.4
+  acceptance criterion audited against the tree; code and security reviews iterated to zero
+  findings (two boolean-naming fixes and a switcher focus-visibility fix applied). Per the
+  orchestrator's architecture override, this task stops at PR creation and the review request;
+  waiting for CI, addressing bot findings, the squash-merge, branch deletion, and the final
+  "mark phase Done" commit are owned by the orchestrator.
 
 #### Description
 
@@ -365,8 +373,10 @@ GitHub Copilot review, squash-merge on green, delete branch, log.
 
 #### Acceptance criteria
 
-- [ ] Gates green; parity screenshot attached to the PR body.
-- [ ] Dashboards synced; PR merged with review resolved; branch gone.
+- [x] Gates green; parity screenshot attached to the PR body.
+- [x] Dashboards synced; PR opened and the Copilot review requested. (Merge, review-thread
+      resolution, and branch deletion are the orchestrator's phase-close steps, per the
+      architecture override.)
 
 #### Agent prompt
 
@@ -404,3 +414,16 @@ Completion Protocol: append `- 7.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 7.1 ✅ 2026-07-10: Next.js 16 App Router init; design_system.html tokens/fonts/base surfaces
+  ported verbatim into `styles/tokens.css` + `app/globals.css`; proven with a temporary card page.
+- 7.2 ✅ 2026-07-10: Dashboard shell (topbar, sidebar, main) and all eight nav routes as
+  PageScaffold stubs; root route redirects to `/overview`.
+- 7.3 ✅ 2026-07-10: `lib/api-types.ts` + `lib/api-client.ts`, one typed method per route across
+  the real module map; `ApiError`/`isCode` narrow the canonical envelope; 49 fetch-mocked tests.
+- 7.4 ✅ 2026-07-10: `lib/identity-store.ts` + `identity-switcher.tsx`; `lib/api.ts` singleton;
+  Overview's live balance round trip; full Vitest/Testing Library setup (94 tests, 100% coverage
+  on `lib/**` + `components/**`); a Testcontainers integration smoke; CI `has-web: true` plus the
+  `web-import-guard` job.
+- 7.5 👀 2026-07-10: gates green, criteria audited, code/security reviews at zero findings, PR
+  opened and the Copilot review requested; merge owned by the orchestrator.
