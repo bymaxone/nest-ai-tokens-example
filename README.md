@@ -2,10 +2,10 @@
 
 The canonical reference application for [`@bymax-one/nest-ai-tokens`](https://github.com/bymaxone/nest-ai-tokens),
 a NestJS 11 library for AI token metering and usage-based billing. This repository is a pnpm
-monorepo containing a NestJS 11 API (`apps/api`) and a Next.js 16 dashboard (`apps/web`), backed
-by Postgres 17, that demonstrates every public export and documented behavior of the library
-against a deterministic mock AI provider. No real AI provider credentials are ever required or
-used.
+monorepo being built toward a NestJS 11 API (`apps/api`) and a Next.js 16 dashboard (`apps/web`),
+backed by Postgres 17, that together will demonstrate every public export and documented behavior
+of the library against a deterministic mock AI provider. No real AI provider credentials are ever
+required or used.
 
 ## Status
 
