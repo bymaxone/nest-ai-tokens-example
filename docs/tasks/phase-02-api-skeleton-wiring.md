@@ -1,6 +1,6 @@
 # Phase 02: API Skeleton & Module Wiring
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 02
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §9.2 (canonical wiring), §10 (Backend Design), §3 (Architecture)
 
@@ -52,7 +52,7 @@ harness. CI gains `build`, `test`, and `e2e` jobs.
 | --- | ------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 2.1 | Branch + NestJS skeleton (`createApp` seam, Zod pipe, config module)      | ✅     | P0       | M    | none       |
 | 2.2 | Demo identity middleware + user registry                                  | ✅     | P0       | S    | 2.1        |
-| 2.3 | Library wiring: options factory + repository/logger placeholders bindings | 📋     | P0       | M    | 2.2        |
+| 2.3 | Library wiring: options factory + repository/logger placeholders bindings | ✅     | P0       | M    | 2.2        |
 | 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs       | 📋     | P0       | M    | 2.3        |
 | 2.5 | Phase close: audit, dashboards, PR + Copilot review                       | 📋     | P0       | S    | 2.1..2.4   |
 
@@ -207,7 +207,7 @@ Completion Protocol: standard steps; commit `feat(api): demo identity middleware
 
 ## Task 2.3: Library wiring: options factory + bindings
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 2.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 2.2
 
 #### Description
 
@@ -222,14 +222,21 @@ the Nest `Logger`.
 
 #### Acceptance criteria
 
-- [ ] `registerAsync` with `isGlobal: true`; boot succeeds with the placeholders.
-- [ ] Every library injection token is bound explicitly; imports come from the package (no deep
-      paths).
-- [ ] The factory reads ONLY the typed env accessor; JSDoc explains every option block.
-- [ ] An injectable smoke service resolves `AiTokenTransactionService` and `PricingService` from
-      the container (proving registration) behind a `GET /health/wiring` debug route.
-- [ ] Unit tests: factory output per env permutation (quota on/off, tenant required), logger
-      bridge log-shape. 100% on new files.
+- [x] `forRootAsync` (the shipped registration API; the module is `@Global()` by construction,
+      superseding the drafted `registerAsync`/`isGlobal`); boot succeeds with the placeholder
+      store (`pricing.seedFromSnapshot: false` until persistence lands).
+- [x] The required `store` option is bound to a full-surface placeholder typed to
+      `IAiTokensStore` (v0.1.0 takes ONE store object instead of per-repository DI tokens);
+      every consumed token/service is injected with explicit `@Inject`; imports come from the
+      package root (no deep paths).
+- [x] The factory reads ONLY the typed env accessor; JSDoc explains every option block.
+- [x] An injectable smoke service resolves `LedgerService` and `PricingService` (the shipped
+      service names) plus `BYMAX_AI_TOKENS_OPTIONS`/`BYMAX_AI_TOKENS_LOGGER` from the container
+      behind `GET /health/wiring`; the logger token is surfaced as the reserved (null) v0.1.0
+      extension point since no logger bridge is wireable yet.
+- [x] Unit tests: factory output per env permutation (quota on/off, tenant required, overdraft
+      mapping), scope-resolver branches, placeholder store contract, metadata shim. 100% on new
+      files.
 
 #### Files to create / modify
 
@@ -426,3 +433,4 @@ Completion Protocol: append `- 2.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 
 - 2.1 ✅ 2026-07-10: NestJS 11 skeleton with createApp seam, typed Zod env config (value-free failure report), global Zod validation pipe, JSON hello; 100% coverage on new files.
 - 2.2 ✅ 2026-07-10: demo identity middleware (x-demo-user/x-tenant-id, simulation-labeled) + static registry incl. null-tenant admin; excluded from /health/*; README note; 100% coverage.
+- 2.3 ✅ 2026-07-10: canonical forRootAsync wiring (options factory from typed env, placeholder IAiTokensStore, demo scopeResolver, wallets/budgets from QUOTA_*), host-side paramtypes shim for the esbuild-built dist, GET /health/wiring smoke; 100% coverage.
