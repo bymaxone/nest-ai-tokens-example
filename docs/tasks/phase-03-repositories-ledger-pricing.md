@@ -1,6 +1,6 @@
 # Phase 03: Repositories, Ledger & Pricing API
 
-> **Status**: 🔄 In Progress · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 👀 Review · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 03
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16, §11 (ledger/pricing routes), §7.2-7.3 (matrix rows 13-36)
 
@@ -66,7 +66,7 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 | 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | ✅     | P0       | S    | 3.2        |
 | 3.4 | `ledger/` REST: list, detail, filters, pagination                              | ✅     | P0       | M    | 3.1        |
 | 3.5 | `pricing/` REST: current, history, update, flush-cache                         | ✅     | P0       | M    | 3.2        |
-| 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | 📋     | P0       | S    | 3.1..3.5   |
+| 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | 👀     | P0       | S    | 3.1..3.5   |
 
 ---
 
@@ -438,7 +438,7 @@ Completion Protocol: standard steps; commit `feat(api): pricing admin endpoints 
 
 ## Task 3.6: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 3.1..3.5
+- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 3.1..3.5
 
 #### Description
 
