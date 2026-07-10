@@ -4,29 +4,59 @@
  *
  * Layer: e2e (real application via createApp, Testcontainers Postgres).
  * Goal: prove the production wiring works end to end against a disposable
- * database, including the readiness failure path via a second boot against
- * an unreachable URL variant.
- * Mocks: none.
+ * database with random host ports (never a fixed host port; local 5432 may
+ * be occupied by unrelated stacks), including the readiness failure path
+ * via a second boot against an unreachable URL variant.
+ * Mocks: none. One container stack per run; the suite runs single-worker.
  */
+import { execFileSync } from 'node:child_process'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 import type { INestApplication } from '@nestjs/common'
+import { PostgreSqlContainer } from '@testcontainers/postgresql'
+import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
 import type { App } from 'supertest/types.js'
 
 import { createApp } from '../../src/bootstrap.js'
-import { startStack, stopStack } from './setup.js'
-import type { E2eStack } from './setup.js'
 
-let stack: E2eStack
+/** The image every tier of this project pins for Postgres. */
+const POSTGRES_IMAGE = 'postgres:17-alpine'
+
+/** The app package root (cwd for the Prisma CLI, which reads prisma.config.ts). */
+const APP_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..')
+
+let container: StartedPostgreSqlContainer
+let app: INestApplication
 let server: App
 
+/**
+ * Stack lifecycle: container up, `prisma migrate deploy` against its random
+ * mapped port, then the production wiring booted through the real
+ * `createApp()` seam (no listener; supertest drives the HTTP server).
+ */
 beforeAll(async () => {
-  stack = await startStack()
-  server = stack.app.getHttpServer() as App
+  container = await new PostgreSqlContainer(POSTGRES_IMAGE)
+    .withDatabase('ai_tokens_example')
+    .start()
+  const databaseUrl = container.getConnectionUri()
+  execFileSync('pnpm', ['exec', 'prisma', 'migrate', 'deploy'], {
+    cwd: APP_ROOT,
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+    stdio: 'pipe',
+  })
+  process.env.DATABASE_URL = databaseUrl
+  process.env.PORT = '0'
+  app = await createApp()
+  server = app.getHttpServer() as App
 })
 
+/** Teardown order matters: app first (pools, reaper timer), then container. */
 afterAll(async () => {
-  await stopStack(stack)
+  await app.close()
+  await container.stop()
 })
 
 describe('boot and hello', () => {
