@@ -108,18 +108,22 @@ export interface MarkerDetection {
 }
 
 /**
- * Scan one input text for a failure marker. The FIRST known marker (in
- * catalog order) wins; every occurrence of it is stripped from the
- * returned text so token math never counts marker characters.
+ * Scan one input text for failure markers. The FIRST known marker (in
+ * catalog order) selects the behavior, and EVERY known marker token is
+ * stripped from the returned text so token math never counts marker
+ * characters, even when several different markers share one input.
  *
  * @param input The raw text (message content or embedding input).
  * @returns The cleaned text and the detected marker, if any.
  */
 export function detectMarker(input: string): MarkerDetection {
+  let marker: DetectedMarker | undefined
+  let cleanInput = input
   for (const [token, behavior] of Object.entries(FAILURE_MARKERS)) {
-    if (input.includes(token)) {
-      return { cleanInput: input.split(token).join(''), marker: { token, behavior } }
+    if (cleanInput.includes(token)) {
+      marker ??= { token, behavior }
+      cleanInput = cleanInput.split(token).join('')
     }
   }
-  return { cleanInput: input }
+  return marker === undefined ? { cleanInput } : { cleanInput, marker }
 }

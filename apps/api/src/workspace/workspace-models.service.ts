@@ -45,17 +45,23 @@ export class WorkspaceModelsService {
   constructor(@Inject(PricingService) private readonly pricing: PricingService) {}
 
   /**
-   * Compose the default models with their current price rows.
+   * Compose the default models with their current price rows. Both lookups
+   * share ONE timestamp so the response is an internally consistent
+   * snapshot even when a pricing window boundary falls between them.
    *
    * @returns The models info payload.
    * @throws {AiTokensException} `AI_TOKENS_PRICE_NOT_FOUND` if a catalog
-   *   model has no open price row (impossible after the boot seed; strict
-   *   pricing keeps such a state loud).
+   *   model has no open price row under strict pricing (impossible after
+   *   the boot seed; strict pricing keeps such a state loud).
+   * @throws {InternalServerErrorException} if rate resolution returns null
+   *   (a non-strict misconfiguration without a seed), so clients still get
+   *   the standard error shape.
    */
   async describeModels(): Promise<ModelsInfo> {
+    const at = new Date()
     const [command, embedding] = await Promise.all([
-      this.currentPricing(DEFAULT_CHAT_MODEL, 'chat'),
-      this.currentPricing(MOCK_EMBEDDING_MODEL, 'embeddings'),
+      this.currentPricing(DEFAULT_CHAT_MODEL, 'chat', at),
+      this.currentPricing(MOCK_EMBEDDING_MODEL, 'embeddings', at),
     ])
     return {
       command: { model: DEFAULT_CHAT_MODEL, models: MOCK_CHAT_MODELS, pricing: command },
@@ -63,16 +69,17 @@ export class WorkspaceModelsService {
     }
   }
 
-  /** Resolve the rate in effect now for one catalog tuple. */
+  /** Resolve the rate in effect at one shared instant for a catalog tuple. */
   private async currentPricing(
     model: string,
     operation: AiOperation,
+    at: Date,
   ): Promise<JsonSafe<PriceVersion>> {
     const rate = await this.pricing.resolveRate({
       provider: MOCK_PROVIDER_ID,
       model,
       operation,
-      at: new Date(),
+      at,
     })
     // Strict pricing throws on a miss, so a null can only mean the module
     // was reconfigured non-strict without seeding; keep that loud too, and

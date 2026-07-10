@@ -74,6 +74,20 @@ describe('detectMarker', () => {
   })
 
   /**
+   * Multi-marker stripping.
+   *
+   * When several DIFFERENT markers share one input, the first in catalog
+   * order selects the behavior but every known token is stripped, so no
+   * marker characters ever leak into token math.
+   */
+  it('strips every distinct marker while the first selects the behavior', () => {
+    const detection = detectMarker('a @@fail:timeout@@ b @@fail:truncate@@ c')
+
+    expect(detection.marker?.token).toBe('@@fail:timeout@@')
+    expect(detection.cleanInput).toBe('a  b  c')
+  })
+
+  /**
    * Marker-free passthrough.
    *
    * Ordinary text (including at-signs that do not form a known marker)
