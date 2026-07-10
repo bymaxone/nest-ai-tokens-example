@@ -1,6 +1,6 @@
 # Phase 03: Repositories, Ledger & Pricing API
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-06
+> **Status**: 🔄 In Progress · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 03
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16, §11 (ledger/pricing routes), §7.2-7.3 (matrix rows 13-36)
 
@@ -10,6 +10,33 @@ The placeholders from phase 02 become real: both repository ports implemented on
 database-level aggregation, the boot pricing seed (defaults + mock models, idempotent), and the
 ledger + pricing REST surface the dashboard will consume. After this phase the library's core
 (ledger + pricing) is fully operational end to end.
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the shapes drafted here
+> and in spec §16/§11 (same rule as the phase 01/02 notes). The real persistence surface is ONE
+> `IAiTokensStore` (ledger + pricing ports, wallet/budget halves optional), and the library SHIPS
+> the official PostgreSQL adapter `PrismaAiTokensStore` (`@bymax-one/nest-ai-tokens/prisma`,
+> parameterized raw SQL over the host schema), so the app binds that adapter to its
+> `PrismaService` instead of reimplementing persistence; there is no
+> `PrismaTokenTransactionRepository`/`PrismaModelPricingRepository` to write. Mappings applied:
+> `sumAmount`/`groupByType`/`groupByUser` -> `sumCost(filter)` (SQL `SUM`/`COUNT`, and its
+> `records` count doubles as the list total; group-by reporting is `UsageReportService` territory,
+> a later phase); `findActive`/`closeCurrentWindow`/`upsertIfMissing` -> `resolveRate` (window
+> predicate in SQL) and `upsertPrice` (atomic close-and-insert under a per-tuple advisory xact
+> lock plus a partial unique index on the single open row); `findAllCurrent` has no port
+> equivalent, so the "all current pricing" read is a host-owned Prisma query (`effectiveTo:
+null`); `AiTokenTransactionService.getUserTransactions` -> `LedgerService.query` + `sumCost`
+> (the shipped filter has no `type`/`onlyDebits`/`onlyCredits`/`order`: costs are unsigned,
+> corrections are compensating records, and the adapter orders `createdAt` ascending);
+> `UpdatePricingDto` -> `NewPriceVersion` (Zod mirror); `invalidateCache()` has NO public
+> equivalent in v0.1.0 (`upsertPrice` clears the cache internally), so `POST /pricing/cache/flush`
+> is not implementable and is documented as omitted; `pricing.seedDefaults` + `customSeed` +
+> `DEFAULT_OPENAI_PRICING_2026` -> `pricing.seedFromSnapshot` + `MODEL_PRICES_SEED` (18 rows,
+> which include `gpt-5-mini` but NOT `gpt-4o-mini`; assertions target shipped models). The
+> shipped snapshot seed serializes CONCURRENT boots (session advisory lock) but re-runs on a
+> later fresh boot, closing and reinserting every open row, so restart row counts would grow;
+> to honor this phase's idempotency requirement the app keeps `seedFromSnapshot: false` and owns
+> an existence-checked, advisory-locked boot seed that writes the snapshot rows plus the three
+> mock models (`mock-chat-pro`, `mock-chat-lite`, `mock-embed`) exactly once.
 
 > **Completion Protocol ("standard steps"):** task Status ✅ (block + index) -> checkboxes ->
 > header Progress -> plan dashboard row + overall counter -> tasks README -> Completion log entry
