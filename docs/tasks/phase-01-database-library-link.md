@@ -1,10 +1,6 @@
 # Phase 01: Postgres, Prisma & Library Link
 
-> **Status**: ⛔ Blocked · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-10
-> **Blocker**: sibling library not built (`../nest-ai-tokens/dist` missing; run
-> `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`) and the
-> publish-vs-vendor link-mode decision in [`../AUTOPILOT.md`](../AUTOPILOT.md)
-> §External preconditions is unresolved for worktree/CI resolution.
+> **Status**: 🔄 In Progress · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 01
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16 (Prisma Repositories), §21 (Local Stack), §8 (Library Consumption)
 

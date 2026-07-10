@@ -9,7 +9,7 @@
 | Phase | File                                      | Tasks | Status | Scope                                                                                                                  |
 | ----- | ----------------------------------------- | ----- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
 | 00    | `phase-00-repo-foundation.md`             | 5 / 5 | ✅     | pnpm workspace, strict TS/ESLint/Prettier, husky/commitlint, CI from day one (CodeQL/Scorecard visibility-conditional) |
-| 01    | `phase-01-database-library-link.md`       | 0 / 5 | ⛔     | docker `postgres:17`, Prisma schema/migration/seed, `file:` library link + subpath probe                               |
+| 01    | `phase-01-database-library-link.md`       | 0 / 5 | 🔄     | docker `postgres:17`, Prisma schema/migration/seed, `file:` library link + subpath probe                               |
 | 02    | `phase-02-api-skeleton-wiring.md`         | 0 / 5 | 📋     | NestJS 11 skeleton, demo identity, `registerAsync` wiring, e2e harness                                                 |
 | 03    | `phase-03-repositories-ledger-pricing.md` | 0 / 6 | 📋     | Prisma repositories (both ports), pricing seed, ledger + pricing REST                                                  |
 | 04    | `phase-04-mock-provider-commands.md`      | 0 / 6 | 📋     | `MockAiProvider` + failure injection, commands, embeddings, transaction guarantees                                     |
