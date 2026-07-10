@@ -7,10 +7,21 @@
  *
  * @layer errors-demo
  */
-import { Controller, Get, Inject, Param, Post, Req } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common'
 
+import { BackdatedCostBodyDto } from './dto/backdated-cost.body.js'
 import { ErrorsDemoService } from './errors-demo.service.js'
-import type { ErrorCatalogView } from './errors-demo.service.js'
+import type { BackdatedCostResult, ErrorCatalogView } from './errors-demo.service.js'
 import type { AuthenticatedRequest } from '../identity/identity.middleware.js'
 import { requireIdentity } from '../identity/require-identity.js'
 
@@ -31,6 +42,26 @@ export class ErrorsDemoController {
   catalog(@Req() request: AuthenticatedRequest): ErrorCatalogView {
     requireIdentity(request)
     return this.errors.catalog()
+  }
+
+  /**
+   * `POST /errors-demo/helpers/backdated-cost`: price a hypothetical call
+   * at a historical date (spec §13 scenario 4). Declared BEFORE the
+   * `:code` route so the literal path wins the match; a pure read, no
+   * ledger write.
+   *
+   * @param request The request carrying the simulated identity.
+   * @param body The validated model, token counts, and date.
+   * @returns The effective price version plus the cost estimate.
+   */
+  @Post('helpers/backdated-cost')
+  @HttpCode(HttpStatus.OK)
+  backdatedCost(
+    @Req() request: AuthenticatedRequest,
+    @Body() body: BackdatedCostBodyDto,
+  ): Promise<BackdatedCostResult> {
+    requireIdentity(request)
+    return this.errors.backdatedCost(body)
   }
 
   /**

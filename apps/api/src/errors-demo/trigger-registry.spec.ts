@@ -476,6 +476,75 @@ describe('AI_TOKENS_STORE_ERROR trigger', () => {
   })
 })
 
+describe('provider marker triggers', () => {
+  const MARKER_CODES: readonly (readonly [string, string])[] = [
+    ['provider.rate_limited', '@@fail:rate_limited@@'],
+    ['provider.timeout', '@@fail:timeout@@'],
+    ['provider.empty_response', '@@fail:empty@@'],
+    ['provider.content_filter', '@@fail:content_filter@@'],
+    ['provider.api_key_invalid', '@@fail:api_key_invalid@@'],
+    ['provider.unknown_error', '@@fail:unknown@@'],
+    ['provider.response_truncated', '@@fail:truncate@@'],
+  ]
+
+  it.each(MARKER_CODES)(
+    /**
+     * Marker embedding per provider code.
+     *
+     * Each provider trigger runs a REAL custom command whose prompt embeds
+     * exactly its failure marker; the raised error propagates verbatim.
+     */
+    '%s embeds %s in a real custom command',
+    async (code, marker) => {
+      const custom = jest.fn<WorkspaceCommandService['custom']>().mockRejectedValue(sentinel)
+      const toolkit = toolkitWith({ commands: { custom } as unknown as WorkspaceCommandService })
+
+      await expect(triggerOf(code).run(toolkit)).rejects.toBe(sentinel)
+
+      expect(custom).toHaveBeenCalledWith(
+        ada,
+        expect.objectContaining({ userPrompt: expect.stringContaining(marker) }),
+      )
+    },
+  )
+
+  /**
+   * JSON-mode bad-json path.
+   *
+   * `provider.invalid_json` must request `json_object` output so the
+   * degraded content fails the parse (which never debits); the marker
+   * rides the prompt.
+   */
+  it('provider.invalid_json requests json_object output with the bad-json marker', async () => {
+    const custom = jest.fn<WorkspaceCommandService['custom']>().mockRejectedValue(sentinel)
+    const toolkit = toolkitWith({ commands: { custom } as unknown as WorkspaceCommandService })
+
+    await expect(triggerOf('provider.invalid_json').run(toolkit)).rejects.toBe(sentinel)
+
+    expect(custom).toHaveBeenCalledWith(
+      ada,
+      expect.objectContaining({
+        userPrompt: expect.stringContaining('@@fail:bad_json@@'),
+        responseFormat: 'json_object',
+      }),
+    )
+  })
+
+  /**
+   * Loud-failure guard for the marker triggers.
+   *
+   * A marker call that resolves means the mock stopped honoring markers;
+   * the bug marker must surface.
+   */
+  it('fails loudly when a marker command unexpectedly succeeds', async () => {
+    const custom = jest.fn<WorkspaceCommandService['custom']>().mockResolvedValue({} as never)
+    const toolkit = toolkitWith({ commands: { custom } as unknown as WorkspaceCommandService })
+
+    await expect(triggerOf('provider.timeout').run(toolkit)).rejects.toThrow('did not raise')
+    await expect(triggerOf('provider.invalid_json').run(toolkit)).rejects.toThrow('did not raise')
+  })
+})
+
 describe('command.missing_translations trigger', () => {
   /**
    * Marker-driven translate path.

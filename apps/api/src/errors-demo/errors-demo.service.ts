@@ -14,9 +14,13 @@ import {
   BudgetService,
   LedgerService,
   MeteringService,
+  PricingService,
   WalletService,
+  toJsonSafe,
 } from '@bymax-one/nest-ai-tokens'
+import type { CostEstimate, JsonSafe, PriceVersion } from '@bymax-one/nest-ai-tokens'
 
+import type { BackdatedCostBody } from './dto/backdated-cost.body.js'
 import { ERROR_CATALOG, ERROR_CATALOG_BY_CODE } from './error-catalog.js'
 import type { ErrorCatalogEntry } from './error-catalog.js'
 import { TRIGGERS } from './trigger-registry.js'
@@ -32,6 +36,14 @@ export interface ErrorCatalogView {
   readonly triggerable: readonly string[]
 }
 
+/** The backdated-cost helper result: the resolved rate plus the estimate. */
+export interface BackdatedCostResult {
+  /** The price version in effect at the supplied date. */
+  readonly pricing: JsonSafe<PriceVersion>
+  /** The raw and billed nano-USD estimate at that rate (decimal strings). */
+  readonly cost: JsonSafe<CostEstimate>
+}
+
 /** Serves the error catalog and runs its triggers. */
 @Injectable()
 export class ErrorsDemoService {
@@ -45,6 +57,7 @@ export class ErrorsDemoService {
   constructor(
     @Inject(MeteringService) private readonly metering: MeteringService,
     @Inject(LedgerService) private readonly ledger: LedgerService,
+    @Inject(PricingService) private readonly pricing: PricingService,
     @Inject(WalletService) private readonly wallets: WalletService | null,
     @Inject(BudgetService) private readonly budgets: BudgetService | null,
     @Inject(WorkspaceCommandService) private readonly commands: WorkspaceCommandService,
@@ -57,6 +70,43 @@ export class ErrorsDemoService {
    */
   catalog(): ErrorCatalogView {
     return { entries: ERROR_CATALOG, triggerable: Object.keys(TRIGGERS) }
+  }
+
+  /**
+   * Price a hypothetical call AT a historical date: the rate in effect at
+   * that instant plus the raw/billed estimate. A pure read pair (strict
+   * resolution + pure estimate); NOTHING is written to the ledger. Past
+   * records are never re-rated; this shows what a call would have cost.
+   *
+   * @param body The validated model, token counts, and historical date.
+   * @returns The effective price version and the cost estimate.
+   * @throws {AiTokensException} `AI_TOKENS_PRICE_NOT_FOUND` when no rate was in effect at the date.
+   */
+  async backdatedCost(body: BackdatedCostBody): Promise<BackdatedCostResult> {
+    const pricing = await this.pricing.resolveRate({
+      provider: body.provider,
+      model: body.model,
+      operation: 'chat',
+      at: body.date,
+    })
+    const cost = await this.metering.estimateCost({
+      provider: body.provider,
+      model: body.model,
+      operation: 'chat',
+      inputTokens: body.promptTokens,
+      maxOutputTokens: body.completionTokens,
+      at: body.date,
+    })
+    // Strict mode makes resolveRate throw on a miss; a null can only mean
+    // the module was rewired non-strict, which this demo does not support.
+    if (pricing === null) {
+      throw new ApiException(
+        'errors_demo.pricing_unavailable',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'No rate resolved for the supplied date; the demo expects strict pricing.',
+      )
+    }
+    return { pricing: toJsonSafe(pricing), cost: toJsonSafe(cost) }
   }
 
   /**

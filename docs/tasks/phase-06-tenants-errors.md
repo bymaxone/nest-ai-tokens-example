@@ -1,6 +1,6 @@
 # Phase 06: Multi-Tenant & Error Catalog
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 06
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §18 (Multi-Tenant), §19 (Error Handling), §7.7 (matrix rows 2, 10-12, 60-62, 75, 77-83)
 
@@ -80,7 +80,7 @@ this phase every row of the coverage matrix that belongs to the backend is demon
 | --- | ---------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 6.1 | Branch + tenant isolation proofs (both modes)                          | ✅     | P0       | M    | none       |
 | 6.2 | `errors-demo/` triggers: ledger, pricing, embedding/command codes      | ✅     | P0       | M    | none       |
-| 6.3 | `errors-demo/` provider codes + backdate helper                        | 📋     | P0       | S    | 6.2        |
+| 6.3 | `errors-demo/` provider codes + backdate helper                        | ✅     | P0       | S    | 6.2        |
 | 6.4 | Module boot variants (sync, ledger-only, invalid configs, missing key) | 📋     | P0       | M    | 6.1        |
 | 6.5 | Phase close: audit, dashboards, PR + Copilot review                    | 📋     | P0       | S    | 6.1..6.4   |
 
@@ -223,7 +223,7 @@ Completion Protocol: standard steps; commit `feat(api): errors-demo core trigger
 
 ## Task 6.3: `errors-demo/` provider codes + backdate helper
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 6.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 6.2
 
 #### Description
 
@@ -234,10 +234,14 @@ old date to expose historical pricing, supporting scenario §13.4).
 
 #### Acceptance criteria
 
-- [ ] All eight provider codes triggerable via their markers with documented status.
-- [ ] Backdate helper returns `{ pricing, cost }` for a supplied model + date (no ledger write).
-- [ ] The full-catalog e2e (6.2 + 6.3) covers 22 of 24 codes; the remaining 2 config codes are
-      owned by task 6.4's boot variants.
+- [x] All eight provider codes triggerable via their markers with documented status (429, 504,
+      502, 400, 401, 500 throws; truncate 502 debited; bad-json 502 not debited).
+- [x] Backdate helper returns `{ pricing, cost }` for a supplied model + date (no ledger write;
+      reconciled to `PricingService.resolveRate` + `MeteringService.estimateCost({ at })`).
+- [x] The full-catalog e2e (6.2 + 6.3) covers 21 of the reconciled 26 codes on demand; the
+      remaining 5 are 3 e2e-only proofs (hold expiry, ledger-only 503, strict-tenancy 403), 1
+      boot-variant code (`AI_TOKENS_FX_REQUIRED`, task 6.4), and 1 honestly reserved
+      (`AI_TOKENS_NOT_CONFIGURED`), asserted by the catalog summary spec.
 
 #### Files to create / modify
 
@@ -410,3 +414,6 @@ Completion Protocol: append `- 6.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 6.2 ✅ 2026-07-10: errors-demo module (catalog + `POST /errors-demo/:code`), 13 deterministic
   triggers with state-safety guarantees, honest 501/404 policy, e2e table walk with verbatim
   canonical messages.
+- 6.3 ✅ 2026-07-10: 8 marker-driven provider triggers (billing semantics proven both ways) +
+  `POST /errors-demo/helpers/backdated-cost` with point-in-time pricing e2e and the 21/26
+  catalog summary.

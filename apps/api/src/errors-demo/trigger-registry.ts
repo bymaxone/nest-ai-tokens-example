@@ -21,6 +21,7 @@ import type {
   WalletService,
 } from '@bymax-one/nest-ai-tokens'
 
+import { customBodySchema } from '../workspace/dto/custom.body.js'
 import { translateBodySchema } from '../workspace/dto/translate.body.js'
 import type { WorkspaceCommandService } from '../workspace/workspace-command.service.js'
 import { buildMeteringContext, walletRefOf } from '../ai/metering-context.js'
@@ -318,6 +319,45 @@ const missingTranslations: TriggerEntry = {
 }
 
 /**
+ * Build a marker-driven provider trigger: a REAL `custom` command whose
+ * prompt embeds the failure marker. Throw-kind markers abort inside the
+ * mock provider BEFORE any usage exists (the hold is released, nothing is
+ * debited); the truncate marker degrades the response, so its tokens ARE
+ * debited per the documented billing semantics.
+ *
+ * @param code The app error code the marker raises.
+ * @param marker The `@@fail:*@@` marker embedded in the prompt.
+ * @returns The registry entry.
+ */
+function markerTrigger(code: string, marker: string): TriggerEntry {
+  return {
+    run: raising(code, async ({ identity, commands }) => {
+      await commands.custom(
+        identity,
+        customBodySchema.parse({ userPrompt: `errors-demo probe ${marker}` }),
+      )
+    }),
+  }
+}
+
+/**
+ * `provider.invalid_json`: a JSON-mode custom command degraded by the
+ * bad-json marker; the unparseable result is abandoned WITHOUT a debit
+ * (spec §4.3 contract 5).
+ */
+const providerInvalidJson: TriggerEntry = {
+  run: raising('provider.invalid_json', async ({ identity, commands }) => {
+    await commands.custom(
+      identity,
+      customBodySchema.parse({
+        userPrompt: 'errors-demo probe @@fail:bad_json@@',
+        responseFormat: 'json_object',
+      }),
+    )
+  }),
+}
+
+/**
  * Every trigger, keyed by the exact catalog code it raises. Keys mirror the
  * `trigger`-availability rows of `ERROR_CATALOG` (asserted by unit test).
  */
@@ -334,5 +374,13 @@ export const TRIGGERS: Readonly<Record<string, TriggerEntry>> = {
   AI_TOKENS_IDEMPOTENCY_CONFLICT: idempotencyConflict,
   AI_TOKENS_STREAM_USAGE_MISSING: streamUsageMissing,
   AI_TOKENS_STORE_ERROR: storeError,
+  'provider.rate_limited': markerTrigger('provider.rate_limited', '@@fail:rate_limited@@'),
+  'provider.timeout': markerTrigger('provider.timeout', '@@fail:timeout@@'),
+  'provider.empty_response': markerTrigger('provider.empty_response', '@@fail:empty@@'),
+  'provider.content_filter': markerTrigger('provider.content_filter', '@@fail:content_filter@@'),
+  'provider.api_key_invalid': markerTrigger('provider.api_key_invalid', '@@fail:api_key_invalid@@'),
+  'provider.unknown_error': markerTrigger('provider.unknown_error', '@@fail:unknown@@'),
+  'provider.response_truncated': markerTrigger('provider.response_truncated', '@@fail:truncate@@'),
+  'provider.invalid_json': providerInvalidJson,
   'command.missing_translations': missingTranslations,
 }

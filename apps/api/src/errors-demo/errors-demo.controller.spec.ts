@@ -9,6 +9,7 @@
 import { UnauthorizedException } from '@nestjs/common'
 import { describe, expect, it, jest } from '@jest/globals'
 
+import { backdatedCostBodySchema } from './dto/backdated-cost.body.js'
 import { ErrorsDemoController } from './errors-demo.controller.js'
 import type { ErrorCatalogView, ErrorsDemoService } from './errors-demo.service.js'
 import type { AuthenticatedRequest, DemoIdentity } from '../identity/identity.middleware.js'
@@ -23,8 +24,13 @@ function controllerWith() {
   const view: ErrorCatalogView = { entries: [], triggerable: [] }
   const catalog = jest.fn<ErrorsDemoService['catalog']>().mockReturnValue(view)
   const trigger = jest.fn<ErrorsDemoService['trigger']>()
-  const controller = new ErrorsDemoController({ catalog, trigger } as unknown as ErrorsDemoService)
-  return { controller, catalog, trigger, view }
+  const backdatedCost = jest.fn<ErrorsDemoService['backdatedCost']>()
+  const controller = new ErrorsDemoController({
+    catalog,
+    trigger,
+    backdatedCost,
+  } as unknown as ErrorsDemoService)
+  return { controller, catalog, trigger, backdatedCost, view }
 }
 
 describe('ErrorsDemoController.catalog', () => {
@@ -85,5 +91,47 @@ describe('ErrorsDemoController.trigger', () => {
 
     expect(() => controller.trigger(requestWith(undefined), 'x')).toThrow(UnauthorizedException)
     expect(trigger).not.toHaveBeenCalled()
+  })
+})
+
+describe('ErrorsDemoController.backdatedCost', () => {
+  const body = backdatedCostBodySchema.parse({
+    model: 'mock-chat-pro',
+    promptTokens: 10,
+    completionTokens: 5,
+    date: '2026-01-15T00:00:00.000Z',
+  })
+
+  /**
+   * Thin delegation on the helper path.
+   *
+   * The validated body travels to the service untouched once the identity
+   * requirement holds.
+   */
+  it('delegates the validated body to the service', async () => {
+    const { controller, backdatedCost } = controllerWith()
+    const result = { pricing: {}, cost: {} } as never
+    backdatedCost.mockResolvedValue(result)
+
+    await expect(
+      controller.backdatedCost(requestWith({ id: 'ada', tenantId: 'acme' }), body),
+    ).resolves.toBe(result)
+
+    expect(backdatedCost).toHaveBeenCalledWith(body)
+  })
+
+  /**
+   * Identity requirement.
+   *
+   * Without a demo identity the helper is rejected with 401 before any
+   * pricing read.
+   */
+  it('throws 401 without an identity', () => {
+    const { controller, backdatedCost } = controllerWith()
+
+    expect(() => controller.backdatedCost(requestWith(undefined), body)).toThrow(
+      UnauthorizedException,
+    )
+    expect(backdatedCost).not.toHaveBeenCalled()
   })
 })

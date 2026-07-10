@@ -15,9 +15,12 @@ import type {
   BudgetService,
   LedgerService,
   MeteringService,
+  PriceVersion,
+  PricingService,
   WalletService,
 } from '@bymax-one/nest-ai-tokens'
 
+import { backdatedCostBodySchema } from './dto/backdated-cost.body.js'
 import { ERROR_CATALOG } from './error-catalog.js'
 import { ErrorsDemoService } from './errors-demo.service.js'
 import { TRIGGERS } from './trigger-registry.js'
@@ -31,12 +34,14 @@ const ada: DemoIdentity = { id: 'ada', tenantId: 'acme' }
 function serviceWith(overrides: {
   metering?: Partial<MeteringService>
   ledger?: Partial<LedgerService>
+  pricing?: Partial<PricingService>
   wallets?: WalletService | null
   budgets?: BudgetService | null
 }): ErrorsDemoService {
   return new ErrorsDemoService(
     (overrides.metering ?? {}) as MeteringService,
     (overrides.ledger ?? {}) as LedgerService,
+    (overrides.pricing ?? {}) as PricingService,
     overrides.wallets ?? null,
     overrides.budgets ?? null,
     {} as WorkspaceCommandService,
@@ -151,5 +156,86 @@ describe('ErrorsDemoService.trigger dispatch', () => {
     ).rejects.toBe(raised)
 
     expect(reverse).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('ErrorsDemoService.backdatedCost', () => {
+  const body = backdatedCostBodySchema.parse({
+    model: 'mock-chat-pro',
+    promptTokens: 1000,
+    completionTokens: 500,
+    date: '2026-01-15T00:00:00.000Z',
+  })
+
+  /**
+   * Historical pricing read pair.
+   *
+   * The helper resolves the rate AT the supplied date and estimates the
+   * cost at that same instant, returning both JSON-safe (bigint money as
+   * decimal strings) with NO write anywhere.
+   */
+  it('returns the effective rate and the estimate at the supplied date', async () => {
+    const rate = {
+      id: 'pv-1',
+      provider: 'mock',
+      model: 'mock-chat-pro',
+      operation: 'chat',
+      serviceTier: 'standard',
+      inputNanoUsdPerMillion: 2_000_000_000n,
+      outputNanoUsdPerMillion: 8_000_000_000n,
+      currency: 'USD',
+      effectiveFrom: new Date('2026-01-01T00:00:00.000Z'),
+      effectiveTo: null,
+      source: 'seed',
+    } as unknown as PriceVersion
+    const resolveRate = jest.fn<PricingService['resolveRate']>().mockResolvedValue(rate)
+    const estimateCost = jest
+      .fn<MeteringService['estimateCost']>()
+      .mockResolvedValue({ rawCostNanoUsd: 6_000_000n, billedCostNanoUsd: 7_500_000n })
+
+    const result = await serviceWith({
+      pricing: { resolveRate },
+      metering: { estimateCost },
+    }).backdatedCost(body)
+
+    expect(resolveRate).toHaveBeenCalledWith({
+      provider: 'mock',
+      model: 'mock-chat-pro',
+      operation: 'chat',
+      at: new Date('2026-01-15T00:00:00.000Z'),
+    })
+    expect(estimateCost).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputTokens: 1000,
+        maxOutputTokens: 500,
+        at: new Date('2026-01-15T00:00:00.000Z'),
+      }),
+    )
+    expect(result.cost).toEqual({ rawCostNanoUsd: '6000000', billedCostNanoUsd: '7500000' })
+    expect(result.pricing).toMatchObject({ id: 'pv-1', inputNanoUsdPerMillion: '2000000000' })
+  })
+
+  /**
+   * Non-strict misconfiguration guard.
+   *
+   * Strict pricing throws on a miss, so a null rate can only mean the
+   * registry was rewired non-strict; the helper rejects with its own 500
+   * instead of returning a half-empty payload.
+   */
+  it('rejects with 500 when the rate resolves to null', async () => {
+    const resolveRate = jest.fn<PricingService['resolveRate']>().mockResolvedValue(null)
+    const estimateCost = jest
+      .fn<MeteringService['estimateCost']>()
+      .mockResolvedValue({ rawCostNanoUsd: 0n, billedCostNanoUsd: 0n })
+    expect.assertions(2)
+
+    try {
+      await serviceWith({ pricing: { resolveRate }, metering: { estimateCost } }).backdatedCost(
+        body,
+      )
+    } catch (error) {
+      expect((error as ApiException).code).toBe('errors_demo.pricing_unavailable')
+      expect((error as ApiException).getStatus()).toBe(500)
+    }
   })
 })

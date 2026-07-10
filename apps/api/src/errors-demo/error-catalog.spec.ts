@@ -45,16 +45,19 @@ describe('ERROR_CATALOG', () => {
   })
 
   /**
-   * Registry consistency.
+   * Registry consistency (exact set equality).
    *
-   * Every trigger key must be a catalog row whose availability is
-   * `trigger`: the registry can never raise a code the catalog does not
-   * document as on-demand.
+   * The registry keys and the catalog's `trigger`-availability rows must
+   * be the SAME set: no undocumented trigger, no promised-but-missing
+   * trigger.
    */
-  it('marks every registry trigger as trigger-available', () => {
-    for (const code of Object.keys(TRIGGERS)) {
-      expect(ERROR_CATALOG_BY_CODE.get(code)?.availability).toBe('trigger')
-    }
+  it('matches the registry keys to the trigger-available rows exactly', () => {
+    const registryKeys = Object.keys(TRIGGERS).sort()
+    const triggerRows = ERROR_CATALOG.filter((entry) => entry.availability === 'trigger')
+      .map((entry) => entry.code)
+      .sort()
+
+    expect(registryKeys).toEqual(triggerRows)
   })
 
   /**
