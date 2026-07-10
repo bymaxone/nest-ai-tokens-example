@@ -1,6 +1,6 @@
 # Phase 04: Mock Provider, Commands & Embeddings
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 04
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §12 (Mock Provider), §11 (workspace routes), §4.3 (behavioral contracts 1, 3, 5), §7.4 (matrix rows 37-52, 73-76)
 
@@ -67,7 +67,7 @@ batch), proving the library's transaction guarantees with e2e ledger assertions.
 | --- | ------------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 4.1 | Branch + `MockAiProvider` core (token math, canned content, latency knob)       | ✅     | P0       | M    | none       |
 | 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error)        | ✅     | P0       | M    | 4.1        |
-| 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | 📋     | P0       | L    | 4.1        |
+| 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | ✅     | P0       | L    | 4.1        |
 | 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | 📋     | P0       | M    | 4.1        |
 | 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | 📋     | P0       | M    | 4.2..4.4   |
 | 4.6 | Phase close: audit, dashboards, PR + Copilot review                             | 📋     | P0       | S    | 4.1..4.5   |
@@ -225,7 +225,7 @@ Completion Protocol: standard steps; commit `feat(api): failure injection marker
 
 ## Task 4.3: Workspace commands REST
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: 4.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: 4.1
 
 #### Description
 
@@ -236,11 +236,13 @@ result (content, tokensUsed, estimatedCost, model, transactionId). No quota guar
 
 #### Acceptance criteria
 
-- [ ] All five endpoints live and Zod-validated; per-call `model` override supported.
-- [ ] Responses expose the library result verbatim plus the request `resourceId`.
-- [ ] `analyze` uses the fixed sentiment/entities JSON schema from the spec and returns typed
+- [x] All five endpoints live and Zod-validated; per-call `model` override supported.
+- [x] Responses expose the library result verbatim plus the request `resourceId`.
+      (Reconciled: the library result is a `UsageRecord`; responses embed its verbatim token
+      split, exact bigint costs as decimal strings, and the record id as `transactionId`.)
+- [x] `analyze` uses the fixed sentiment/entities JSON schema from the spec and returns typed
       output.
-- [ ] Unit + e2e happy paths green; 100% coverage on new files.
+- [x] Unit + e2e happy paths green; 100% coverage on new files.
 
 #### Files to create / modify
 
@@ -471,3 +473,6 @@ Completion Protocol: append `- 4.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
   app-owned presets + latency knob wired from MOCK_LATENCY_MS), 100% coverage.
 - 4.2 ✅ 2026-07-10: failure-injection engine (9 markers: 6 throw with pinned HTTP statuses, 3
   degrade modes), marker-stripped token math, table-driven spec, 100% coverage.
+- 4.3 ✅ 2026-07-10: five workspace command endpoints (Zod DTOs, thin controller, metering via
+  MeteringService.record, billing semantics for truncation/invalid-JSON/partial translations)
+  plus the updatedAt DB-default migration the raw-SQL store adapter requires; e2e happy paths.
