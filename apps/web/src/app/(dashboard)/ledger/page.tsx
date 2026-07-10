@@ -1,26 +1,27 @@
 /**
- * @fileoverview Ledger stub page. The filterable transaction table and the
- * row inspector land once the api client can call `/ledger/*`.
+ * @fileoverview Ledger page: filters, the transactions table, the row
+ * inspector, and the top-up dialog. `LedgerPageContent` calls
+ * `useSearchParams` (the `?focus=` deep link), so Next.js requires it to
+ * sit under a `Suspense` boundary even though this route has no server
+ * data of its own to stream ahead of it.
  *
  * @layer app/(dashboard)/ledger
  */
+import { Suspense } from 'react'
+
+import { LedgerPageContent } from '@/components/ledger/LedgerPageContent'
 import { PageScaffold } from '@/components/shell/PageScaffold'
 import { requireNavItem } from '@/components/shell/nav-items'
 
 const NAV_ITEM = requireNavItem('/ledger')
 
-/**
- * The Ledger stub page.
- *
- * @returns The page scaffold with a placeholder content area.
- */
+/** The Ledger page. */
 export default function LedgerPage(): React.JSX.Element {
   return (
     <PageScaffold title={NAV_ITEM.label} description={NAV_ITEM.description}>
-      <div className="empty">
-        <div className="empty__title">Content lands next</div>
-        <p>The transaction table and row inspector wire up once the api client is live.</p>
-      </div>
+      <Suspense fallback={<div className="skeleton" style={{ height: 240 }} />}>
+        <LedgerPageContent />
+      </Suspense>
     </PageScaffold>
   )
 }

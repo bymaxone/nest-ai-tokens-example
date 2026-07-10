@@ -16,7 +16,7 @@
 | 05    | `phase-05-quota-aggregations.md`          | 6 / 6 | ✅     | quota guard + estimators, credits/refund, usage aggregations, system jobs                                              |
 | 06    | `phase-06-tenants-errors.md`              | 5 / 5 | ✅     | tenant isolation + required mode, full error catalog, module variants                                                  |
 | 07    | `phase-07-web-skeleton-design.md`         | 5 / 5 | ✅     | Next.js 16 + shared design system + typed api client + switcher                                                        |
-| 08    | `phase-08-dashboard-pages.md`             | 2 / 6 | 🔄     | the eight dashboard pages                                                                                              |
+| 08    | `phase-08-dashboard-pages.md`             | 3 / 6 | 🔄     | the eight dashboard pages                                                                                              |
 | 09    | `phase-09-quality-docs-audit.md`          | 0 / 6 | 📋     | 100% coverage, full E2E, export audit, README, CI finalization                                                         |
 
 **Status legend:** 📋 ToDo · 🔄 In Progress · 👀 Review · ✅ Done · ⛔ Blocked · 🟡 Partial

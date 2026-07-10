@@ -1,6 +1,6 @@
 # Phase 08: Dashboard Pages
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 08
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (page-by-page), §13 (Demonstration Scenarios)
 
@@ -26,6 +26,22 @@ here:
   `@bymax-one/nest-ai-tokens/shared` (exact string-to-bigint parse, no floating-point division) so
   the web never computes a cost, it only renders an already-settled amount through the library's
   own formatter.
+- **Ledger "metadata JSON viewer" / "batchSize" / "resourceId" (task 8.3).** `UsageRecord` has no
+  free-form metadata column by design (`apps/api/src/ai/correlation-tags.ts`: "the immutable
+  ledger never stores request payloads"); `resourceId` and an embedding batch's input count travel
+  as `resource:<id>` / `batch-size:<n>` entries in the row's `tags` array, and system-cost rows
+  carry `systemCostCategory` as its own field. The row inspector renders the full `UsageRecordView`
+  verbatim as JSON (so `tags`, `extraUnits`, and `systemCostCategory` are all visible) instead of a
+  non-existent `metadata` sub-object.
+- **Ledger "type chips" / "debit-credit toggle" (task 8.3, continued).** The filterable dimension
+  the real `/ledger/transactions` query exposes is `status` (`UsageStatus`:
+  pending/posted/reversed/released) and `operation` (`AiOperation`); `status=posted` is the debit
+  view and `status=reversed` is the credit/refund view, so the status chip group doubles as the
+  debit/credit toggle rather than a separate control.
+- **Top-up amount conversion.** `POST /ledger/credits` requires `amountNanoUsd` as a positive
+  integer nano-USD decimal string. The TopUpDialog accepts a USD amount and converts it with the
+  library's own `floatUsdToNanoUsd` (from the shared subpath), never a hand-rolled parser: the web
+  still never invents money math, it only calls the library's documented converter.
 
 ## Context
 
@@ -59,7 +75,7 @@ every §13 scenario is walkable end to end in the browser.
 | --- | --------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 8.1 | Branch + Overview page (stat cards + sparkline)                       | ✅     | P0       | M    | none       |
 | 8.2 | Playground page (5 command cards + embeddings panel + failure helper) | ✅     | P0       | L    | 8.1        |
-| 8.3 | Ledger page (table, filters, inspector, refund/top-up)                | 📋     | P0       | M    | 8.1        |
+| 8.3 | Ledger page (table, filters, inspector, refund/top-up)                | ✅     | P0       | M    | 8.1        |
 | 8.4 | Pricing + Usage pages (tables, timeline, charts, leaderboard)         | 📋     | P0       | L    | 8.1        |
 | 8.5 | Quota Lab + Tenants + Errors pages                                    | 📋     | P0       | M    | 8.2        |
 | 8.6 | Phase close: audit, dashboards, PR + Copilot review                   | 📋     | P0       | S    | 8.1..8.5   |
@@ -197,7 +213,7 @@ Completion Protocol: standard steps; commit `feat(web): playground page (8.2)`.
 
 ## Task 8.3: Ledger page
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 8.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 8.1
 
 #### Description
 
@@ -208,12 +224,12 @@ cost snapshot, `refundOf` links), the refund action, the top-up dialog (credit t
 
 #### Acceptance criteria
 
-- [ ] Filters map 1:1 to the `/ledger/transactions` query contract; pagination works.
-- [ ] Inspector renders metadata verbatim (JSON viewer) including `batchSize`, `resourceId`,
+- [x] Filters map 1:1 to the `/ledger/transactions` query contract; pagination works.
+- [x] Inspector renders metadata verbatim (JSON viewer) including `batchSize`, `resourceId`,
       system-cost keys.
-- [ ] Refund creates the compensating row and refreshes; original row visibly untouched
+- [x] Refund creates the compensating row and refreshes; original row visibly untouched
       (scenario 3 walkable).
-- [ ] Component tests; 100% on touched `lib/**`.
+- [x] Component tests; 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -443,3 +459,6 @@ Completion Protocol: append `- 8.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 8.2 ✅ 2026-07-10: Playground page (Translate/Summarize/Rewrite/Analyze/Custom command cards,
   the shared model picker, result panel, and failure-marker helper, plus the embeddings panel
   proving the batch call settles as one ledger transaction).
+- 8.3 ✅ 2026-07-10: Ledger page (status/operation/date filters doubling as the debit/credit view,
+  paginated table, the `?focus=` deep-linked row inspector with the full-row JSON viewer and the
+  two-step confirm refund, and the top-up dialog using the library's `floatUsdToNanoUsd`).

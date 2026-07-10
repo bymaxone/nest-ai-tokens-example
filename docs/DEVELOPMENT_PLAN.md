@@ -29,7 +29,7 @@
 > every phase file mirror this table; when they disagree, this table wins and must be fixed in the
 > same commit.
 >
-> **Overall progress: 45 / 55 tasks (82%) · 8 / 10 phases done**
+> **Overall progress: 46 / 55 tasks (84%) · 8 / 10 phases done**
 > **Active phase:** 08 · **Blockers:** none
 
 | #   | Phase                                | Tasks file                                | Size | Done / Total | %    | Status |
@@ -42,7 +42,7 @@
 | 05  | Quota, Credits & Aggregations        | `phase-05-quota-aggregations.md`          | L    | 6 / 6        | 100% | ✅     |
 | 06  | Multi-Tenant & Error Catalog         | `phase-06-tenants-errors.md`              | M    | 5 / 5        | 100% | ✅     |
 | 07  | Web Skeleton & Design System         | `phase-07-web-skeleton-design.md`         | M    | 5 / 5        | 100% | ✅     |
-| 08  | Dashboard Pages                      | `phase-08-dashboard-pages.md`             | L    | 2 / 6        | 33%  | 🔄     |
+| 08  | Dashboard Pages                      | `phase-08-dashboard-pages.md`             | L    | 3 / 6        | 50%  | 🔄     |
 | 09  | Quality, Docs & Export Audit         | `phase-09-quality-docs-audit.md`          | L    | 0 / 6        | 0%   | 📋     |
 
 ---
