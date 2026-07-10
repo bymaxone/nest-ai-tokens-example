@@ -192,7 +192,7 @@ describe('latency knob', () => {
   /**
    * Positive latency delays the response.
    *
-   * With latencyMs 50 the response resolves only after the timer fires —
+   * With latencyMs 50 the response resolves only after the timer fires -
    * the dashboard-spinner knob works and stays off the zero path.
    */
   it('waits latencyMs before answering when configured', async () => {
@@ -217,7 +217,7 @@ describe('latency knob', () => {
    * Zero latency never touches a timer.
    *
    * With the default knob the response resolves without any timer being
-   * scheduled — tests and CI stay instantaneous.
+   * scheduled: tests and CI stay instantaneous.
    */
   it('skips the timer entirely at zero latency', async () => {
     jest.useFakeTimers()
@@ -311,7 +311,7 @@ describe('failure injection', () => {
    * Truncation degrade (contract 5 groundwork).
    *
    * The content is cut to its first half (rounded up), the finish reason
-   * flips to 'length', and the usage reflects the TRUNCATED content — a
+   * flips to 'length', and the usage reflects the TRUNCATED content: a
    * real-but-cut response that still debits downstream.
    */
   it('truncate returns half the content with finish_reason length', async () => {
@@ -335,7 +335,7 @@ describe('failure injection', () => {
    * Bad-JSON degrade (contract 5 groundwork).
    *
    * The content becomes a deterministic unparseable fragment while the
-   * usage stays valid — downstream must reject WITHOUT debiting.
+   * usage stays valid: downstream must reject WITHOUT debiting.
    */
   it('bad_json returns unparseable content with valid usage', async () => {
     const response = await provider().chatCompletion({

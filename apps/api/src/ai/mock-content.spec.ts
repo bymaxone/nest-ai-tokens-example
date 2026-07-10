@@ -80,7 +80,7 @@ describe('translateContent', () => {
    * Per-language tagged translations.
    *
    * Each requested language gets the language tag plus the uppercased
-   * source text, in request order, as parseable JSON — the canned shape
+   * source text, in request order, as parseable JSON: the canned shape
    * the translate command asserts.
    */
   it('renders one tagged uppercase translation per language', () => {
@@ -125,7 +125,7 @@ describe('analyzeText', () => {
   /**
    * JSON rendering.
    *
-   * The analyze directive renders the fixed schema as parseable JSON — the
+   * The analyze directive renders the fixed schema as parseable JSON: the
    * exact shape the analyze command types its response with.
    */
   it('renders the fixed sentiment/entities JSON', () => {
@@ -190,7 +190,7 @@ describe('echoContent', () => {
    * Echo transforms.
    *
    * JSON mode echoes a parseable object naming the model; text mode tags
-   * the normalized text with the model — the custom command's canned
+   * the normalized text with the model: the custom command's canned
    * answer for arbitrary prompts.
    */
   it('echoes JSON in json mode and a tagged line in text mode', () => {
@@ -207,7 +207,7 @@ describe('synthesizeChatContent', () => {
    * Directive dispatch.
    *
    * Each directive task routes to its transform; a non-directive message
-   * routes to the echo transform — one assertion per switch arm.
+   * routes to the echo transform: one assertion per switch arm.
    */
   it('dispatches every directive task and falls back to echo', () => {
     const translate = JSON.stringify({ task: 'translate', text: 'Hi', targetLanguages: ['pt'] })
@@ -229,7 +229,7 @@ describe('synthesizeChatContent', () => {
   /**
    * Determinism invariant.
    *
-   * The same input must synthesize byte-identical content across calls —
+   * The same input must synthesize byte-identical content across calls -
    * the property every ledger and cost assertion builds on.
    */
   it('produces identical content for identical input', () => {

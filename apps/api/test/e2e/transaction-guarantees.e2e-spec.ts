@@ -124,7 +124,7 @@ describe('one transaction per call (contract 1; matrix row 43)', () => {
    *
    * Each command (and the single embed) appends EXACTLY one row, and the
    * row carries the response's model, token totals, exact billed cost,
-   * and the resource tag — the record and the response tell one story.
+   * and the resource tag: the record and the response tell one story.
    */
   it.each(commandCalls)('$name appends exactly one row', async ({ url, payload, feature }) => {
     const before = await rowsFor(feature)

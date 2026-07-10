@@ -6,10 +6,10 @@
  *
  * Billing semantics are load-bearing here (spec §4.3 contract 5):
  * - `provider.response_truncated` and `command.missing_translations` fire
- *   AFTER the usage was recorded — real tokens were produced, so the call
+ *   AFTER the usage was recorded: real tokens were produced, so the call
  *   debits what the response reported, and the error carries the
  *   `transactionId` proving it;
- * - `provider.invalid_json` fires INSTEAD of recording — an unparseable
+ * - `provider.invalid_json` fires INSTEAD of recording: an unparseable
  *   result is worthless, so it never debits and carries no transaction.
  *
  * @layer workspace

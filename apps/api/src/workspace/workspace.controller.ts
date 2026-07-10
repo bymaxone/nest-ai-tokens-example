@@ -1,6 +1,6 @@
 /**
  * @fileoverview `/workspace` routes: the five command endpoints, the two
- * embedding endpoints, and the models info read. Thin controllers —
+ * embedding endpoints, and the models info read. Thin controllers -
  * identity extraction plus delegation; the services own the inference
  * calls, the billing semantics, and the metering. Commands respond 200
  * (they run an operation; the created ledger row is a side effect the

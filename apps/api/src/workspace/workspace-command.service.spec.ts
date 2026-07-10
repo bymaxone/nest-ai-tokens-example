@@ -256,7 +256,7 @@ describe('rewrite defaults', () => {
   /**
    * Bare rewrite.
    *
-   * Without style or language the canned output wears the neutral tag —
+   * Without style or language the canned output wears the neutral tag -
    * the undefined branches of the directive builder.
    */
   it('rewrites with the neutral default tag', async () => {

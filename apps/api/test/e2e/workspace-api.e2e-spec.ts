@@ -192,7 +192,7 @@ describe('embeddings and models', () => {
    * scenario 2).
    *
    * Five texts produce five vectors but exactly ONE new ledger row,
-   * carrying the `batch-size:5` tag — counted through the same
+   * carrying the `batch-size:5` tag: counted through the same
    * `LedgerService` port consumers use, before and after the call.
    */
   it('POST /workspace/embed/batch writes exactly one aggregate ledger row', async () => {

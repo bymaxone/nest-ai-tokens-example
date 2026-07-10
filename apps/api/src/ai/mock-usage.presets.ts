@@ -4,7 +4,7 @@
  * ships `providerPresets.openaiCompatible(id)` for OpenAI-shaped gateways,
  * but its normalizer leaves `NormalizedUsage.provider` empty (the .d.ts
  * documents "the preset or context to supply" it) and `record()` rates by
- * `usage.provider` — so a custom provider stamps its own id in a thin
+ * `usage.provider`: so a custom provider stamps its own id in a thin
  * normalizer wrapper to make rating hit its price rows. Embeddings have no
  * shipped normalizer at all (the OpenAI-compatible one requires
  * `completion_tokens` and hard-codes the `'chat'` operation), so the

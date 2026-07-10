@@ -3,7 +3,7 @@
  * rewrite, analyze, custom). Each call is exactly: build the task
  * directive, run the mock inference, apply the billing semantics, meter
  * the raw response through `MeteringService.record` with the app's mock
- * preset, and return the content plus the usage view — the same shape a
+ * preset, and return the content plus the usage view: the same shape a
  * real consumer's service has around a live SDK.
  *
  * Billing semantics per response (spec §4.3 contracts 1 and 5):
@@ -202,7 +202,7 @@ export class WorkspaceCommandService {
    * @param body The validated analyze body.
    * @returns The typed analysis plus the usage view.
    * @throws {ApiException} Truncation (debited) or invalid JSON (NOT
-   *   debited — spec §4.3 contract 5).
+   *   debited: spec §4.3 contract 5).
    */
   async analyze(identity: DemoIdentity, body: AnalyzeBody): Promise<AnalyzeResult> {
     const directive = { task: 'analyze', text: body.text }

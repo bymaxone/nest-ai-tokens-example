@@ -95,7 +95,7 @@ describe('presets', () => {
    * Preset wiring.
    *
    * Both presets pair their normalizer with the mock provider id and the
-   * deterministic rate-table mode — the tuple `MeteringService.record`
+   * deterministic rate-table mode: the tuple `MeteringService.record`
    * consumes.
    */
   it('binds the mock provider id and rate-table mode', () => {

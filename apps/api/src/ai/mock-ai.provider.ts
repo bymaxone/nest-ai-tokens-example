@@ -284,7 +284,7 @@ interface DegradedContent {
 /**
  * Apply a degrade mode to synthesized content (spec §12):
  * - `truncate`: keep the first half (rounded up) and finish with
- *   `'length'` — a real-but-cut response whose usage reflects what was
+ *   `'length'`: a real-but-cut response whose usage reflects what was
  *   actually produced;
  * - `bad_json`: replace the content with an unparseable fragment while
  *   keeping normal usage semantics;

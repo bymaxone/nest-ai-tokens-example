@@ -3,7 +3,7 @@
  * embed. The batch contract (spec §4.3 contract 1) is enforced by shape:
  * the whole batch is ONE provider call with ONE usage block, metered by
  * ONE `MeteringService.record` call, so exactly one aggregate ledger row
- * exists per batch — with the batch size persisted as a `batch-size:<n>`
+ * exists per batch: with the batch size persisted as a `batch-size:<n>`
  * tag beside the resource correlation.
  *
  * @layer workspace

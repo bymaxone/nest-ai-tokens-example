@@ -64,7 +64,7 @@ describe('WorkspaceController', () => {
    * Thin delegation per route.
    *
    * Each handler forwards the identity and the validated body to its
-   * service method and returns the service result untouched — no logic in
+   * service method and returns the service result untouched: no logic in
    * the controller.
    */
   it('delegates every command to the service with the identity', async () => {

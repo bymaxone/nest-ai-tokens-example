@@ -16,7 +16,7 @@ describe('FAILURE_MARKERS', () => {
    * Catalog completeness and shape.
    *
    * Every documented marker is present, every token wears the reserved
-   * demo-only prefix, and each maps to its spec-pinned behavior — the
+   * demo-only prefix, and each maps to its spec-pinned behavior: the
    * table the provider integration spec walks.
    */
   it('maps every documented marker to its behavior', () => {
@@ -40,7 +40,7 @@ describe('FAILURE_MARKERS', () => {
    * Throw-kind status mapping.
    *
    * Each thrown provider failure surfaces with its documented HTTP status
-   * (429/504/502/400/401/500) — the contract the errors demo relies on.
+   * (429/504/502/400/401/500): the contract the errors demo relies on.
    */
   it('pins the documented HTTP status per throw marker', () => {
     const statuses = Object.values(FAILURE_MARKERS)
@@ -77,7 +77,7 @@ describe('detectMarker', () => {
    * Marker-free passthrough.
    *
    * Ordinary text (including at-signs that do not form a known marker)
-   * must pass through untouched with no marker reported — the prefix
+   * must pass through untouched with no marker reported: the prefix
    * convention cannot fire accidentally.
    */
   it('passes marker-free input through untouched', () => {
