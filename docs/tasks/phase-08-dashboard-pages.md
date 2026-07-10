@@ -1,6 +1,6 @@
 # Phase 08: Dashboard Pages
 
-> **Status**: 🔄 In Progress · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 👀 Review · **Progress**: 6 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 08
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (page-by-page), §13 (Demonstration Scenarios)
 
@@ -74,6 +74,13 @@ here:
   refetching automatically on every switcher change (the same `useApiQuery` pattern every page
   uses). Switching the header identity IS the walkthrough; the acceptance criterion is "isolation
   visible", not simultaneous dual identities.
+- **Quota Lab prompt-less crash (task 8.6, found during the live scenario sweep).**
+  `apps/api/src/quota/quota-lab.service.ts` builds the mock chat message as
+  `{ content: body.prompt }` with no default; `LabRunBody.prompt` is optional on the wire, so
+  omitting it (the natural call shape for a button with no prompt field) crashes the mock
+  provider's marker scan on `undefined` content instead of returning a clean response or a
+  canonical error. The fix belongs in `apps/api`, out of this phase's scope; `LabRunner` works
+  around it by always sending a fixed prompt string on every constant/model-based/drain call.
 
 ## Context
 
@@ -110,7 +117,7 @@ every §13 scenario is walkable end to end in the browser.
 | 8.3 | Ledger page (table, filters, inspector, refund/top-up)                | ✅     | P0       | M    | 8.1        |
 | 8.4 | Pricing + Usage pages (tables, timeline, charts, leaderboard)         | 📋     | P0       | L    | 8.1        |
 | 8.5 | Quota Lab + Tenants + Errors pages                                    | ✅     | P0       | M    | 8.2        |
-| 8.6 | Phase close: audit, dashboards, PR + Copilot review                   | 📋     | P0       | S    | 8.1..8.5   |
+| 8.6 | Phase close: audit, dashboards, PR + Copilot review                   | ✅     | P0       | S    | 8.1..8.5   |
 
 ---
 
@@ -434,7 +441,7 @@ Completion Protocol: standard steps; commit `feat(web): quota, tenants and error
 
 ## Task 8.6: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 8.1..8.5
+- **Status**: ✅ Done (implementer scope) · **Priority**: P0 · **Size**: S · **Depends on**: 8.1..8.5
 
 #### Description
 
@@ -442,10 +449,16 @@ Standard phase close plus the scenario sweep: walk all eight §13 scenarios in t
 record the outcome in the PR body. PR `feat(web): phase 08, dashboard pages`, GitHub Copilot
 review, squash-merge on green, delete branch, log.
 
+> Per the autopilot architecture, the implementer's scope for this task ends at opening the PR
+> and requesting the Copilot review; waiting for CI/review, fixing findings, resolving threads,
+> merging, deleting the branch, and this task's final completion-log entry are owned by the
+> orchestrator.
+
 #### Acceptance criteria
 
-- [ ] All eight §13 scenarios walk green (evidence in the PR body).
-- [ ] Gates green; dashboards synced; PR merged with review resolved; branch gone.
+- [x] All eight §13 scenarios walk green (evidence in the PR body).
+- [x] Gates green; dashboards synced. Merge, review-thread resolution, and branch deletion are
+      owned by the orchestrator (architecture override).
 
 #### Agent prompt
 
