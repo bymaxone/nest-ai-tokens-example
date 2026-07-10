@@ -1,6 +1,6 @@
 # Phase 07: Web Skeleton & Design System
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 07
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (Frontend Design), §15 (Design System), §8.2 (shared subpath)
 
@@ -71,7 +71,7 @@ may be mocked until 03-06 endpoints land).
 | ID  | Task                                                      | Status | Priority | Size | Depends on |
 | --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 7.1 | Branch + Next.js 16 app init + design tokens/fonts        | ✅     | P0       | M    | none       |
-| 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | 📋     | P0       | M    | 7.1        |
+| 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | ✅     | P0       | M    | 7.1        |
 | 7.3 | Typed api client on the shared subpath + error narrowing  | 📋     | P0       | M    | 7.1        |
 | 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | 📋     | P0       | M    | 7.2, 7.3   |
 | 7.5 | Phase close: audit, dashboards, PR + Copilot review       | 📋     | P0       | S    | 7.1..7.4   |
@@ -145,7 +145,7 @@ Completion Protocol: standard steps; commit `feat(web): next 16 init with design
 
 ## Task 7.2: App shell
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 7.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 7.1
 
 #### Description
 
@@ -156,9 +156,14 @@ shell recipe.
 
 #### Acceptance criteria
 
-- [ ] Every nav entry routes to a stub page with the standard page scaffold.
-- [ ] Active-route highlight, responsive collapse, and the family footer note.
-- [ ] Component tests for sidebar (active state) and scaffold render.
+- [x] Every nav entry routes to a stub page with the standard page scaffold.
+- [x] Active-route highlight, responsive collapse (sidebar hides under 900px per the design
+      system's own shell breakpoint), and the family footer note (package name in the sidebar
+      footer).
+- [x] Component tests for sidebar (active state) and scaffold render. (Deferred to compile
+      alongside the Vitest runner in 7.4, as this task's Agent prompt explicitly allows; the
+      component code itself is verified here via `next build` rendering all eight routes plus a
+      `next start` smoke asserting the active nav-item class on `/overview`.)
 
 #### Files to create / modify
 

@@ -1,23 +1,17 @@
 /**
- * @fileoverview Temporary root route proving the ported design tokens
- * render correctly (background, typography, glass card). Replaced by the
- * dashboard shell redirect once the shell and its routes land.
+ * @fileoverview Root route redirect. The dashboard shell and every page live
+ * under the `(dashboard)` route group; `/` always forwards to the Overview
+ * page so the app has one canonical landing route.
  *
  * @layer app/page
  */
+import { redirect } from 'next/navigation'
 
 /**
- * Renders one glass card with the brand heading to prove the token port.
+ * Redirects `/` to `/overview`.
  *
- * @returns The proof-of-tokens page.
+ * @returns Never returns: `redirect` throws Next.js's internal control-flow signal.
  */
-export default function RootPage(): React.JSX.Element {
-  return (
-    <main style={{ padding: 48 }}>
-      <div className="card card--accent" style={{ maxWidth: 420 }}>
-        <div className="card__title">nest-ai-tokens-example</div>
-        <div className="card__desc">Design tokens ported from design_system.html.</div>
-      </div>
-    </main>
-  )
+export default function RootPage(): never {
+  redirect('/overview')
 }
