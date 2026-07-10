@@ -2,10 +2,12 @@
  * Unit tests for the demo identity middleware.
  *
  * Layer: unit.
- * Goal: prove all four resolution branches: absent header (unauthenticated
+ * Goal: prove all resolution branches: absent header (unauthenticated
  * passthrough), unknown user (401 with the valid list, value-free), known
- * user (registry tenant), and the x-tenant-id override.
- * Mocks: a minimal Express request stub exposing `get()`.
+ * user (registry tenant), the x-tenant-id override, and the strict-mode
+ * `tenant.required` 403 for null-tenant identities.
+ * Mocks: a minimal Express request stub exposing `get()`; a typed env
+ * fixture (the middleware reads only TENANT_REQUIRED).
  */
 import { UnauthorizedException } from '@nestjs/common'
 import { describe, expect, it } from '@jest/globals'
@@ -13,6 +15,9 @@ import type { NextFunction, Request, Response } from 'express'
 
 import { IdentityMiddleware } from './identity.middleware.js'
 import type { AuthenticatedRequest } from './identity.middleware.js'
+import { TENANT_REQUIRED_ERROR_CODE } from './tenant-policy.js'
+import { ApiException } from '../common/api-exception.js'
+import type { EnvConfig } from '../config/env.js'
 
 /** Build a request stub whose `get()` serves the given headers. */
 function requestWith(headers: Record<string, string>): AuthenticatedRequest {
@@ -21,7 +26,23 @@ function requestWith(headers: Record<string, string>): AuthenticatedRequest {
   } as unknown as AuthenticatedRequest
 }
 
-const middleware = new IdentityMiddleware()
+/** A complete typed env fixture with overridable fields. */
+function envWith(overrides: Partial<EnvConfig> = {}): EnvConfig {
+  return {
+    DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/ai_tokens_example',
+    PORT: 3001,
+    AI_PROVIDER_MODE: 'mock',
+    QUOTA_ENABLED: true,
+    QUOTA_TOLERANCE: 1.2,
+    QUOTA_MINIMUM_BALANCE: 0,
+    TENANT_REQUIRED: false,
+    PRICING_CACHE_TTL_MS: 300_000,
+    MOCK_LATENCY_MS: 0,
+    ...overrides,
+  }
+}
+
+const middleware = new IdentityMiddleware(envWith())
 const response = {} as Response
 
 /** Typed manual spy for Express's overloaded NextFunction. */
@@ -118,6 +139,52 @@ describe('IdentityMiddleware', () => {
     middleware.use(req, response, next)
 
     expect(req.user).toEqual({ id: 'root', tenantId: null })
+  })
+})
+
+describe('IdentityMiddleware with TENANT_REQUIRED=true', () => {
+  const strict = new IdentityMiddleware(envWith({ TENANT_REQUIRED: true }))
+
+  /**
+   * Strict-mode rejection at the choke point.
+   *
+   * A null-tenant identity must be rejected with the canonical 403
+   * `tenant.required` envelope BEFORE `req.user` is attached, so no
+   * downstream layer can fall back to the global tenant.
+   */
+  it('throws the canonical tenant.required 403 for a null-tenant identity', () => {
+    const req = requestWith({ 'x-demo-user': 'root' })
+    const { next, calls } = makeNext()
+    expect.assertions(5)
+
+    try {
+      strict.use(req, response, next)
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiException)
+      expect((error as ApiException).code).toBe(TENANT_REQUIRED_ERROR_CODE)
+      expect((error as ApiException).getStatus()).toBe(403)
+    }
+    expect(req.user).toBeUndefined()
+    expect(calls()).toBe(0)
+  })
+
+  /**
+   * Strict-mode acceptance for tenant-scoped identities.
+   *
+   * Tenant-carrying users are unaffected by the strict mode, including the
+   * admin adopting a tenant through the x-tenant-id override.
+   */
+  it('accepts tenant-scoped identities, including an x-tenant-id override', () => {
+    const ada = requestWith({ 'x-demo-user': 'ada' })
+    const rootWithTenant = requestWith({ 'x-demo-user': 'root', 'x-tenant-id': 'acme' })
+    const { next, calls } = makeNext()
+
+    strict.use(ada, response, next)
+    strict.use(rootWithTenant, response, next)
+
+    expect(ada.user).toEqual({ id: 'ada', tenantId: 'acme' })
+    expect(rootWithTenant.user).toEqual({ id: 'root', tenantId: 'acme' })
+    expect(calls()).toBe(2)
   })
 })
 

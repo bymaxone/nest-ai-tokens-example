@@ -10,7 +10,7 @@
  *
  * @layer ai
  */
-import { ForbiddenException, UnauthorizedException } from '@nestjs/common'
+import { UnauthorizedException } from '@nestjs/common'
 import type { ExecutionContext } from '@nestjs/common'
 import { floatUsdToNanoUsd } from '@bymax-one/nest-ai-tokens'
 import type {
@@ -23,6 +23,7 @@ import { z } from 'zod'
 
 import type { EnvConfig } from '../config/env.js'
 import type { AuthenticatedRequest } from '../identity/identity.middleware.js'
+import { tenantRequiredError } from '../identity/tenant-policy.js'
 
 /** Tenant id used for global (null-tenant) identities when tenancy is optional. */
 export const GLOBAL_TENANT_ID = 'global'
@@ -60,10 +61,11 @@ export function createDemoScopeResolver(
         'A demo identity is required for metered endpoints. Send the x-demo-user header.',
       )
     }
+    // Defense in depth: the identity middleware already rejects tenant-less
+    // identities in strict mode; a real app's resolver (reading verified
+    // claims) keeps this as its own enforcement point.
     if (user.tenantId === null && env.TENANT_REQUIRED) {
-      throw new ForbiddenException(
-        'A tenant is required (TENANT_REQUIRED=true). Use a tenant-scoped demo user or send x-tenant-id.',
-      )
+      throw tenantRequiredError()
     }
     return {
       tenantId: user.tenantId ?? GLOBAL_TENANT_ID,

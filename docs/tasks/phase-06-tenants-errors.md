@@ -1,6 +1,6 @@
 # Phase 06: Multi-Tenant & Error Catalog
 
-> **Status**: 🔄 In Progress · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 06
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §18 (Multi-Tenant), §19 (Error Handling), §7.7 (matrix rows 2, 10-12, 60-62, 75, 77-83)
 
@@ -78,7 +78,7 @@ this phase every row of the coverage matrix that belongs to the backend is demon
 
 | ID  | Task                                                                   | Status | Priority | Size | Depends on |
 | --- | ---------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 6.1 | Branch + tenant isolation proofs (both modes)                          | 📋     | P0       | M    | none       |
+| 6.1 | Branch + tenant isolation proofs (both modes)                          | ✅     | P0       | M    | none       |
 | 6.2 | `errors-demo/` triggers: ledger, pricing, embedding/command codes      | 📋     | P0       | M    | none       |
 | 6.3 | `errors-demo/` provider codes + backdate helper                        | 📋     | P0       | S    | 6.2        |
 | 6.4 | Module boot variants (sync, ledger-only, invalid configs, missing key) | 📋     | P0       | M    | 6.1        |
@@ -88,7 +88,7 @@ this phase every row of the coverage matrix that belongs to the backend is demon
 
 ## Task 6.1: Branch + tenant isolation proofs
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -98,11 +98,12 @@ variant with `multiTenant.required: true` proves `ledger.tenant_required` on a t
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-06-tenants-errors` created with `git switch -c`.
-- [ ] Isolation e2e: run a command as ada(acme) and linus(globex); each tenant's
+- [x] Branch `feat/phase-06-tenants-errors` created with `git switch -c`.
+- [x] Isolation e2e: run a command as ada(acme) and linus(globex); each tenant's
       ledger/usage/balance reflects only its own rows (matrix row 83).
-- [ ] Required-mode variant: write without tenantId -> `ledger.tenant_required` 400 (rows 22, 81).
-- [ ] Default mode documented: null tenant = global (row 80).
+- [x] Required-mode variant: write without tenantId -> `tenant.required` 403 canonical envelope
+      (rows 22, 81; reconciled — no `ledger.tenant_required` code exists in v0.1.0).
+- [x] Default mode documented: null tenant = global (row 80).
 
 #### Files to create / modify
 
@@ -399,3 +400,6 @@ Completion Protocol: append `- 6.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 6.1 ✅ 2026-07-10: tenant isolation e2e (both modes) + strict-tenancy `tenant.required` 403 at
+  the identity middleware choke point and the scopeResolver (defense in depth).

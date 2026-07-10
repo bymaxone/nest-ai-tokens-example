@@ -7,7 +7,7 @@
  * resolver's four branches, and the DI narrowing helpers.
  * Mocks: a minimal ExecutionContext double carrying the request stub.
  */
-import { ForbiddenException, UnauthorizedException } from '@nestjs/common'
+import { UnauthorizedException } from '@nestjs/common'
 import type { ExecutionContext } from '@nestjs/common'
 import { describe, expect, it } from '@jest/globals'
 
@@ -25,6 +25,8 @@ import {
 import { createPrismaAiTokensStore } from './ai-store.module.js'
 import type { EnvConfig } from '../config/env.js'
 import type { DemoIdentity } from '../identity/identity.middleware.js'
+import { TENANT_REQUIRED_ERROR_CODE } from '../identity/tenant-policy.js'
+import { ApiException } from '../common/api-exception.js'
 import { PrismaService } from '../prisma/prisma.service.js'
 
 /** A complete typed env fixture with overridable fields. */
@@ -182,13 +184,21 @@ describe('createDemoScopeResolver', () => {
   /**
    * Tenant-required strictness.
    *
-   * With TENANT_REQUIRED=true a null-tenant identity is rejected with 403
-   * instead of falling back to the global tenant.
+   * With TENANT_REQUIRED=true a null-tenant identity is rejected with the
+   * canonical `tenant.required` 403 envelope instead of falling back to the
+   * global tenant (defense in depth behind the identity middleware).
    */
-  it('throws 403 for a null tenant when TENANT_REQUIRED is true', () => {
+  it('throws the canonical tenant.required 403 for a null tenant when TENANT_REQUIRED is true', () => {
     const resolve = createDemoScopeResolver(envWith({ TENANT_REQUIRED: true }))
+    expect.assertions(3)
 
-    expect(() => resolve(contextFor({ id: 'root', tenantId: null }))).toThrow(ForbiddenException)
+    try {
+      resolve(contextFor({ id: 'root', tenantId: null }))
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiException)
+      expect((error as ApiException).code).toBe(TENANT_REQUIRED_ERROR_CODE)
+      expect((error as ApiException).getStatus()).toBe(403)
+    }
   })
 })
 
