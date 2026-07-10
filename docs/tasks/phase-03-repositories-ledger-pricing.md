@@ -32,14 +32,14 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 3.1 | Branch + `PrismaTokenTransactionRepository` (8 methods, SQL aggregation) | 📋 | P0 | L | none |
-| 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | 📋 | P0 | M | 3.1 |
-| 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e | 📋 | P0 | S | 3.2 |
-| 3.4 | `ledger/` REST: list, detail, filters, pagination | 📋 | P0 | M | 3.1 |
-| 3.5 | `pricing/` REST: current, history, update, flush-cache | 📋 | P0 | M | 3.2 |
-| 3.6 | Phase close: audit, dashboards, PR + Copilot review | 📋 | P0 | S | 3.1..3.5 |
+| ID  | Task                                                                           | Status | Priority | Size | Depends on |
+| --- | ------------------------------------------------------------------------------ | ------ | -------- | ---- | ---------- |
+| 3.1 | Branch + `PrismaTokenTransactionRepository` (8 methods, SQL aggregation)       | 📋     | P0       | L    | none       |
+| 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | 📋     | P0       | M    | 3.1        |
+| 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | 📋     | P0       | S    | 3.2        |
+| 3.4 | `ledger/` REST: list, detail, filters, pagination                              | 📋     | P0       | M    | 3.1        |
+| 3.5 | `pricing/` REST: current, history, update, flush-cache                         | 📋     | P0       | M    | 3.2        |
+| 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | 📋     | P0       | S    | 3.1..3.5   |
 
 ---
 
@@ -71,7 +71,7 @@ placeholder binding.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS/Prisma engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens. The library defines
@@ -114,7 +114,7 @@ Verification:
 - `pnpm --filter api test:cov` 100%; integration spec green in `pnpm --filter api test:e2e`.
 
 Completion Protocol: standard steps; commit `feat(api): prisma token transaction repository (3.1)`.
-````
+```
 
 ---
 
@@ -131,8 +131,9 @@ predicate, highest `effectiveFrom` on overlap), `findHistory`, `findAllCurrent`,
 
 #### Acceptance criteria
 
-- [ ] Window predicate exactly: `effectiveFrom <= date AND (effectiveTo IS NULL OR
-      effectiveTo >= date)`; overlap resolution picks max `effectiveFrom`.
+- [ ] Window predicate exactly:
+      `effectiveFrom <= date AND (effectiveTo IS NULL OR effectiveTo >= date)`;
+      overlap resolution picks max `effectiveFrom`.
 - [ ] `upsertIfMissing` tolerates a concurrent insert (unique violation -> fetch existing).
 - [ ] Binding swapped in `ai.module.ts`; placeholders deleted.
 - [ ] 100% coverage incl. integration specs on windows and history ordering.
@@ -143,7 +144,7 @@ predicate, highest `effectiveFrom` on overlap), `findHistory`, `findAllCurrent`,
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS/Prisma engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 03, Task 3.2 of 6 (MIDDLE).
@@ -179,7 +180,7 @@ Verification:
 - test:cov 100%; e2e integration specs green.
 
 Completion Protocol: standard steps; commit `feat(api): prisma model pricing repository (3.2)`.
-````
+```
 
 ---
 
@@ -208,7 +209,7 @@ database and asserts pricing rows are created once (idempotent), covering
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS testing engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 03, Task 3.3 of 6 (MIDDLE).
@@ -240,7 +241,7 @@ Verification:
 - `pnpm --filter api test:e2e` green including the new spec.
 
 Completion Protocol: standard steps; commit `test(api): prove pricing seed idempotency (3.3)`.
-````
+```
 
 ---
 
@@ -268,7 +269,7 @@ repository. Credits/refund arrive in phase 05.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 03, Task 3.4 of 6 (MIDDLE).
@@ -302,7 +303,7 @@ Verification:
 - test:cov 100%; e2e green.
 
 Completion Protocol: standard steps; commit `feat(api): ledger read endpoints (3.4)`.
-````
+```
 
 ---
 
@@ -333,7 +334,7 @@ window sequence and that a backdated `calculateCost` still uses the old window.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 03, Task 3.5 of 6 (MIDDLE).
@@ -367,7 +368,7 @@ Verification:
 - test:cov 100%; e2e green.
 
 Completion Protocol: standard steps; commit `feat(api): pricing admin endpoints (3.5)`.
-````
+```
 
 ---
 
@@ -389,7 +390,7 @@ address every finding, squash-merge on green, delete the branch, log completion.
 
 #### Agent prompt
 
-````
+```
 You are the phase-close auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 03, Task 3.6 of 6 (LAST, phase close).
@@ -417,7 +418,7 @@ Verification: PR MERGED; CI green on main.
 
 Completion Protocol: append `- 3.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; commit
 `docs(plan): mark phase 03 complete`.
-````
+```
 
 ---
 

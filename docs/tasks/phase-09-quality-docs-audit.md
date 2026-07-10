@@ -32,14 +32,14 @@ matrix honest forever, the publishable README, and the final acceptance audit.
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 9.1 | Branch + api unit coverage to 100% (all four metrics) | 📋 | P0 | L | none |
-| 9.2 | Web unit coverage to 100% (`lib/**` + components) | 📋 | P0 | M | none |
-| 9.3 | E2E consolidation: every route, code, guard path, variant | 📋 | P0 | L | 9.1 |
-| 9.4 | Export-audit script + CI gate | 📋 | P0 | M | 9.1 |
-| 9.5 | README + CHANGELOG + docs polish | 📋 | P0 | M | 9.3, 9.4 |
-| 9.6 | Phase close: final acceptance audit, PR + Copilot review | 📋 | P0 | M | 9.1..9.5 |
+| ID  | Task                                                      | Status | Priority | Size | Depends on |
+| --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
+| 9.1 | Branch + api unit coverage to 100% (all four metrics)     | 📋     | P0       | L    | none       |
+| 9.2 | Web unit coverage to 100% (`lib/**` + components)         | 📋     | P0       | M    | none       |
+| 9.3 | E2E consolidation: every route, code, guard path, variant | 📋     | P0       | L    | 9.1        |
+| 9.4 | Export-audit script + CI gate                             | 📋     | P0       | M    | 9.1        |
+| 9.5 | README + CHANGELOG + docs polish                          | 📋     | P0       | M    | 9.3, 9.4   |
+| 9.6 | Phase close: final acceptance audit, PR + Copilot review  | 📋     | P0       | M    | 9.1..9.5   |
 
 ---
 
@@ -66,7 +66,7 @@ edge cases). Thresholds already sit at 100%; this task makes them pass with zero
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS testing engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens. CURRENT PHASE: 09,
@@ -102,7 +102,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `test(api): close unit coverage to 100 percent
 (9.1)`.
-````
+```
 
 ---
 
@@ -127,7 +127,7 @@ state (loading/empty/error/success) and interaction (filters, forms, switcher).
 
 #### Agent prompt
 
-````
+```
 You are a senior React testing engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 09, Task 9.2 of 6 (MIDDLE).
@@ -158,7 +158,7 @@ Verification:
 - `pnpm --filter web test:cov` passes thresholds and exits 0.
 
 Completion Protocol: standard steps; commit `test(web): close unit coverage to thresholds (9.2)`.
-````
+```
 
 ---
 
@@ -189,7 +189,7 @@ route is a test failure, not an oversight.
 
 #### Agent prompt
 
-````
+```
 You are a senior E2E engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 09, Task 9.3 of 6 (MIDDLE).
@@ -225,7 +225,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `test(e2e): exhaustive inventory and web smoke
 (9.3)`.
-````
+```
 
 ---
 
@@ -253,7 +253,7 @@ matrix. Wired as `pnpm audit:exports` + a CI step.
 
 #### Agent prompt
 
-````
+```
 You are a senior Node tooling engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 09, Task 9.4 of 6 (MIDDLE).
@@ -290,7 +290,7 @@ Verification:
 - `pnpm audit:exports` exits 0 today; the fixture self-test proves the failure mode.
 
 Completion Protocol: standard steps; commit `feat(tooling): library export audit gate (9.4)`.
-````
+```
 
 ---
 
@@ -318,7 +318,7 @@ CHANGELOG entry; final consistency pass across the three docs (statuses, counts,
 
 #### Agent prompt
 
-````
+```
 You are a senior technical writer-engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 09, Task 9.5 of 6 (MIDDLE).
@@ -356,7 +356,7 @@ Verification:
 - A markdown link checker (or manual pass) finds zero dead links.
 
 Completion Protocol: standard steps; commit `docs(repo): publishable readme and changelog (9.5)`.
-````
+```
 
 ---
 
@@ -380,7 +380,7 @@ flip the plan to complete.
 
 #### Agent prompt
 
-````
+```
 You are the final acceptance auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 09, Task 9.6 of 6 (LAST, phase close and project
@@ -414,7 +414,7 @@ Verification: PR MERGED; CI green on main; plan reads 100%.
 
 Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #<n>`; commit
 `docs(plan): mark phase 09 and the plan complete`.
-````
+```
 
 ---
 

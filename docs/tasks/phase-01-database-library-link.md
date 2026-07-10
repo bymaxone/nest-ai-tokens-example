@@ -35,13 +35,13 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 1.1 | Branch + docker compose Postgres + infra scripts | 📋 | P0 | S | none |
-| 1.2 | `apps/api` package init + Prisma schema + first migration | 📋 | P0 | M | 1.1 |
-| 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | 📋 | P0 | M | 1.2 |
-| 1.4 | Library `file:` link + dual-subpath probe script (CI job) | 📋 | P0 | S | 1.2 |
-| 1.5 | Phase close: audit, dashboards, PR + Copilot review | 📋 | P0 | S | 1.1..1.4 |
+| ID  | Task                                                                | Status | Priority | Size | Depends on |
+| --- | ------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
+| 1.1 | Branch + docker compose Postgres + infra scripts                    | 📋     | P0       | S    | none       |
+| 1.2 | `apps/api` package init + Prisma schema + first migration           | 📋     | P0       | M    | 1.1        |
+| 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | 📋     | P0       | M    | 1.2        |
+| 1.4 | Library `file:` link + dual-subpath probe script (CI job)           | 📋     | P0       | S    | 1.2        |
+| 1.5 | Phase close: audit, dashboards, PR + Copilot review                 | 📋     | P0       | S    | 1.1..1.4   |
 
 ---
 
@@ -68,7 +68,7 @@ scripts replacing the phase 00 stubs.
 
 #### Agent prompt
 
-````
+```
 You are a senior platform engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens. pnpm workspace,
@@ -105,7 +105,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `feat(api): add postgres compose stack and infra
 scripts (1.1)`.
-````
+```
 
 ---
 
@@ -134,7 +134,7 @@ indexes, `@@map` table names), the first migration, and `prisma:*` scripts.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS/Prisma engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens. The library is
@@ -180,7 +180,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `feat(api): add prisma schema and first migration
 (1.2)`.
-````
+```
 
 ---
 
@@ -210,7 +210,7 @@ usage charts and top-consumer boards have meaningful shapes from first boot.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS/Prisma engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 01, Task 1.3 of 5 (MIDDLE).
@@ -246,7 +246,7 @@ Verification:
 - `pnpm --filter api test` green.
 
 Completion Protocol: standard steps; commit `feat(api): add deterministic demo seed (1.3)`.
-````
+```
 
 ---
 
@@ -275,7 +275,7 @@ the three linking modes in the README (spec §8.1).
 
 #### Agent prompt
 
-````
+```
 You are a senior Node/TypeScript engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 01, Task 1.4 of 5 (MIDDLE).
@@ -310,7 +310,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `feat(api): link nest-ai-tokens and probe subpaths
 (1.4)`.
-````
+```
 
 ---
 
@@ -337,7 +337,7 @@ PR, request the GitHub Copilot review, address all findings, merge with CI green
 
 #### Agent prompt
 
-````
+```
 You are the phase-close auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 01, Task 1.5 of 5 (LAST, phase close).
@@ -372,7 +372,7 @@ Verification:
 
 Completion Protocol: append `- 1.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; commit
 `docs(plan): mark phase 01 complete` on main.
-````
+```
 
 ---
 

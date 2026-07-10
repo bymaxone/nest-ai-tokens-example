@@ -1,0 +1,67 @@
+{
+  "name": "nest-ai-tokens-example",
+  "private": true,
+  "description": "Reference application demonstrating every public export of @bymax-one/nest-ai-tokens: a NestJS 11 API and a Next.js 16 dashboard backed by Postgres 17 and a deterministic mock AI provider.",
+  "keywords": [
+    "bymax",
+    "bymax-one",
+    "nest-ai-tokens",
+    "nestjs",
+    "nextjs",
+    "postgres",
+    "prisma",
+    "ai",
+    "tokens",
+    "billing",
+    "reference-app",
+    "example",
+    "monorepo"
+  ],
+  "homepage": "https://github.com/bymaxone/nest-ai-tokens-example#readme",
+  "bugs": {
+    "url": "https://github.com/bymaxone/nest-ai-tokens-example/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bymaxone/nest-ai-tokens-example.git"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Bymax One",
+    "url": "https://github.com/bymaxone"
+  },
+  "type": "module",
+  "packageManager": "pnpm@10.8.1",
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=10.8"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel --if-present run dev",
+    "build": "pnpm -r --if-present run build",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm -r --workspace-concurrency=1 --if-present run test",
+    "test:cov": "pnpm -r --workspace-concurrency=1 --if-present run test:cov",
+    "test:e2e": "pnpm -r --workspace-concurrency=1 --if-present run test:e2e",
+    "infra:up": "echo \"infra arrives in a later change\" && exit 0",
+    "infra:down": "echo \"infra arrives in a later change\" && exit 0",
+    "infra:nuke": "echo \"infra arrives in a later change\" && exit 0",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.0.2",
+    "@commitlint/config-conventional": "^21.0.2",
+    "@eslint/js": "^9.39.4",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "prettier": "^3",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.61.1"
+  }
+}

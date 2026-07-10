@@ -1,0 +1,51 @@
+# OpenSSF Scorecard: measures supply-chain security best practices. Guarded by a
+# visibility check so it runs only once the repository is public; while private
+# it reports as skipped, not failed, and activates automatically on the
+# visibility flip with zero workflow edits.
+name: Scorecard
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Weekly on Sunday 04:00 UTC, offset from CodeQL to avoid resource contention.
+    - cron: '0 4 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  scorecard:
+    name: OpenSSF Scorecard
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.repository.private }}
+    permissions:
+      contents: read
+      id-token: write
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          # Full history required for branch-protection and commit-signing checks.
+          fetch-depth: 0
+
+      - name: Run Scorecard analysis
+        uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Upload Scorecard results as a workflow artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 5
+
+      - name: Publish Scorecard results to the Security tab
+        uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+        with:
+          sarif_file: results.sarif

@@ -6,18 +6,18 @@
 
 ## Phase files
 
-| Phase | File | Tasks | Status | Scope |
-| --- | --- | --- | --- | --- |
-| 00 | `phase-00-repo-foundation.md` | 0 / 5 | 📋 | pnpm workspace, strict TS/ESLint/Prettier, husky/commitlint, CI from day one (CodeQL/Scorecard visibility-conditional) |
-| 01 | `phase-01-database-library-link.md` | 0 / 5 | 📋 | docker `postgres:17`, Prisma schema/migration/seed, `file:` library link + subpath probe |
-| 02 | `phase-02-api-skeleton-wiring.md` | 0 / 5 | 📋 | NestJS 11 skeleton, demo identity, `registerAsync` wiring, e2e harness |
-| 03 | `phase-03-repositories-ledger-pricing.md` | 0 / 6 | 📋 | Prisma repositories (both ports), pricing seed, ledger + pricing REST |
-| 04 | `phase-04-mock-provider-commands.md` | 0 / 6 | 📋 | `MockAiProvider` + failure injection, commands, embeddings, transaction guarantees |
-| 05 | `phase-05-quota-aggregations.md` | 0 / 6 | 📋 | quota guard + estimators, credits/refund, usage aggregations, system jobs |
-| 06 | `phase-06-tenants-errors.md` | 0 / 5 | 📋 | tenant isolation + required mode, full error catalog, module variants |
-| 07 | `phase-07-web-skeleton-design.md` | 0 / 5 | 📋 | Next.js 16 + shared design system + typed api client + switcher |
-| 08 | `phase-08-dashboard-pages.md` | 0 / 6 | 📋 | the eight dashboard pages |
-| 09 | `phase-09-quality-docs-audit.md` | 0 / 6 | 📋 | 100% coverage, full E2E, export audit, README, CI finalization |
+| Phase | File                                      | Tasks | Status | Scope                                                                                                                  |
+| ----- | ----------------------------------------- | ----- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| 00    | `phase-00-repo-foundation.md`             | 4 / 5 | 👀     | pnpm workspace, strict TS/ESLint/Prettier, husky/commitlint, CI from day one (CodeQL/Scorecard visibility-conditional) |
+| 01    | `phase-01-database-library-link.md`       | 0 / 5 | 📋     | docker `postgres:17`, Prisma schema/migration/seed, `file:` library link + subpath probe                               |
+| 02    | `phase-02-api-skeleton-wiring.md`         | 0 / 5 | 📋     | NestJS 11 skeleton, demo identity, `registerAsync` wiring, e2e harness                                                 |
+| 03    | `phase-03-repositories-ledger-pricing.md` | 0 / 6 | 📋     | Prisma repositories (both ports), pricing seed, ledger + pricing REST                                                  |
+| 04    | `phase-04-mock-provider-commands.md`      | 0 / 6 | 📋     | `MockAiProvider` + failure injection, commands, embeddings, transaction guarantees                                     |
+| 05    | `phase-05-quota-aggregations.md`          | 0 / 6 | 📋     | quota guard + estimators, credits/refund, usage aggregations, system jobs                                              |
+| 06    | `phase-06-tenants-errors.md`              | 0 / 5 | 📋     | tenant isolation + required mode, full error catalog, module variants                                                  |
+| 07    | `phase-07-web-skeleton-design.md`         | 0 / 5 | 📋     | Next.js 16 + shared design system + typed api client + switcher                                                        |
+| 08    | `phase-08-dashboard-pages.md`             | 0 / 6 | 📋     | the eight dashboard pages                                                                                              |
+| 09    | `phase-09-quality-docs-audit.md`          | 0 / 6 | 📋     | 100% coverage, full E2E, export audit, README, CI finalization                                                         |
 
 **Status legend:** 📋 ToDo · 🔄 In Progress · 👀 Review · ✅ Done · ⛔ Blocked · 🟡 Partial
 

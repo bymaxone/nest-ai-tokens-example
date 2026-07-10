@@ -32,14 +32,14 @@ metadata). After this phase the drain-then-402 scenario is walkable.
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 5.1 | Branch + ledger-backed balance resolver + guard on workspace | 📋 | P0 | M | none |
-| 5.2 | Estimators: body-size on commands, constant + model-based + resolver overrides in `quota/` | 📋 | P0 | M | 5.1 |
-| 5.3 | Credits + refund endpoints (`purchase`, allocations, `refund`) | 📋 | P0 | S | 5.1 |
-| 5.4 | `usage/` REST: balance, by-period/type/model, top consumers, system costs | 📋 | P0 | M | 5.1 |
-| 5.5 | `system-jobs/`: reindex (system cost) + agent-decision metadata | 📋 | P1 | S | 5.4 |
-| 5.6 | Phase close: audit, dashboards, PR + Copilot review | 📋 | P0 | S | 5.1..5.5 |
+| ID  | Task                                                                                       | Status | Priority | Size | Depends on |
+| --- | ------------------------------------------------------------------------------------------ | ------ | -------- | ---- | ---------- |
+| 5.1 | Branch + ledger-backed balance resolver + guard on workspace                               | 📋     | P0       | M    | none       |
+| 5.2 | Estimators: body-size on commands, constant + model-based + resolver overrides in `quota/` | 📋     | P0       | M    | 5.1        |
+| 5.3 | Credits + refund endpoints (`purchase`, allocations, `refund`)                             | 📋     | P0       | S    | 5.1        |
+| 5.4 | `usage/` REST: balance, by-period/type/model, top consumers, system costs                  | 📋     | P0       | M    | 5.1        |
+| 5.5 | `system-jobs/`: reindex (system cost) + agent-decision metadata                            | 📋     | P1       | S    | 5.4        |
+| 5.6 | Phase close: audit, dashboards, PR + Copilot review                                        | 📋     | P0       | S    | 5.1..5.5   |
 
 ---
 
@@ -72,7 +72,7 @@ body-size estimator to the five command endpoints and embeds.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens. CURRENT PHASE: 05,
@@ -116,7 +116,7 @@ Verification:
 - test:cov 100%; test:e2e green.
 
 Completion Protocol: standard steps; commit `feat(api): ledger-backed quota enforcement (5.1)`.
-````
+```
 
 ---
 
@@ -147,7 +147,7 @@ binding `BYMAX_AI_TOKENS_QUOTA_POLICY` to a class-based policy, and a variant wi
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 05, Task 5.2 of 6 (MIDDLE).
@@ -183,7 +183,7 @@ Verification:
 - test:cov 100%; test:e2e green.
 
 Completion Protocol: standard steps; commit `feat(api): quota lab and policy variants (5.2)`.
-````
+```
 
 ---
 
@@ -214,7 +214,7 @@ the library intentionally excludes.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 05, Task 5.3 of 6 (MIDDLE).
@@ -248,7 +248,7 @@ Verification:
 - test:cov 100%; e2e green.
 
 Completion Protocol: standard steps; commit `feat(api): credits and refund endpoints (5.3)`.
-````
+```
 
 ---
 
@@ -275,7 +275,7 @@ The full `UsageAggregatorService` surface as chart-ready endpoints: `GET /usage/
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 05, Task 5.4 of 6 (MIDDLE).
@@ -308,7 +308,7 @@ Verification:
 - test:cov 100%; e2e green.
 
 Completion Protocol: standard steps; commit `feat(api): usage aggregation endpoints (5.4)`.
-````
+```
 
 ---
 
@@ -336,7 +336,7 @@ Completion Protocol: standard steps; commit `feat(api): usage aggregation endpoi
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 05, Task 5.5 of 6 (MIDDLE).
@@ -372,7 +372,7 @@ Verification:
 - test:cov 100%; e2e green.
 
 Completion Protocol: standard steps; commit `feat(api): system jobs simulations (5.5)`.
-````
+```
 
 ---
 
@@ -392,7 +392,7 @@ addressed, squash-merge on green, delete branch, log.
 
 #### Agent prompt
 
-````
+```
 You are the phase-close auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 05, Task 5.6 of 6 (LAST, phase close).
@@ -419,7 +419,7 @@ Verification: PR MERGED; CI green on main.
 
 Completion Protocol: append `- 5.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; commit
 `docs(plan): mark phase 05 complete`.
-````
+```
 
 ---
 

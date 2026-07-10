@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "schedule": ["every weekend"],
+  "packageRules": [
+    {
+      "matchPackageNames": ["@bymax-one/nest-ai-tokens"],
+      "rangeStrategy": "pin",
+      "groupName": "bymax-one"
+    },
+    {
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "groupName": "docker"
+    }
+  ],
+  "github-actions": {
+    "enabled": false
+  }
+}

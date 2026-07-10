@@ -32,14 +32,14 @@ every §13 scenario is walkable end to end in the browser.
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 8.1 | Branch + Overview page (stat cards + sparkline) | 📋 | P0 | M | none |
-| 8.2 | Playground page (5 command cards + embeddings panel + failure helper) | 📋 | P0 | L | 8.1 |
-| 8.3 | Ledger page (table, filters, inspector, refund/top-up) | 📋 | P0 | M | 8.1 |
-| 8.4 | Pricing + Usage pages (tables, timeline, charts, leaderboard) | 📋 | P0 | L | 8.1 |
-| 8.5 | Quota Lab + Tenants + Errors pages | 📋 | P0 | M | 8.2 |
-| 8.6 | Phase close: audit, dashboards, PR + Copilot review | 📋 | P0 | S | 8.1..8.5 |
+| ID  | Task                                                                  | Status | Priority | Size | Depends on |
+| --- | --------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
+| 8.1 | Branch + Overview page (stat cards + sparkline)                       | 📋     | P0       | M    | none       |
+| 8.2 | Playground page (5 command cards + embeddings panel + failure helper) | 📋     | P0       | L    | 8.1        |
+| 8.3 | Ledger page (table, filters, inspector, refund/top-up)                | 📋     | P0       | M    | 8.1        |
+| 8.4 | Pricing + Usage pages (tables, timeline, charts, leaderboard)         | 📋     | P0       | L    | 8.1        |
+| 8.5 | Quota Lab + Tenants + Errors pages                                    | 📋     | P0       | M    | 8.2        |
+| 8.6 | Phase close: audit, dashboards, PR + Copilot review                   | 📋     | P0       | S    | 8.1..8.5   |
 
 ---
 
@@ -66,7 +66,7 @@ default models with pricing badges (`/workspace/models`).
 
 #### Agent prompt
 
-````
+```
 You are a senior Next.js/React engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens. CURRENT PHASE: 08,
@@ -101,7 +101,7 @@ Verification:
 - `pnpm --filter web test:cov` green; manual: switcher flips the numbers between ada and linus.
 
 Completion Protocol: standard steps; commit `feat(web): overview page (8.1)`.
-````
+```
 
 ---
 
@@ -131,7 +131,7 @@ each demonstrates). A streaming note marks the documented boundary.
 
 #### Agent prompt
 
-````
+```
 You are a senior Next.js/React engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 08, Task 8.2 of 6 (MIDDLE).
@@ -168,7 +168,7 @@ Verification:
   balance in the header fall, hit 402 rendered faithfully).
 
 Completion Protocol: standard steps; commit `feat(web): playground page (8.2)`.
-````
+```
 
 ---
 
@@ -198,7 +198,7 @@ cost snapshot, `refundOf` links), the refund action, the top-up dialog (credit t
 
 #### Agent prompt
 
-````
+```
 You are a senior Next.js/React engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 08, Task 8.3 of 6 (MIDDLE).
@@ -231,7 +231,7 @@ Verification:
 - `pnpm --filter web test:cov` green; manual: focus deep link from Playground lands highlighted.
 
 Completion Protocol: standard steps; commit `feat(web): ledger page (8.3)`.
-````
+```
 
 ---
 
@@ -261,7 +261,7 @@ top-consumers leaderboard, system-costs panel grouped by category.
 
 #### Agent prompt
 
-````
+```
 You are a senior Next.js/React engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 08, Task 8.4 of 6 (MIDDLE).
@@ -293,7 +293,7 @@ Verification:
 - `pnpm --filter web test:cov` green; manual: scenario 4 walkable end to end.
 
 Completion Protocol: standard steps; commit `feat(web): pricing and usage pages (8.4)`.
-````
+```
 
 ---
 
@@ -322,7 +322,7 @@ for each.
 
 #### Agent prompt
 
-````
+```
 You are a senior Next.js/React engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 08, Task 8.5 of 6 (MIDDLE).
@@ -357,7 +357,7 @@ Verification:
 - `pnpm --filter web test:cov` green; manual: scenarios 5, 6, 8 walkable.
 
 Completion Protocol: standard steps; commit `feat(web): quota, tenants and errors pages (8.5)`.
-````
+```
 
 ---
 
@@ -378,7 +378,7 @@ review, squash-merge on green, delete branch, log.
 
 #### Agent prompt
 
-````
+```
 You are the phase-close auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 08, Task 8.6 of 6 (LAST, phase close).
@@ -406,7 +406,7 @@ Verification: PR MERGED; CI green on main.
 
 Completion Protocol: append `- 8.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; commit
 `docs(plan): mark phase 08 complete`.
-````
+```
 
 ---
 
