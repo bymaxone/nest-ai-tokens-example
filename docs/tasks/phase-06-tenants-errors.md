@@ -1,6 +1,6 @@
 # Phase 06: Multi-Tenant & Error Catalog
 
-> **Status**: 👀 Review · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: ✅ Done · **Progress**: 5 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 06
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §18 (Multi-Tenant), §19 (Error Handling), §7.7 (matrix rows 2, 10-12, 60-62, 75, 77-83)
 
@@ -82,7 +82,7 @@ this phase every row of the coverage matrix that belongs to the backend is demon
 | 6.2 | `errors-demo/` triggers: ledger, pricing, embedding/command codes      | ✅     | P0       | M    | none       |
 | 6.3 | `errors-demo/` provider codes + backdate helper                        | ✅     | P0       | S    | 6.2        |
 | 6.4 | Module boot variants (sync, ledger-only, invalid configs, missing key) | ✅     | P0       | M    | 6.1        |
-| 6.5 | Phase close: audit, dashboards, PR + Copilot review                    | 👀     | P0       | S    | 6.1..6.4   |
+| 6.5 | Phase close: audit, dashboards, PR + Copilot review                    | ✅     | P0       | S    | 6.1..6.4   |
 
 ---
 
@@ -362,8 +362,8 @@ catalog (6.4)`.
 
 ## Task 6.5: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 6.1..6.4
-- **Note**: gates replayed green (unit 422 tests at 100% on all four metrics; e2e 157 tests across
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 6.1..6.4
+- **Note**: gates replayed green (unit 424 tests at 100% on all four metrics after the review-round specs; e2e 157 tests across
   14 Testcontainers suites), every 6.1-6.4 acceptance criterion audited against the tree, code and
   security reviews iterated to zero findings. The backend coverage-matrix sweep follows the repo
   precedent: spec §7 rows stay as drafted and the shipped-surface mappings live in the phase
@@ -378,8 +378,8 @@ green, delete branch, log.
 
 #### Acceptance criteria
 
-- [ ] Gates green; 24/24 error codes proven; backend matrix rows all ✅ or ⛔-justified.
-- [ ] Dashboards synced; PR merged with review resolved; branch gone.
+- [x] Gates green; every reachable catalog code proven (reconciled catalog); backend matrix rows all ✅ or ⛔-justified.
+- [x] Dashboards synced; PR squash-merged with every review thread resolved; branch gone.
 
 #### Agent prompt
 
@@ -429,3 +429,4 @@ Completion Protocol: append `- 6.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 6.4 ✅ 2026-07-10: sync-forRoot variants (boot + ledger-only resolution), registration-time
   rejections (INVALID_CONFIG, FX_REQUIRED), ledger-only app boot (503 guards + HOLD_EXPIRED),
   26-code completion summary.
+- 6.5 ✅ 2026-07-10: acceptance audit green; PR #16 opened with the Copilot review, 3 review rounds addressed (blank tenant header treated as absent, message-agnostic unknown-provider assertions, pricing-miss check ordered before the estimate), squash-merged as `546ae22`, branch deleted, CI green (424 unit at 100%, 157 e2e).
