@@ -1,6 +1,6 @@
 # Phase 01: Postgres, Prisma & Library Link
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 01
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16 (Prisma Repositories), §21 (Local Stack), §8 (Library Consumption)
 
@@ -11,6 +11,13 @@ the Postgres data layer (docker compose, Prisma schema mirroring the library's r
 migration, deterministic seed) and the library dependency itself, linked via `file:` until the
 package is published, with a probe script proving both subpaths resolve. No NestJS app yet.
 
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the shapes drafted here
+> and in spec §16. The reference schema is the seven-model fragment shipped at
+> `dist/prisma/schema.prisma.fragment` (BigInt nano-USD money, `tenantId` on every table, two
+> PostgreSQL partial indexes in the shipped SQL), and the public export names differ from the
+> draft. Tasks were executed against the shipped dist/types (the source of truth); acceptance
+> criteria below were aligned in the same commits.
+
 > **Completion Protocol (referenced by every task below as "standard steps"):** set the task's
 > Status ✅ in its block and the Task index; tick its acceptance checkboxes; bump the header
 > Progress counter; update the Phase 01 row in `docs/DEVELOPMENT_PLAN.md` (and overall counter) and
@@ -19,8 +26,10 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 
 ## Rules-of-phase
 
-1. Prisma models replicate the library's reference schemas exactly: `Int` amount, `Jsonb`
-   metadata, `Decimal(10,6)` prices, all documented indexes; no extra opinion.
+1. Prisma models replicate the library's reference schema exactly: a verbatim copy of the shipped
+   `dist/prisma/schema.prisma.fragment` (seven models, BigInt nano-USD money, `Decimal(10,4)`
+   markup multiplier, `Json?` metadata columns, every documented index plus the two PostgreSQL
+   partial indexes from the shipped `migrations/0001_init.sql`); no extra opinion.
 2. The seed is deterministic (stable ids, stable dates) so charts and tests assert exact values.
 3. The library is consumed as an external package (`file:../../../nest-ai-tokens`), never copied,
    never a workspace member.
@@ -38,7 +47,7 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 | ID  | Task                                                                | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 1.1 | Branch + docker compose Postgres + infra scripts                    | ✅     | P0       | S    | none       |
-| 1.2 | `apps/api` package init + Prisma schema + first migration           | 📋     | P0       | M    | 1.1        |
+| 1.2 | `apps/api` package init + Prisma schema + first migration           | ✅     | P0       | M    | 1.1        |
 | 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | 📋     | P0       | M    | 1.2        |
 | 1.4 | Library `file:` link + dual-subpath probe script (CI job)           | 📋     | P0       | S    | 1.2        |
 | 1.5 | Phase close: audit, dashboards, PR + Copilot review                 | 📋     | P0       | S    | 1.1..1.4   |
@@ -111,7 +120,7 @@ scripts (1.1)`.
 
 ## Task 1.2: `apps/api` package init + Prisma schema + first migration
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 1.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 1.1
 
 #### Description
 
@@ -121,11 +130,13 @@ indexes, `@@map` table names), the first migration, and `prisma:*` scripts.
 
 #### Acceptance criteria
 
-- [ ] `apps/api/prisma/schema.prisma` mirrors both reference models field for field, including
-      the six transaction indexes and the four pricing indexes.
-- [ ] `pnpm --filter api prisma:migrate:dev` creates the tables against the compose Postgres.
-- [ ] `amount` is `Int`; prices are `Decimal @db.Decimal(10, 6)`; `metadata` is `Json?`.
-- [ ] `pnpm typecheck` green with the generated client.
+- [x] `apps/api/prisma/schema/ai-tokens.prisma` is a verbatim copy of the library's shipped
+      `dist/prisma/schema.prisma.fragment` (all seven models, field for field, every index).
+- [x] `pnpm --filter api run prisma:migrate:dev` creates the tables against the compose Postgres,
+      including the two partial indexes from the shipped `migrations/0001_init.sql`.
+- [x] Money columns are `BigInt` nano-USD; `markupMultiplier` is `Decimal @db.Decimal(10, 4)`;
+      `extraUnits`/`unitRates`/`softThresholds` are the documented `Json` columns.
+- [x] `pnpm typecheck` green with the generated client.
 
 #### Files to create / modify
 
@@ -381,3 +392,4 @@ Completion Protocol: append `- 1.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
 
 - 1.1 ✅ 2026-07-10: postgres:17-alpine compose stack (digest-pinned, healthcheck, named volume), root `.env.example` (DATABASE_URL, PORT), real infra:up/down/nuke scripts
+- 1.2 ✅ 2026-07-10: apps/api package (Prisma 7 + adapter-pg + prisma.config.ts), multi-file schema with the library's shipped fragment verbatim, first migration applied incl. both partial indexes
