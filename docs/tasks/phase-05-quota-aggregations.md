@@ -456,8 +456,8 @@ Completion Protocol: standard steps; commit `feat(api): system jobs simulations 
 - **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 5.1..5.5
 - **Note**: gates replayed green (unit 367 tests at 100% on all four metrics after the review-round specs; e2e 107 tests across
   11 Testcontainers suites), every 5.1-5.5 acceptance criterion audited against the tree, code and
-  security reviews at zero findings; the PR is open with the Copilot review requested. Merge,
-  branch deletion, and the final Done flip follow the review.
+  security reviews at zero findings; PR #14 carried the Copilot review through two fix rounds and
+  was squash-merged with the branch deleted.
 
 #### Description
 
