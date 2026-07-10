@@ -32,14 +32,14 @@ batch), proving the library's transaction guarantees with e2e ledger assertions.
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 4.1 | Branch + `MockAiProvider` core (token math, canned content, latency knob) | 📋 | P0 | M | none |
-| 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error) | 📋 | P0 | M | 4.1 |
-| 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom) | 📋 | P0 | L | 4.1 |
-| 4.4 | Embeddings REST (single + batch) + `/workspace/models` | 📋 | P0 | M | 4.1 |
-| 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | 📋 | P0 | M | 4.2..4.4 |
-| 4.6 | Phase close: audit, dashboards, PR + Copilot review | 📋 | P0 | S | 4.1..4.5 |
+| ID  | Task                                                                            | Status | Priority | Size | Depends on |
+| --- | ------------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
+| 4.1 | Branch + `MockAiProvider` core (token math, canned content, latency knob)       | 📋     | P0       | M    | none       |
+| 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error)        | 📋     | P0       | M    | 4.1        |
+| 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | 📋     | P0       | L    | 4.1        |
+| 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | 📋     | P0       | M    | 4.1        |
+| 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | 📋     | P0       | M    | 4.2..4.4   |
+| 4.6 | Phase close: audit, dashboards, PR + Copilot review                             | 📋     | P0       | S    | 4.1..4.5   |
 
 ---
 
@@ -69,7 +69,7 @@ constructor latency knob (0 in tests). Replaces the echo provider binding.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens. The library's
@@ -114,7 +114,7 @@ Verification:
 - test:cov 100%; app boots; GET /health/wiring still green.
 
 Completion Protocol: standard steps; commit `feat(api): deterministic mock ai provider (4.1)`.
-````
+```
 
 ---
 
@@ -145,7 +145,7 @@ costs stay stable.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 04, Task 4.2 of 6 (MIDDLE).
@@ -183,7 +183,7 @@ Verification:
 - test:cov 100%.
 
 Completion Protocol: standard steps; commit `feat(api): failure injection markers (4.2)`.
-````
+```
 
 ---
 
@@ -212,7 +212,7 @@ result (content, tokensUsed, estimatedCost, model, transactionId). No quota guar
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 04, Task 4.3 of 6 (MIDDLE).
@@ -249,7 +249,7 @@ Verification:
 - test:cov 100%; e2e green.
 
 Completion Protocol: standard steps; commit `feat(api): workspace command endpoints (4.3)`.
-````
+```
 
 ---
 
@@ -277,7 +277,7 @@ unmarked-handler path).
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 04, Task 4.4 of 6 (MIDDLE).
@@ -312,7 +312,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `feat(api): embedding endpoints and models info
 (4.4)`.
-````
+```
 
 ---
 
@@ -341,7 +341,7 @@ metadata; `resourceId` lands in metadata.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS testing engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 04, Task 4.5 of 6 (MIDDLE).
@@ -375,7 +375,7 @@ Verification:
 - `pnpm --filter api test:e2e` green.
 
 Completion Protocol: standard steps; commit `test(api): transaction guarantee proofs (4.5)`.
-````
+```
 
 ---
 
@@ -396,7 +396,7 @@ findings addressed, squash-merge on green, delete branch, log.
 
 #### Agent prompt
 
-````
+```
 You are the phase-close auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 04, Task 4.6 of 6 (LAST, phase close).
@@ -423,7 +423,7 @@ Verification: PR MERGED; CI green on main.
 
 Completion Protocol: append `- 4.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; commit
 `docs(plan): mark phase 04 complete`.
-````
+```
 
 ---
 

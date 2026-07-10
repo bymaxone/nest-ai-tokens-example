@@ -32,18 +32,18 @@
 > **Overall progress: 0 / 55 tasks (0%) · 0 / 10 phases done**
 > **Active phase:** 00 (Repository Foundation & CI) · **Blockers:** none
 
-| # | Phase | Tasks file | Size | Done / Total | % | Status |
-| --- | --- | --- | --- | --- | --- | --- |
-| 00 | Repository Foundation & CI | `phase-00-repo-foundation.md` | M | 1 / 5 | 20% | 🔄 |
-| 01 | Postgres, Prisma & Library Link | `phase-01-database-library-link.md` | M | 0 / 5 | 0% | 📋 |
-| 02 | API Skeleton & Module Wiring | `phase-02-api-skeleton-wiring.md` | L | 0 / 5 | 0% | 📋 |
-| 03 | Repositories, Ledger & Pricing API | `phase-03-repositories-ledger-pricing.md` | L | 0 / 6 | 0% | 📋 |
-| 04 | Mock Provider, Commands & Embeddings | `phase-04-mock-provider-commands.md` | L | 0 / 6 | 0% | 📋 |
-| 05 | Quota, Credits & Aggregations | `phase-05-quota-aggregations.md` | L | 0 / 6 | 0% | 📋 |
-| 06 | Multi-Tenant & Error Catalog | `phase-06-tenants-errors.md` | M | 0 / 5 | 0% | 📋 |
-| 07 | Web Skeleton & Design System | `phase-07-web-skeleton-design.md` | M | 0 / 5 | 0% | 📋 |
-| 08 | Dashboard Pages | `phase-08-dashboard-pages.md` | L | 0 / 6 | 0% | 📋 |
-| 09 | Quality, Docs & Export Audit | `phase-09-quality-docs-audit.md` | L | 0 / 6 | 0% | 📋 |
+| #   | Phase                                | Tasks file                                | Size | Done / Total | %   | Status |
+| --- | ------------------------------------ | ----------------------------------------- | ---- | ------------ | --- | ------ |
+| 00  | Repository Foundation & CI           | `phase-00-repo-foundation.md`             | M    | 2 / 5        | 40% | 🔄     |
+| 01  | Postgres, Prisma & Library Link      | `phase-01-database-library-link.md`       | M    | 0 / 5        | 0%  | 📋     |
+| 02  | API Skeleton & Module Wiring         | `phase-02-api-skeleton-wiring.md`         | L    | 0 / 5        | 0%  | 📋     |
+| 03  | Repositories, Ledger & Pricing API   | `phase-03-repositories-ledger-pricing.md` | L    | 0 / 6        | 0%  | 📋     |
+| 04  | Mock Provider, Commands & Embeddings | `phase-04-mock-provider-commands.md`      | L    | 0 / 6        | 0%  | 📋     |
+| 05  | Quota, Credits & Aggregations        | `phase-05-quota-aggregations.md`          | L    | 0 / 6        | 0%  | 📋     |
+| 06  | Multi-Tenant & Error Catalog         | `phase-06-tenants-errors.md`              | M    | 0 / 5        | 0%  | 📋     |
+| 07  | Web Skeleton & Design System         | `phase-07-web-skeleton-design.md`         | M    | 0 / 5        | 0%  | 📋     |
+| 08  | Dashboard Pages                      | `phase-08-dashboard-pages.md`             | L    | 0 / 6        | 0%  | 📋     |
+| 09  | Quality, Docs & Export Audit         | `phase-09-quality-docs-audit.md`          | L    | 0 / 6        | 0%  | 📋     |
 
 ---
 
@@ -102,23 +102,23 @@
 
 ## 2. Global Conventions
 
-| Concern | Convention |
-| --- | --- |
-| Package manager | `pnpm` (pinned via `packageManager`), workspaces `apps/*` |
-| Runtime | Node `>=24` (`.nvmrc`, `engines`, CI `node-version: '24'`) |
-| Language | TypeScript 5.9 strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`; ESM |
-| Lint / format | ESLint 9 flat (`recommendedTypeChecked`) + Prettier 3; zero suppressions |
-| Commits & hooks | Conventional Commits; husky `pre-commit` -> lint-staged, `commit-msg` -> commitlint; no AI-attribution trailers, ever |
-| Branching | `git switch -c feat/phase-NN-<slug>` (never `git checkout -b`); one PR per phase; squash merge; delete branch |
-| Reviews | GitHub Copilot code review requested on every phase PR; all findings addressed before merge |
-| API docs | No Swagger; JSDoc + Zod DTOs (family convention) |
-| Datastore | Postgres 17 via docker compose; Prisma; no Redis |
-| Library dependency | `@bymax-one/nest-ai-tokens` via `file:../../../nest-ai-tokens` until published, then `^0.1.0` |
-| Subpaths | `.` (server) only in `apps/api`; `./shared` in **both** apps (browser-safe) |
-| Identity | Demo headers `x-demo-user` / `x-tenant-id` (simulation, clearly labeled) |
-| Test bar | 100% unit coverage (api Jest, web Vitest `lib/**` + components); E2E every flow (Testcontainers `postgres:17-alpine`); export audit |
-| Memory safety | One suite at a time; `maxWorkers: '50%'`; never fan out parallel test agents |
-| CI | From phase 00: install, lint, typecheck, build, unit, e2e (Postgres service container), sequential. CodeQL + Scorecard conditional on public visibility |
+| Concern            | Convention                                                                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Package manager    | `pnpm` (pinned via `packageManager`), workspaces `apps/*`                                                                                               |
+| Runtime            | Node `>=24` (`.nvmrc`, `engines`, CI `node-version: '24'`)                                                                                              |
+| Language           | TypeScript 5.9 strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes`; ESM                                                                  |
+| Lint / format      | ESLint 9 flat (`recommendedTypeChecked`) + Prettier 3; zero suppressions                                                                                |
+| Commits & hooks    | Conventional Commits; husky `pre-commit` -> lint-staged, `commit-msg` -> commitlint; no AI-attribution trailers, ever                                   |
+| Branching          | `git switch -c feat/phase-NN-<slug>` (never `git checkout -b`); one PR per phase; squash merge; delete branch                                           |
+| Reviews            | GitHub Copilot code review requested on every phase PR; all findings addressed before merge                                                             |
+| API docs           | No Swagger; JSDoc + Zod DTOs (family convention)                                                                                                        |
+| Datastore          | Postgres 17 via docker compose; Prisma; no Redis                                                                                                        |
+| Library dependency | `@bymax-one/nest-ai-tokens` via `file:../../../nest-ai-tokens` until published, then `^0.1.0`                                                           |
+| Subpaths           | `.` (server) only in `apps/api`; `./shared` in **both** apps (browser-safe)                                                                             |
+| Identity           | Demo headers `x-demo-user` / `x-tenant-id` (simulation, clearly labeled)                                                                                |
+| Test bar           | 100% unit coverage (api Jest, web Vitest `lib/**` + components); E2E every flow (Testcontainers `postgres:17-alpine`); export audit                     |
+| Memory safety      | One suite at a time; `maxWorkers: '50%'`; never fan out parallel test agents                                                                            |
+| CI                 | From phase 00: install, lint, typecheck, build, unit, e2e (Postgres service container), sequential. CodeQL + Scorecard conditional on public visibility |
 
 ---
 
@@ -267,13 +267,13 @@
 
 ## Appendix A: Quality Gates
 
-| Gate | Command | Bar |
-| --- | --- | --- |
-| Lint / format | `pnpm lint` / `pnpm format:check` | zero warnings, zero suppressions |
-| Types | `pnpm typecheck` | strict, no `any` |
-| Unit (api) | `pnpm --filter api test:cov` | 100% all four metrics |
-| Unit (web) | `pnpm --filter web test:cov` | 100% `lib/**` + components |
-| E2E | `pnpm --filter api test:e2e` | every route, error code, guard path, module variant |
-| Web smoke | `pnpm --filter web test:e2e` | shell + one live round-trip |
-| Export audit | `pnpm audit:exports` | every library export demonstrated or ⛔-justified |
-| CI | `.github/workflows/ci.yml` | all of the above, sequential, green from the first PR |
+| Gate          | Command                           | Bar                                                   |
+| ------------- | --------------------------------- | ----------------------------------------------------- |
+| Lint / format | `pnpm lint` / `pnpm format:check` | zero warnings, zero suppressions                      |
+| Types         | `pnpm typecheck`                  | strict, no `any`                                      |
+| Unit (api)    | `pnpm --filter api test:cov`      | 100% all four metrics                                 |
+| Unit (web)    | `pnpm --filter web test:cov`      | 100% `lib/**` + components                            |
+| E2E           | `pnpm --filter api test:e2e`      | every route, error code, guard path, module variant   |
+| Web smoke     | `pnpm --filter web test:e2e`      | shell + one live round-trip                           |
+| Export audit  | `pnpm audit:exports`              | every library export demonstrated or ⛔-justified     |
+| CI            | `.github/workflows/ci.yml`        | all of the above, sequential, green from the first PR |

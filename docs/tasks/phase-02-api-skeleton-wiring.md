@@ -35,13 +35,13 @@ harness. CI gains `build`, `test`, and `e2e` jobs.
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 2.1 | Branch + NestJS skeleton (`createApp` seam, Zod pipe, config module) | 📋 | P0 | M | none |
-| 2.2 | Demo identity middleware + user registry | 📋 | P0 | S | 2.1 |
-| 2.3 | Library wiring: options factory + repository/logger placeholders bindings | 📋 | P0 | M | 2.2 |
-| 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs | 📋 | P0 | M | 2.3 |
-| 2.5 | Phase close: audit, dashboards, PR + Copilot review | 📋 | P0 | S | 2.1..2.4 |
+| ID  | Task                                                                      | Status | Priority | Size | Depends on |
+| --- | ------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
+| 2.1 | Branch + NestJS skeleton (`createApp` seam, Zod pipe, config module)      | 📋     | P0       | M    | none       |
+| 2.2 | Demo identity middleware + user registry                                  | 📋     | P0       | S    | 2.1        |
+| 2.3 | Library wiring: options factory + repository/logger placeholders bindings | 📋     | P0       | M    | 2.2        |
+| 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs       | 📋     | P0       | M    | 2.3        |
+| 2.5 | Phase close: audit, dashboards, PR + Copilot review                       | 📋     | P0       | S    | 2.1..2.4   |
 
 ---
 
@@ -73,7 +73,7 @@ modules.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens (AI token ledger,
@@ -119,7 +119,7 @@ Verification:
 - `pnpm --filter api test:cov` 100% on implemented files.
 
 Completion Protocol: standard steps; commit `feat(api): nest skeleton with createApp seam (2.1)`.
-````
+```
 
 ---
 
@@ -150,7 +150,7 @@ users get 401 with a helpful body. Clearly labeled simulation.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 02, Task 2.2 of 5 (MIDDLE).
@@ -185,7 +185,7 @@ Verification:
 - `pnpm --filter api test:cov` green at 100% on implemented files.
 
 Completion Protocol: standard steps; commit `feat(api): demo identity middleware (2.2)`.
-````
+```
 
 ---
 
@@ -222,7 +222,7 @@ the Nest `Logger`.
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 02, Task 2.3 of 5 (MIDDLE).
@@ -269,7 +269,7 @@ Verification:
 - `pnpm --filter api test:cov` 100% on implemented files.
 
 Completion Protocol: standard steps; commit `feat(api): canonical registerAsync wiring (2.3)`.
-````
+```
 
 ---
 
@@ -300,7 +300,7 @@ programmatically), first e2e specs (boot, health, hello, identity 401); CI gains
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS testing engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 02, Task 2.4 of 5 (MIDDLE).
@@ -340,7 +340,7 @@ Verification:
 - CI green on the branch with the new jobs.
 
 Completion Protocol: standard steps; commit `feat(api): health endpoints and e2e harness (2.4)`.
-````
+```
 
 ---
 
@@ -367,7 +367,7 @@ on green, delete the branch.
 
 #### Agent prompt
 
-````
+```
 You are the phase-close auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 02, Task 2.5 of 5 (LAST, phase close).
@@ -400,7 +400,7 @@ Verification:
 
 Completion Protocol: append `- 2.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; commit
 `docs(plan): mark phase 02 complete`.
-````
+```
 
 ---
 

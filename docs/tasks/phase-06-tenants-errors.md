@@ -32,13 +32,13 @@ this phase every row of the coverage matrix that belongs to the backend is demon
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 6.1 | Branch + tenant isolation proofs (both modes) | 📋 | P0 | M | none |
-| 6.2 | `errors-demo/` triggers: ledger, pricing, embedding/command codes | 📋 | P0 | M | none |
-| 6.3 | `errors-demo/` provider codes + backdate helper | 📋 | P0 | S | 6.2 |
-| 6.4 | Module boot variants (sync, ledger-only, invalid configs, missing key) | 📋 | P0 | M | 6.1 |
-| 6.5 | Phase close: audit, dashboards, PR + Copilot review | 📋 | P0 | S | 6.1..6.4 |
+| ID  | Task                                                                   | Status | Priority | Size | Depends on |
+| --- | ---------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
+| 6.1 | Branch + tenant isolation proofs (both modes)                          | 📋     | P0       | M    | none       |
+| 6.2 | `errors-demo/` triggers: ledger, pricing, embedding/command codes      | 📋     | P0       | M    | none       |
+| 6.3 | `errors-demo/` provider codes + backdate helper                        | 📋     | P0       | S    | 6.2        |
+| 6.4 | Module boot variants (sync, ledger-only, invalid configs, missing key) | 📋     | P0       | M    | 6.1        |
+| 6.5 | Phase close: audit, dashboards, PR + Copilot review                    | 📋     | P0       | S    | 6.1..6.4   |
 
 ---
 
@@ -66,7 +66,7 @@ variant with `multiTenant.required: true` proves `ledger.tenant_required` on a t
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS testing engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens. CURRENT PHASE: 06,
@@ -100,7 +100,7 @@ Verification:
 - `pnpm --filter api test:e2e` green.
 
 Completion Protocol: standard steps; commit `test(api): tenant isolation proofs (6.1)`.
-````
+```
 
 ---
 
@@ -131,7 +131,7 @@ with a note instead of faking it).
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 06, Task 6.2 of 5 (MIDDLE).
@@ -168,7 +168,7 @@ Verification:
 - test:cov 100%; e2e green.
 
 Completion Protocol: standard steps; commit `feat(api): errors-demo core triggers (6.2)`.
-````
+```
 
 ---
 
@@ -196,7 +196,7 @@ old date to expose historical pricing, supporting scenario §13.4).
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 06, Task 6.3 of 5 (MIDDLE).
@@ -230,7 +230,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `feat(api): provider error triggers and backdate
 helper (6.3)`.
-````
+```
 
 ---
 
@@ -261,7 +261,7 @@ failures (rows 10-11); `provider.api_key_missing` with `strategy: 'openai-defaul
 
 #### Agent prompt
 
-````
+```
 You are a senior NestJS testing engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 06, Task 6.4 of 5 (MIDDLE).
@@ -299,7 +299,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `test(api): module boot variants complete the
 catalog (6.4)`.
-````
+```
 
 ---
 
@@ -321,7 +321,7 @@ green, delete branch, log.
 
 #### Agent prompt
 
-````
+```
 You are the phase-close auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 06, Task 6.5 of 5 (LAST, phase close).
@@ -348,7 +348,7 @@ Verification: PR MERGED; CI green on main.
 
 Completion Protocol: append `- 6.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; commit
 `docs(plan): mark phase 06 complete`.
-````
+```
 
 ---
 

@@ -1,6 +1,6 @@
 # Phase 00: Repository Foundation & CI
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 00
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §23 (Tooling & Conventions), §6 (Repository Layout)
 
@@ -29,13 +29,13 @@ repository-visibility condition, so the pipeline is public-ready while the repo 
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 0.1 | Branch + workspace root (pnpm, tsconfig, scripts) | ✅ | P0 | S | none |
-| 0.2 | Lint, format & hooks (ESLint flat, Prettier, husky, commitlint, lint-staged) | 📋 | P0 | S | 0.1 |
-| 0.3 | Repo hygiene files (LICENSE, README stub, CHANGELOG, renovate, editorconfig) | 📋 | P1 | S | 0.1 |
-| 0.4 | CI pipeline + conditional security workflows | 📋 | P0 | M | 0.2 |
-| 0.5 | Phase close: audit, dashboards, PR + Copilot review | 📋 | P0 | S | 0.1..0.4 |
+| ID  | Task                                                                         | Status | Priority | Size | Depends on |
+| --- | ---------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
+| 0.1 | Branch + workspace root (pnpm, tsconfig, scripts)                            | ✅     | P0       | S    | none       |
+| 0.2 | Lint, format & hooks (ESLint flat, Prettier, husky, commitlint, lint-staged) | ✅     | P0       | S    | 0.1        |
+| 0.3 | Repo hygiene files (LICENSE, README stub, CHANGELOG, renovate, editorconfig) | 📋     | P1       | S    | 0.1        |
+| 0.4 | CI pipeline + conditional security workflows                                 | 📋     | P0       | M    | 0.2        |
+| 0.5 | Phase close: audit, dashboards, PR + Copilot review                          | 📋     | P0       | S    | 0.1..0.4   |
 
 ---
 
@@ -67,7 +67,7 @@ Create the phase branch and the pnpm workspace skeleton: root `package.json` (pr
 
 #### Agent prompt
 
-````
+```
 You are a senior TypeScript platform engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, the canonical reference application for the
@@ -113,13 +113,13 @@ Completion Protocol:
 3. Update the Phase 00 row in docs/DEVELOPMENT_PLAN.md (dashboard) and docs/tasks/README.md.
 4. Append `- 0.1 ✅ YYYY-MM-DD: <summary>` to the Completion log.
 5. Commit: `chore(repo): scaffold pnpm workspace root (0.1)`.
-````
+```
 
 ---
 
 ## Task 0.2: Lint, format & hooks
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 0.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 0.1
 
 #### Description
 
@@ -130,10 +130,10 @@ scopes (`repo`, `api`, `web`, `ci`, `docs`).
 
 #### Acceptance criteria
 
-- [ ] `pnpm lint` and `pnpm format:check` exit 0.
-- [ ] A commit with message `bad message` is rejected by the commit-msg hook.
-- [ ] A staged `.ts` file with a lint error blocks the pre-commit hook.
-- [ ] Zero `eslint-disable` / `@ts-ignore` anywhere.
+- [x] `pnpm lint` and `pnpm format:check` exit 0.
+- [x] A commit with message `bad message` is rejected by the commit-msg hook.
+- [x] A staged `.ts` file with a lint error blocks the pre-commit hook.
+- [x] Zero `eslint-disable` / `@ts-ignore` anywhere.
 
 #### Files to create / modify
 
@@ -142,7 +142,7 @@ scopes (`repo`, `api`, `web`, `ci`, `docs`).
 
 #### Agent prompt
 
-````
+```
 You are a senior TypeScript platform engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example (reference app for @bymax-one/nest-ai-tokens). pnpm workspace,
@@ -184,7 +184,7 @@ Verification:
 
 Completion Protocol: same 5 steps as task 0.1 (status, checkboxes, dashboards, completion log,
 Conventional commit `chore(repo): add lint, format and commit governance (0.2)`).
-````
+```
 
 ---
 
@@ -211,7 +211,7 @@ the `@bymax-one/nest-ai-tokens` dependency, pin GitHub Actions digests), `.edito
 
 #### Agent prompt
 
-````
+```
 You are a senior TypeScript platform engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example (reference app for @bymax-one/nest-ai-tokens).
@@ -249,7 +249,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `docs(repo): add license, readme stub and hygiene
 files (0.3)`.
-````
+```
 
 ---
 
@@ -280,7 +280,7 @@ actions updates (Renovate handles npm).
 
 #### Agent prompt
 
-````
+```
 You are a senior CI engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example (reference app for @bymax-one/nest-ai-tokens). pnpm, Node 24.
@@ -324,7 +324,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `ci(repo): add gating pipeline and conditional
 security workflows (0.4)`.
-````
+```
 
 ---
 
@@ -350,7 +350,7 @@ the GitHub Copilot code review, address every finding, and merge with CI green.
 
 #### Agent prompt
 
-````
+```
 You are the phase-close auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 00, Task 0.5 of 5 (LAST, phase close).
@@ -390,11 +390,13 @@ Verification:
 
 Completion Protocol: append `- 0.5 ✅ YYYY-MM-DD: phase merged in PR #<n>` to the Completion log
 (commit lands on main via a docs commit if needed: `docs(plan): mark phase 00 complete`).
-````
+```
 
 ---
 
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
 - 0.1 ✅ 2026-07-10: pnpm workspace root scaffolded (package.json, pnpm-workspace.yaml, .nvmrc, strict tsconfig.base.json, .gitignore); `pnpm install` and `pnpm typecheck` green.
+- 0.2 ✅ 2026-07-10: ESLint 9 flat config + Prettier 3 + husky (pre-commit/commit-msg) + commitlint + lint-staged wired; commit-msg hook proven to reject a non-conventional message, pre-commit hook proven to block a broken staged file.

@@ -36,13 +36,13 @@ may be mocked until 03-06 endpoints land).
 
 ## Task index
 
-| ID | Task | Status | Priority | Size | Depends on |
-| --- | --- | --- | --- | --- | --- |
-| 7.1 | Branch + Next.js 16 app init + design tokens/fonts | 📋 | P0 | M | none |
-| 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | 📋 | P0 | M | 7.1 |
-| 7.3 | Typed api client on the shared subpath + error narrowing | 📋 | P0 | M | 7.1 |
-| 7.4 | User/tenant switcher + Vitest setup + CI web jobs | 📋 | P0 | M | 7.2, 7.3 |
-| 7.5 | Phase close: audit, dashboards, PR + Copilot review | 📋 | P0 | S | 7.1..7.4 |
+| ID  | Task                                                      | Status | Priority | Size | Depends on |
+| --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
+| 7.1 | Branch + Next.js 16 app init + design tokens/fonts        | 📋     | P0       | M    | none       |
+| 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | 📋     | P0       | M    | 7.1        |
+| 7.3 | Typed api client on the shared subpath + error narrowing  | 📋     | P0       | M    | 7.1        |
+| 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | 📋     | P0       | M    | 7.2, 7.3   |
+| 7.5 | Phase close: audit, dashboards, PR + Copilot review       | 📋     | P0       | S    | 7.1..7.4   |
 
 ---
 
@@ -70,7 +70,7 @@ from `design_system.html`.
 
 #### Agent prompt
 
-````
+```
 You are a senior Next.js/React engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example, reference app for @bymax-one/nest-ai-tokens. The dashboard must
@@ -106,7 +106,7 @@ Verification:
 - `pnpm --filter web dev` renders the tokenized page; pnpm lint + typecheck green.
 
 Completion Protocol: standard steps; commit `feat(web): next 16 init with design tokens (7.1)`.
-````
+```
 
 ---
 
@@ -133,7 +133,7 @@ shell recipe.
 
 #### Agent prompt
 
-````
+```
 You are a senior Next.js/React engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 07, Task 7.2 of 5 (MIDDLE).
@@ -165,7 +165,7 @@ Verification:
 - All eight routes render with the shell; lint/typecheck green.
 
 Completion Protocol: standard steps; commit `feat(web): dashboard shell and routes (7.2)`.
-````
+```
 
 ---
 
@@ -193,7 +193,7 @@ response types built from `@bymax-one/nest-ai-tokens/shared` (`TokenTransaction`
 
 #### Agent prompt
 
-````
+```
 You are a senior TypeScript frontend engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 07, Task 7.3 of 5 (MIDDLE).
@@ -230,7 +230,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `feat(web): typed api client on shared subpath
 (7.3)`.
-````
+```
 
 ---
 
@@ -261,7 +261,7 @@ feeding the api client headers), the Vitest + Testing Library setup with 100% th
 
 #### Agent prompt
 
-````
+```
 You are a senior Next.js/React engineer working on nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 07, Task 7.4 of 5 (MIDDLE).
@@ -299,7 +299,7 @@ Verification:
 
 Completion Protocol: standard steps; commit `feat(web): identity switcher, vitest and ci jobs
 (7.4)`.
-````
+```
 
 ---
 
@@ -320,7 +320,7 @@ GitHub Copilot review, squash-merge on green, delete branch, log.
 
 #### Agent prompt
 
-````
+```
 You are the phase-close auditor for nest-ai-tokens-example.
 
 PROJECT: nest-ai-tokens-example. CURRENT PHASE: 07, Task 7.5 of 5 (LAST, phase close).
@@ -347,7 +347,7 @@ Verification: PR MERGED; CI green on main.
 
 Completion Protocol: append `- 7.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; commit
 `docs(plan): mark phase 07 complete`.
-````
+```
 
 ---
 
