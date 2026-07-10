@@ -5,7 +5,7 @@
  *
  * @layer components/overview
  */
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/lib/api-client'
@@ -17,6 +17,7 @@ vi.mock('@/lib/api', () => ({
 import { api } from '@/lib/api'
 
 import { BalanceCard } from './BalanceCard.js'
+import { setIdentity } from '@/lib/identity-store'
 
 describe('BalanceCard', () => {
   // scenario: the tile shows a loading state before the fetch resolves.
@@ -53,6 +54,28 @@ describe('BalanceCard', () => {
     await waitFor(() =>
       expect(screen.getByText('Something went wrong loading the balance.')).toBeInTheDocument(),
     )
+  })
+
+  // scenario: switching the demo identity must refetch, since the client's
+  // headers follow the selection and the old user's balance would be stale.
+  it('refetches the balance when the selected identity changes', async () => {
+    vi.mocked(api.getBalance).mockResolvedValue({
+      nanoUsd: '1',
+      credits: 1,
+      formatted: '$1.000000',
+    })
+    const callsBefore = vi.mocked(api.getBalance).mock.calls.length
+    render(<BalanceCard />)
+    await waitFor(() => expect(api.getBalance).toHaveBeenCalledTimes(callsBefore + 1))
+
+    act(() => {
+      setIdentity({ userId: 'grace', tenantId: 'acme' })
+    })
+
+    await waitFor(() => expect(api.getBalance).toHaveBeenCalledTimes(callsBefore + 2))
+    act(() => {
+      setIdentity(null)
+    })
   })
 
   // scenario: unmounting before the fetch resolves must not update state on the unmounted tree.

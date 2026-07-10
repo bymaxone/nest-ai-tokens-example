@@ -105,7 +105,7 @@ export interface UsageRecordView {
 /**
  * The wire shape of a price row: the library's `PriceVersion` (pricing
  * history/update responses) and the Prisma `AiModelPrice` open-window row
- * (`GET /pricing`) share this field set field for field.
+ * (`GET /pricing`) share this field set, field for field.
  */
 export interface PriceRowView {
   readonly id: string
