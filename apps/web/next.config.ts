@@ -1,7 +1,7 @@
 /**
- * @fileoverview Next.js 16 configuration. The local `@bymax-one/nest-ai-tokens`
- * `file:` dependency needs no transpile config: the browser bundle only ever
- * touches its `./shared` subpath, which is pure TypeScript. Emits baseline
+ * @fileoverview Next.js 16 configuration. The local `file:` metering library
+ * dependency needs no transpile config: the browser bundle only ever touches
+ * its browser-safe shared subpath, which is pure TypeScript. Emits baseline
  * HTTP security headers on every route, including a Content-Security-Policy
  * whose `connect-src` is derived from the configured API origin so the
  * browser only ever talks to the intended backend.

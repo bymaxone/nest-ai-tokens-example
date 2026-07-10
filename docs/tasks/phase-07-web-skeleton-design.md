@@ -1,6 +1,6 @@
 # Phase 07: Web Skeleton & Design System
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 07
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (Frontend Design), §15 (Design System), §8.2 (shared subpath)
 
@@ -72,7 +72,7 @@ may be mocked until 03-06 endpoints land).
 | --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 7.1 | Branch + Next.js 16 app init + design tokens/fonts        | ✅     | P0       | M    | none       |
 | 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | ✅     | P0       | M    | 7.1        |
-| 7.3 | Typed api client on the shared subpath + error narrowing  | 📋     | P0       | M    | 7.1        |
+| 7.3 | Typed api client on the shared subpath + error narrowing  | ✅     | P0       | M    | 7.1        |
 | 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | 📋     | P0       | M    | 7.2, 7.3   |
 | 7.5 | Phase close: audit, dashboards, PR + Copilot review       | 📋     | P0       | S    | 7.1..7.4   |
 
@@ -209,21 +209,27 @@ Completion Protocol: standard steps; commit `feat(web): dashboard shell and rout
 
 ## Task 7.3: Typed api client
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 7.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 7.1
 
 #### Description
 
-`lib/api-client.ts`: a thin typed fetch wrapper for every backend route (§11 catalogue), request/
-response types built from `@bymax-one/nest-ai-tokens/shared` (`TokenTransaction`, `ModelPricing`,
-`UsageBy*`, `AI_TOKEN_TRANSACTION_TYPES`), an `ApiError` class narrowing the canonical envelope on
-`AI_TOKENS_ERROR_CODES`, and header injection from the identity store (7.4).
+`lib/api-client.ts`: a thin typed fetch wrapper for every backend route (the real module map,
+spec §10.1: workspace, ledger, pricing, usage, quota, errors-demo, system-jobs, health; see the
+phase Reconciliation note), request/response types in `lib/api-types.ts` built ON the shared
+subpath's unions/interfaces, an `ApiError` class narrowing the canonical envelope, and header
+injection from the identity store (7.4).
 
 #### Acceptance criteria
 
-- [ ] Every §11 route has a typed method; no `any` anywhere.
-- [ ] Errors parse the canonical envelope; `isCode(err, AI_TOKENS_ERROR_CODES.X)` helper works.
-- [ ] Only the shared subpath is imported (grep-proof).
-- [ ] 100% unit coverage on `lib/**` (fetch mocked).
+- [x] Every route across the eight real modules has a typed method; no `any` anywhere.
+- [x] Errors parse the canonical envelope; `isCode(err, code)` helper works for both library
+      codes (`AI_TOKENS_ERROR_CODES`) and host dot-namespaced codes.
+- [x] Only the shared subpath is imported (grep-proof).
+- [x] 100% unit coverage on `lib/**` (fetch mocked; `api-types.ts` is a pure-declaration file with
+      no executable statements, excluded from the coverage denominator, same as the sibling apps'
+      convention for compile-time-only files). A minimal `vitest.config.ts` (node environment)
+      lands with this task so the 49 tests are actually runnable; jsdom, Testing Library, and
+      enforced coverage thresholds land with the switcher and CI wiring in 7.4.
 
 #### Files to create / modify
 
