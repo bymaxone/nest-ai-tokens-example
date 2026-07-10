@@ -1,8 +1,40 @@
 # Phase 07: Web Skeleton & Design System
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-06
+> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 07
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (Frontend Design), §15 (Design System), §8.2 (shared subpath)
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 and the REAL `apps/api` surface built
+> in phases 01-06 supersede the shapes drafted here and in spec §11/§14 (same rule as the phase
+> 01-06 notes). The shared subpath (`dist/shared/index.d.ts`) exports `UsageRecord`, `PriceVersion`,
+> `AccessStatus`, `Budget`/`BudgetStatus`, `AiTokensErrorResponse`, `AI_TOKENS_ERROR_CODES`,
+> `AI_OPERATIONS`, `SERVICE_TIERS`, `formatNanoUsd`, and related money/catalog helpers — NOT the
+> drafted `TokenTransaction`/`ModelPricing`/`UsageBy*`/`AI_TOKEN_TRANSACTION_TYPES` names. It also
+> ships no `JsonSafe<T>` mapped type (that utility lives only on the server subpath), so the api
+> client's response types are hand-declared wire shapes (bigint money and `Date` fields as `string`,
+> matching what actually crosses the JSON boundary) built ON the shared unions/interfaces wherever
+> they apply (`AiOperation`, `ServiceTier`, `ProviderId`, `UsageStatus`, `MeteringScope`,
+> `AiTokensErrorCode`) rather than re-declaring those catalog types. The route catalogue is the REAL
+> one from `apps/api/src/{workspace,ledger,pricing,usage,quota,errors-demo,system-jobs,health}`
+> (module map, spec §10.1), not the drafted spec §11 table: every controller method in those modules
+> has a typed client method. Every app-raised error (library `AiTokensException` AND the host
+> `ApiException`) serializes the same `{ error: { code, message, details? } }` envelope, so the
+> client narrows on one shape regardless of which layer raised it; host codes (e.g.
+> `provider.rate_limited`) are outside the `AI_TOKENS_ERROR_CODES` union and stay typed as `string`.
+>
+> **Design system.** `design_system.html` documents the production sibling recipe as Tailwind v4 +
+> shadcn, but its own rendering — and the literal `tokens.css`/`globals.css` file targets this task
+> names — is hand-written CSS custom properties and component-recipe classes. This phase ports that
+> hand-written layer VERBATIM (same variable names, same class names, same values) rather than
+> adding Tailwind/shadcn/Radix as new dependencies: it is the smaller, equally faithful surface for
+> a skeleton phase whose pages are stubs until phase 08.
+>
+> **CI.** The reusable `node-ci.yml` has no separate "web-test" job: web unit coverage folds into
+> the existing `unit` job through the root `test:cov` script (already `pnpm -r --workspace-concurrency=1
+--if-present run test:cov`, serialized) once `apps/web/package.json` carries a `test:cov` script.
+> Setting `has-web: true` turns on the reusable's own `web-build` job. The shared-subpath-only grep
+> is a new repo-specific CI job (mirroring the existing `probe` job), since the reusable has no such
+> input.
 
 ## Context
 
@@ -38,7 +70,7 @@ may be mocked until 03-06 endpoints land).
 
 | ID  | Task                                                      | Status | Priority | Size | Depends on |
 | --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 7.1 | Branch + Next.js 16 app init + design tokens/fonts        | 📋     | P0       | M    | none       |
+| 7.1 | Branch + Next.js 16 app init + design tokens/fonts        | ✅     | P0       | M    | none       |
 | 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | 📋     | P0       | M    | 7.1        |
 | 7.3 | Typed api client on the shared subpath + error narrowing  | 📋     | P0       | M    | 7.1        |
 | 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | 📋     | P0       | M    | 7.2, 7.3   |
@@ -48,7 +80,7 @@ may be mocked until 03-06 endpoints land).
 
 ## Task 7.1: Branch + Next.js 16 init + design tokens
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -58,11 +90,12 @@ from `design_system.html`.
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-07-web-skeleton-design` created with `git switch -c`.
-- [ ] `pnpm --filter web dev` serves a page using the design tokens (background, typography,
-      glass card visible).
-- [ ] Tokens/fonts match `design_system.html` exactly (same variable names and values).
-- [ ] Workspace lint/typecheck cover the new app.
+- [x] Branch `feat/phase-07-web-skeleton-design` created with `git switch -c`.
+- [x] `pnpm --filter web dev` serves a page using the design tokens (background, typography,
+      glass card visible). (Verified via `next build` + `next start`; `next dev` itself hits an
+      unrelated port conflict from a concurrent sibling worktree in this environment.)
+- [x] Tokens/fonts match `design_system.html` exactly (same variable names and values).
+- [x] Workspace lint/typecheck cover the new app.
 
 #### Files to create / modify
 
