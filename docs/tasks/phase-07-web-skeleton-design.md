@@ -298,7 +298,8 @@ to the chain (see the phase Reconciliation note: the reusable has no separate "w
       automated integration test (`test/integration/balance-round-trip.integration.test.ts`,
       `pnpm --filter web run test:integration`) that boots Postgres via Testcontainers and the
       real `createApp()` boot seam on a random port, never the host's 5432.
-- [x] `pnpm --filter web run test:cov` enforces 100% on `lib/**` and `components/**` (94 tests);
+- [x] `pnpm --filter web run test:cov` enforces 100% on `lib/**` and `components/**` (94 tests
+      at PR-open, 97 after the review-round specs);
       component tests green.
 - [x] CI: `has-web: true` turns on the reusable's `web-build` job; web unit coverage folds into
       the reusable's existing `unit` job (root `test:cov`, no separate "web-test" job exists); a
@@ -357,7 +358,8 @@ Completion Protocol: standard steps; commit `feat(web): identity switcher, vites
 
 - **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 7.1..7.4
 - **Note**: gates replayed green (root `lint`/`typecheck`/`format:check`/`build`; `web test:cov`
-  94 tests at 100% on all four metrics on `lib/**` + `components/**`; `web test:integration`
+  94 tests at PR-open (97 after the review-round specs) at 100% on all four metrics on
+  `lib/**` + `components/**`; `web test:integration`
   Testcontainers round-trip; `api test:cov` unaffected, still 424 tests at 100%); every 7.1-7.4
   acceptance criterion audited against the tree; code and security reviews iterated to zero
   findings (two boolean-naming fixes and a switcher focus-visibility fix applied). Per the
@@ -422,7 +424,8 @@ Completion Protocol: append `- 7.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 7.3 ✅ 2026-07-10: `lib/api-types.ts` + `lib/api-client.ts`, one typed method per route across
   the real module map; `ApiError`/`isCode` narrow the canonical envelope; 49 fetch-mocked tests.
 - 7.4 ✅ 2026-07-10: `lib/identity-store.ts` + `identity-switcher.tsx`; `lib/api.ts` singleton;
-  Overview's live balance round trip; full Vitest/Testing Library setup (94 tests, 100% coverage
+  Overview's live balance round trip; full Vitest/Testing Library setup (94 tests then, 97 after
+  the review-round specs, 100% coverage
   on `lib/**` + `components/**`); a Testcontainers integration smoke; CI `has-web: true` plus the
   `web-import-guard` job.
 - 7.5 ✅ 2026-07-10: gates green, criteria audited, code/security reviews at zero findings; PR #18
