@@ -1,8 +1,31 @@
 # Phase 08: Dashboard Pages
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-06
+> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 08
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (page-by-page), §13 (Demonstration Scenarios)
+
+## Reconciliation note (endpoint/type surface vs drafted names)
+
+The `apps/web/src/lib/api-client.ts` + `api-types.ts` pair built in phase 07 already models every
+route this phase needs, field for field against the real controllers (`apps/api/src/{workspace,
+ledger,pricing,usage,quota,errors-demo}`); no client/type changes were required to start this
+phase. Two drafted names in the task blocks do not exist on the real surface and are reconciled
+here:
+
+- **"Type chips from `AI_TOKEN_TRANSACTION_TYPES`" (task 8.3).** No such export exists on the
+  library's shared subpath (it exports `WALLET_ENTRY_TYPES` for wallet entries, not ledger usage
+  rows). The Ledger's `GET /ledger/transactions` filter surface (`ListTransactionsQueryDto`) is
+  `status` (`UsageStatus`: pending/posted/reversed/released) and `operation` (`AiOperation`:
+  chat/responses/embeddings/...). The Ledger page builds its filter chips from `UsageStatus` and
+  `AiOperation` (both re-exported by `@bymax-one/nest-ai-tokens/shared`) instead.
+- **Per-field `formatted` money strings (project constraint).** Only `BalanceView`,
+  `WorkspaceUsageView.cost`, and `CreditResponse.balance` carry a pre-formatted USD string.
+  `PriceRowView`, `UsageSummaryView`, and `UsageRecordView` carry only raw nano-USD decimal
+  strings. `apps/web/src/lib/money.ts` formats those the same way the library formats them
+  server-side: it re-exports the library's own `formatNanoUsd` from
+  `@bymax-one/nest-ai-tokens/shared` (exact string-to-bigint parse, no floating-point division) so
+  the web never computes a cost, it only renders an already-settled amount through the library's
+  own formatter.
 
 ## Context
 
@@ -34,7 +57,7 @@ every §13 scenario is walkable end to end in the browser.
 
 | ID  | Task                                                                  | Status | Priority | Size | Depends on |
 | --- | --------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 8.1 | Branch + Overview page (stat cards + sparkline)                       | 📋     | P0       | M    | none       |
+| 8.1 | Branch + Overview page (stat cards + sparkline)                       | ✅     | P0       | M    | none       |
 | 8.2 | Playground page (5 command cards + embeddings panel + failure helper) | 📋     | P0       | L    | 8.1        |
 | 8.3 | Ledger page (table, filters, inspector, refund/top-up)                | 📋     | P0       | M    | 8.1        |
 | 8.4 | Pricing + Usage pages (tables, timeline, charts, leaderboard)         | 📋     | P0       | L    | 8.1        |
@@ -45,7 +68,7 @@ every §13 scenario is walkable end to end in the browser.
 
 ## Task 8.1: Branch + Overview page
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -55,10 +78,10 @@ default models with pricing badges (`/workspace/models`).
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-08-dashboard-pages` created with `git switch -c`.
-- [ ] All four data blocks live with loading/empty/error states; switcher changes refresh them.
-- [ ] Sparkline renders the seeded history deterministically.
-- [ ] Component tests (mocked client) cover states; 100% on touched `lib/**`.
+- [x] Branch `feat/phase-08-dashboard-pages` created with `git switch -c`.
+- [x] All four data blocks live with loading/empty/error states; switcher changes refresh them.
+- [x] Sparkline renders the seeded history deterministically.
+- [x] Component tests (mocked client) cover states; 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -413,3 +436,7 @@ Completion Protocol: append `- 8.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 8.1 ✅ 2026-07-10: Overview page (BalanceCard, TotalsStats, UsageSparkline, ModelsBadge) plus
+  the shared `useApiQuery`/`useApiMutation` hooks, `StatCard`, `ErrorBanner`, and `money.ts` that
+  every later task in this phase builds on.
