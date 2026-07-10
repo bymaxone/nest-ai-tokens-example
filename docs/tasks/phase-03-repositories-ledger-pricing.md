@@ -65,7 +65,7 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 | 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | ✅     | P0       | M    | 3.1        |
 | 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | ✅     | P0       | S    | 3.2        |
 | 3.4 | `ledger/` REST: list, detail, filters, pagination                              | ✅     | P0       | M    | 3.1        |
-| 3.5 | `pricing/` REST: current, history, update, flush-cache                         | ✅     | P0       | M    | 3.2        |
+| 3.5 | `pricing/` REST: current, history, update (cache flush reconciled out)         | ✅     | P0       | M    | 3.2        |
 | 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | ✅     | P0       | S    | 3.1..3.5   |
 
 ---
@@ -449,7 +449,7 @@ address every finding, squash-merge on green, delete the branch, log completion.
 
 #### Acceptance criteria
 
-- [ ] All gates green sequentially; all 3.1..3.5 criteria verified against the tree.
+- [x] All gates green sequentially; all 3.1..3.5 criteria verified against the tree.
 - [x] Dashboards synced; PR squash-merged with the Copilot review resolved; branch gone.
 
 #### Agent prompt
