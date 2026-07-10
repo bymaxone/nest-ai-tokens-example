@@ -1,6 +1,6 @@
 # Phase 02: API Skeleton & Module Wiring
 
-> **Status**: 🔄 In Progress · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 👀 Review · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 02
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §9.2 (canonical wiring), §10 (Backend Design), §3 (Architecture)
 
@@ -54,7 +54,7 @@ harness. CI gains `build`, `test`, and `e2e` jobs.
 | 2.2 | Demo identity middleware + user registry                                  | ✅     | P0       | S    | 2.1        |
 | 2.3 | Library wiring: options factory + repository/logger placeholders bindings | ✅     | P0       | M    | 2.2        |
 | 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs       | ✅     | P0       | M    | 2.3        |
-| 2.5 | Phase close: audit, dashboards, PR + Copilot review                       | 📋     | P0       | S    | 2.1..2.4   |
+| 2.5 | Phase close: audit, dashboards, PR + Copilot review                       | 👀     | P0       | S    | 2.1..2.4   |
 
 ---
 
@@ -373,7 +373,7 @@ Completion Protocol: standard steps; commit `feat(api): health endpoints and e2e
 
 ## Task 2.5: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 2.1..2.4
+- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 2.1..2.4
 
 #### Description
 
@@ -383,10 +383,12 @@ on green, delete the branch.
 
 #### Acceptance criteria
 
-- [ ] Gate replay green: lint, typecheck, build, test:cov (100%), test:e2e.
-- [ ] Dashboards synced (this file, plan, tasks README).
-- [ ] PR `feat(api): phase 02, api skeleton and module wiring` merged; Copilot findings all
-      addressed; branch deleted.
+- [x] Gate replay green: lint, typecheck, format:check, build, test:cov (100% on all four
+      metrics), test:e2e (Testcontainers).
+- [x] Dashboards synced (this file, plan, tasks README).
+- [ ] PR `feat(api): phase 2, api skeleton and module wiring` merged; Copilot findings all
+      addressed; branch deleted. (PR opened and the Copilot review requested by the implementer;
+      waiting, findings, merge, and branch deletion are owned by the orchestrator.)
 
 #### Files to create / modify
 
@@ -439,3 +441,4 @@ Completion Protocol: append `- 2.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 2.2 ✅ 2026-07-10: demo identity middleware (x-demo-user/x-tenant-id, simulation-labeled) + static registry incl. null-tenant admin; excluded from /health/*; README note; 100% coverage.
 - 2.3 ✅ 2026-07-10: canonical forRootAsync wiring (options factory from typed env, placeholder IAiTokensStore, demo scopeResolver, wallets/budgets from QUOTA_*), host-side paramtypes shim for the esbuild-built dist, GET /health/wiring smoke; 100% coverage.
 - 2.4 ✅ 2026-07-10: health live/ready (Prisma SELECT 1, value-free 503), Testcontainers e2e harness (postgres:17-alpine, prisma migrate deploy, createApp boot, 9 specs incl. bad-URL readiness variant), CI e2e-api on + Build API job; 100% coverage.
+- 2.5 👀 2026-07-10: acceptance audit green (lint, typecheck, format, build, test:cov 100%, test:e2e), zero code-review and security-review findings; PR opened with the Copilot review requested; merge owned by the orchestrator.
