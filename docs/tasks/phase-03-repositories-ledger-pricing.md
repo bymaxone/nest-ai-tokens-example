@@ -1,6 +1,6 @@
 # Phase 03: Repositories, Ledger & Pricing API
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 03
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16, §11 (ledger/pricing routes), §7.2-7.3 (matrix rows 13-36)
 
@@ -62,7 +62,7 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 | ID  | Task                                                                           | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------------ | ------ | -------- | ---- | ---------- |
 | 3.1 | Branch + `PrismaTokenTransactionRepository` (8 methods, SQL aggregation)       | ✅     | P0       | L    | none       |
-| 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | 📋     | P0       | M    | 3.1        |
+| 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | ✅     | P0       | M    | 3.1        |
 | 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | 📋     | P0       | S    | 3.2        |
 | 3.4 | `ledger/` REST: list, detail, filters, pagination                              | 📋     | P0       | M    | 3.1        |
 | 3.5 | `pricing/` REST: current, history, update, flush-cache                         | 📋     | P0       | M    | 3.2        |
@@ -153,27 +153,32 @@ Completion Protocol: standard steps; commit `feat(api): prisma token transaction
 
 ## Task 3.2: `PrismaModelPricingRepository`
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 3.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 3.1
 
 #### Description
 
 Implement the six methods of `IModelPricingRepository`: `create`, `findActive` (documented window
 predicate, highest `effectiveFrom` on overlap), `findHistory`, `findAllCurrent`,
 `closeCurrentWindow` (returns updated count), `upsertIfMissing` (race-safe on the
-`(model, effectiveFrom)` pair). Decimal mapped to number at the boundary.
+`(model, effectiveFrom)` pair). Decimal mapped to number at the boundary. _Reconciled (see the
+phase note): the pricing half also ships inside `PrismaAiTokensStore` (`resolveRate`,
+`upsertPrice`, `getPriceHistory`, `listModels`); this task proves that half's behavior against
+real data._
 
 #### Acceptance criteria
 
-- [ ] Window predicate exactly:
+- [x] Window predicate proven exactly:
       `effectiveFrom <= date AND (effectiveTo IS NULL OR effectiveTo >= date)`;
-      overlap resolution picks max `effectiveFrom`.
-- [ ] `upsertIfMissing` tolerates a concurrent insert (unique violation -> fetch existing).
-- [ ] Binding swapped in `ai.module.ts`; placeholders deleted.
-- [ ] 100% coverage incl. integration specs on windows and history ordering.
+      overlap resolution picks max `effectiveFrom` (inclusive-boundary spec).
+- [x] Concurrent upserts are race-safe: the per-tuple advisory transaction lock plus the partial
+      unique index leave exactly one open window (proven with a concurrent `upsertPrice` pair).
+- [x] Binding swapped in `ai.module.ts`; placeholders deleted (landed in 3.1).
+- [x] Integration specs cover stacked windows, gapless newest-first history ordering, tier
+      isolation, `listModels` tuples, and exact bigint rate/`unitRates` round-trips.
 
 #### Files to create / modify
 
-- `apps/api/src/ai/repositories/prisma-model-pricing.repository.ts`, `ai/ai.module.ts`, specs
+- `apps/api/test/e2e/store-integration.e2e-spec.ts` (pricing-half describe block)
 
 #### Agent prompt
 
@@ -460,3 +465,4 @@ Completion Protocol: append `- 3.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
 
 - 3.1 ✅ 2026-07-10: bound the shipped `PrismaAiTokensStore` (ledger half proven vs the seed plan), deleted the placeholder store
+- 3.2 ✅ 2026-07-10: proved the pricing half (window predicate, overlap resolution, gapless history, concurrent-upsert race safety, bigint round-trips)
