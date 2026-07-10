@@ -287,7 +287,7 @@ describe('AI_TOKENS_INSUFFICIENT_CREDITS trigger', () => {
 
     expect(debit).toHaveBeenCalledWith(
       { tenantId: 'acme', ownerType: 'user', ownerId: 'ada' },
-      expect.objectContaining({ amountNanoUsd: 1_000_000_000_000_000n }),
+      expect.objectContaining({ amountNanoUsd: 9_000_000_000_000_000_000n }),
     )
   })
 

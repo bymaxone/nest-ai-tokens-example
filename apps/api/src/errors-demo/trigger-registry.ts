@@ -43,7 +43,12 @@ export interface TriggerToolkit {
 /** A trigger deterministically raises its catalog code (it never returns). */
 export type TriggerFn = (toolkit: TriggerToolkit) => Promise<never>
 
-/** One registry entry: the trigger plus its feature-block requirement. */
+/**
+ * One registry entry: the trigger plus its feature-block requirement.
+ * The dispatcher (`ErrorsDemoService.trigger`) rejects with the app's 503
+ * `quota.disabled` BEFORE running an entry whose required block resolved
+ * to `null`, so entries may narrow `wallets`/`budgets` to non-null.
+ */
 export interface TriggerEntry {
   /** The enforcement block the trigger needs, if any. */
   readonly requires?: 'wallets' | 'budgets'
@@ -53,8 +58,14 @@ export interface TriggerEntry {
 /** The demo-labeled feature prefix every trigger-side write carries. */
 export const ERRORS_DEMO_FEATURE_PREFIX = 'errors-demo'
 
-/** A debit no demo wallet can cover (seeded balances are tens of USD). */
-const IMPOSSIBLE_DEBIT_NANO_USD = 1_000_000_000_000_000n
+/**
+ * A debit no demo wallet can ever cover: nine billion USD in nano-USD,
+ * just under the int8 column ceiling (so the store binds it cleanly).
+ * Seeded balances are tens of USD and the credit endpoint caps a single
+ * grant at under one million USD, so this amount stays unreachable by
+ * orders of magnitude (the debit must reject, never settle).
+ */
+const IMPOSSIBLE_DEBIT_NANO_USD = 9_000_000_000_000_000_000n
 
 /** The smallest value beyond the ledger's int4 token columns. */
 const INT4_OVERFLOW_TOKENS = 2_147_483_648
