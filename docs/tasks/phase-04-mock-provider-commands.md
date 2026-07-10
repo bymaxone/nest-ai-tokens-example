@@ -1,6 +1,6 @@
 # Phase 04: Mock Provider, Commands & Embeddings
 
-> **Status**: 🔄 In Progress · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 👀 Review · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 04
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §12 (Mock Provider), §11 (workspace routes), §4.3 (behavioral contracts 1, 3, 5), §7.4 (matrix rows 37-52, 73-76)
 
@@ -70,7 +70,7 @@ batch), proving the library's transaction guarantees with e2e ledger assertions.
 | 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | ✅     | P0       | L    | 4.1        |
 | 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | ✅     | P0       | M    | 4.1        |
 | 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | ✅     | P0       | M    | 4.2..4.4   |
-| 4.6 | Phase close: audit, dashboards, PR + Copilot review                             | 📋     | P0       | S    | 4.1..4.5   |
+| 4.6 | Phase close: audit, dashboards, PR + Copilot review                             | 👀     | P0       | S    | 4.1..4.5   |
 
 ---
 
@@ -422,7 +422,7 @@ Completion Protocol: standard steps; commit `test(api): transaction guarantee pr
 
 ## Task 4.6: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 4.1..4.5
+- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 4.1..4.5
 
 #### Description
 
@@ -432,8 +432,9 @@ findings addressed, squash-merge on green, delete branch, log.
 
 #### Acceptance criteria
 
-- [ ] Gates green sequentially (lint, typecheck, build, test:cov 100%, test:e2e).
-- [ ] Dashboards synced; PR merged with review resolved; branch gone.
+- [x] Gates green sequentially (lint, typecheck, build, test:cov 100%, test:e2e).
+- [ ] Dashboards synced; PR merged with review resolved; branch gone. (PR opened and review
+      requested; the merge, thread resolution, and branch deletion are handled after review.)
 
 #### Agent prompt
 
