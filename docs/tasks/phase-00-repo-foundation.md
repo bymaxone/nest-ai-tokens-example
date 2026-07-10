@@ -1,6 +1,6 @@
 # Phase 00: Repository Foundation & CI
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 00
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §23 (Tooling & Conventions), §6 (Repository Layout)
 
@@ -33,7 +33,7 @@ repository-visibility condition, so the pipeline is public-ready while the repo 
 | --- | ---------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 0.1 | Branch + workspace root (pnpm, tsconfig, scripts)                            | ✅     | P0       | S    | none       |
 | 0.2 | Lint, format & hooks (ESLint flat, Prettier, husky, commitlint, lint-staged) | ✅     | P0       | S    | 0.1        |
-| 0.3 | Repo hygiene files (LICENSE, README stub, CHANGELOG, renovate, editorconfig) | 📋     | P1       | S    | 0.1        |
+| 0.3 | Repo hygiene files (LICENSE, README stub, CHANGELOG, renovate, editorconfig) | ✅     | P1       | S    | 0.1        |
 | 0.4 | CI pipeline + conditional security workflows                                 | 📋     | P0       | M    | 0.2        |
 | 0.5 | Phase close: audit, dashboards, PR + Copilot review                          | 📋     | P0       | S    | 0.1..0.4   |
 
@@ -190,7 +190,7 @@ Conventional commit `chore(repo): add lint, format and commit governance (0.2)`)
 
 ## Task 0.3: Repo hygiene files
 
-- **Status**: 📋 ToDo · **Priority**: P1 · **Size**: S · **Depends on**: 0.1
+- **Status**: ✅ Done · **Priority**: P1 · **Size**: S · **Depends on**: 0.1
 
 #### Description
 
@@ -200,10 +200,10 @@ the `@bymax-one/nest-ai-tokens` dependency, pin GitHub Actions digests), `.edito
 
 #### Acceptance criteria
 
-- [ ] All five files exist with real content (no lorem/TODO bodies).
-- [ ] README names the library under test and links `docs/TECHNICAL_SPECIFICATION.md`,
+- [x] All five files exist with real content (no lorem/TODO bodies).
+- [x] README names the library under test and links `docs/TECHNICAL_SPECIFICATION.md`,
       `docs/DEVELOPMENT_PLAN.md`, `docs/tasks/README.md`.
-- [ ] `renovate.json` validates against the Renovate schema (`$schema` set).
+- [x] `renovate.json` validates against the Renovate schema (`$schema` set).
 
 #### Files to create / modify
 
@@ -400,3 +400,4 @@ Completion Protocol: append `- 0.5 ✅ YYYY-MM-DD: phase merged in PR #<n>` to t
 
 - 0.1 ✅ 2026-07-10: pnpm workspace root scaffolded (package.json, pnpm-workspace.yaml, .nvmrc, strict tsconfig.base.json, .gitignore); `pnpm install` and `pnpm typecheck` green.
 - 0.2 ✅ 2026-07-10: ESLint 9 flat config + Prettier 3 + husky (pre-commit/commit-msg) + commitlint + lint-staged wired; commit-msg hook proven to reject a non-conventional message, pre-commit hook proven to block a broken staged file.
+- 0.3 ✅ 2026-07-10: LICENSE (MIT), README stub, CHANGELOG (Keep a Changelog), renovate.json, .editorconfig added.
