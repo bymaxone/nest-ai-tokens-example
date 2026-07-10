@@ -1,6 +1,6 @@
 # Phase 05: Quota, Credits & Aggregations
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 05
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §17 (Quota), §11 (usage/quota/system-jobs routes), §7.5-7.6 (matrix rows 53-72, 84-85)
 
@@ -79,7 +79,7 @@ metadata). After this phase the drain-then-402 scenario is walkable.
 | --- | ------------------------------------------------------------------------------------------ | ------ | -------- | ---- | ---------- |
 | 5.1 | Branch + ledger-backed balance resolver + guard on workspace                               | ✅     | P0       | M    | none       |
 | 5.2 | Estimators: body-size on commands, constant + model-based + resolver overrides in `quota/` | ✅     | P0       | M    | 5.1        |
-| 5.3 | Credits + refund endpoints (`purchase`, allocations, `refund`)                             | 📋     | P0       | S    | 5.1        |
+| 5.3 | Credits + refund endpoints (`purchase`, allocations, `refund`)                             | ✅     | P0       | S    | 5.1        |
 | 5.4 | `usage/` REST: balance, by-period/type/model, top consumers, system costs                  | 📋     | P0       | M    | 5.1        |
 | 5.5 | `system-jobs/`: reindex (system cost) + agent-decision metadata                            | 📋     | P1       | S    | 5.4        |
 | 5.6 | Phase close: audit, dashboards, PR + Copilot review                                        | 📋     | P0       | S    | 5.1..5.5   |
@@ -245,24 +245,31 @@ Completion Protocol: standard steps; commit `feat(api): quota lab and policy var
 
 ## Task 5.3: Credits + refund endpoints
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 5.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 5.1
 
 #### Description
 
-`POST /ledger/credits` (`recordCredit` with type `purchase`/`monthly_allocation`/
-`trial_allocation`, positive amount, description) and `POST /ledger/refund` (compensating
-`refund` credit referencing an original transaction id in metadata). Simulates the billing webhook
-the library intentionally excludes.
+(Reconciled onto v0.1.0; see the phase note.) `POST /ledger/credits` (`WalletService.grant` with
+type `purchase`/`monthly_allocation`/`trial_allocation` as the entry reason, strict positive
+BigInt nano-USD strings, backdated `effectiveAt`, host-side replay pre-check) and
+`POST /ledger/refund` (`MeteringService.reverse`: a compensating record linked via
+`reversesRecordId`/`reversedByRecordId`, wallet refunded for enforced originals). Simulates the
+billing webhook the library intentionally excludes.
 
 #### Acceptance criteria
 
-- [ ] Credits raise the balance immediately (asserted through `/usage/balance` once 5.4 lands or
-      the resolver directly here).
-- [ ] Refund writes a NEW positive transaction with `metadata.refundOf: <id>`; the original row
-      is untouched (immutability proof, matrix row 23).
-- [ ] Zero/negative amounts rejected by Zod before reaching the library; the library's own
-      `ledger.zero_amount` stays reachable via errors-demo (phase 06).
-- [ ] 100% coverage.
+- [x] Credits raise the balance immediately: e2e asserts the wallet balance delta equals exactly
+      the granted bigint amount, with the post-credit balance echoed in the response
+      (`effectiveAt` backdated so the DB-clock spendability rule can never leave a fresh top-up
+      inert); a client `idempotencyKey` makes retries replay-safe (one grant, same entry).
+- [x] Refund writes a NEW compensating transaction that exactly negates the original (linked via
+      `reversesRecordId`; the reconciled home of `metadata.refundOf`); the original row's amounts
+      stay byte-identical under the `reversed` annotation (immutability proof, matrix row 23),
+      the wallet is restored by the billed cost, and a double refund is the canonical 409.
+- [x] Zero/negative/fractional/oversized amounts rejected by Zod before reaching the library
+      (proven e2e with a zero wallet delta); the library's own zero-amount error stays reachable
+      only through its direct API.
+- [x] 100% coverage.
 
 #### Files to create / modify
 
@@ -485,3 +492,4 @@ Completion Protocol: append `- 5.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 
 - 5.1 ✅ 2026-07-10: hold-based enforcement on all seven metered workspace handlers (tolerance-scaled estimators, EnforcementGuard, drain-then-blocked e2e)
 - 5.2 ✅ 2026-07-10: quota lab (declarative constant + model-based estimators), access status read, budgets admin surface with pre-handler block e2e
+- 5.3 ✅ 2026-07-10: credits (grant with backdated effectiveAt + replay pre-check) and refund (orchestrated reversal) endpoints with exact-delta e2e proofs
