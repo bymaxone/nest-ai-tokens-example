@@ -54,7 +54,7 @@ describe('TranslateCard', () => {
   it('renders the error envelope on a rejection', async () => {
     const user = userEvent.setup()
     vi.mocked(api.translate).mockRejectedValue(
-      new ApiError('quota.insufficient_balance', 402, 'not enough balance'),
+      new ApiError('AI_TOKENS_INSUFFICIENT_CREDITS', 402, 'not enough balance'),
     )
     render(<TranslateCard models={['mock-chat-pro']} />)
 

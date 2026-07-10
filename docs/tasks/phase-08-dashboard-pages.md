@@ -1,6 +1,6 @@
 # Phase 08: Dashboard Pages
 
-> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 08
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (page-by-page), §13 (Demonstration Scenarios)
 
@@ -50,6 +50,30 @@ here:
 - **Usage "system-costs byCategory + byType" (task 8.4).** `GET /usage/system-costs` has exactly
   one `groupBy` dimension (`systemCostCategory`); there is no second "by type" grouping on that
   endpoint. `SystemCostsPanel` renders the one dimension the endpoint provides.
+- **Errors-demo catalog field names (task 8.5).** `api-types.ts`'s `ErrorCatalogEntryView` had
+  drifted from the real `ErrorCatalogEntry` (`apps/api/src/errors-demo/error-catalog.ts`): the
+  wire fields are `httpStatus`/`summary`, not `status`/`note`, and `availability` is one of four
+  values (`trigger` / `boot-variant` / `e2e-only` / `reserved`), not three. Fixed in this task.
+- **The "quota wall" code is a library code, not `quota.insufficient_balance`.** That drafted name
+  appears nowhere in `apps/api`; every quota-exhaustion e2e (`quota-lab.e2e-spec.ts`,
+  `quota-enforcement.e2e-spec.ts`) asserts the library code `AI_TOKENS_INSUFFICIENT_CREDITS` (402).
+  The Quota Lab's drain shortcut and every fixture that demonstrates the "hit the wall" outcome use
+  that real code.
+- **Quota Lab "resolver overrides" / `@SkipQuota` (task 8.5).** These are guard-configuration
+  concepts (spec §17), not separate demo endpoints; only two lab routes exist
+  (`POST /quota/lab/constant`, flat 1000-token hold; `POST /quota/lab/model-based`, 5000 tokens for
+  the flagship model / 1000 otherwise, from `apps/api/src/quota/quota-lab.service.ts`). `LabRunner`
+  covers both real variants plus the drain/top-up shortcuts.
+- **Guard tolerance/minimum balance (task 8.5).** No endpoint echoes `QUOTA_TOLERANCE` /
+  `QUOTA_MINIMUM_BALANCE`; `GuardInputsCard` renders the documented `.env` defaults
+  (`apps/api/src/config/env.ts`: tolerance `1.2`, minimum balance `0`) with a note, per the task's
+  own fallback instruction.
+- **Tenants "side-by-side" snapshot (task 8.5).** Rather than two independently-selected identity
+  panels (extra picker UI, a second `ApiClient` instance bypassing the header switcher), the
+  snapshot shows the CURRENTLY selected identity's balance and recent transactions side by side,
+  refetching automatically on every switcher change (the same `useApiQuery` pattern every page
+  uses). Switching the header identity IS the walkthrough; the acceptance criterion is "isolation
+  visible", not simultaneous dual identities.
 
 ## Context
 
@@ -85,7 +109,7 @@ every §13 scenario is walkable end to end in the browser.
 | 8.2 | Playground page (5 command cards + embeddings panel + failure helper) | ✅     | P0       | L    | 8.1        |
 | 8.3 | Ledger page (table, filters, inspector, refund/top-up)                | ✅     | P0       | M    | 8.1        |
 | 8.4 | Pricing + Usage pages (tables, timeline, charts, leaderboard)         | 📋     | P0       | L    | 8.1        |
-| 8.5 | Quota Lab + Tenants + Errors pages                                    | 📋     | P0       | M    | 8.2        |
+| 8.5 | Quota Lab + Tenants + Errors pages                                    | ✅     | P0       | M    | 8.2        |
 | 8.6 | Phase close: audit, dashboards, PR + Copilot review                   | 📋     | P0       | S    | 8.1..8.5   |
 
 ---
@@ -346,7 +370,7 @@ Completion Protocol: standard steps; commit `feat(web): pricing and usage pages 
 
 ## Task 8.5: Quota Lab + Tenants + Errors pages
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 8.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 8.2
 
 #### Description
 
@@ -358,10 +382,10 @@ for each.
 
 #### Acceptance criteria
 
-- [ ] Quota Lab renders the decision inputs and demonstrates pass/402 per estimator (scenario 5).
-- [ ] Tenants page makes isolation visible (scenario 6) and states the honest boundaries.
-- [ ] Errors grid covers every runtime-triggerable code with its rendered envelope (scenario 8).
-- [ ] Component tests; 100% on touched `lib/**`.
+- [x] Quota Lab renders the decision inputs and demonstrates pass/402 per estimator (scenario 5).
+- [x] Tenants page makes isolation visible (scenario 6) and states the honest boundaries.
+- [x] Errors grid covers every runtime-triggerable code with its rendered envelope (scenario 8).
+- [x] Component tests; 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -473,3 +497,8 @@ Completion Protocol: append `- 8.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 8.4 ✅ 2026-07-10: Pricing page (current table, per-model history timeline with the open window
   highlighted, the admin update form) and Usage page (period chart with the granularity switch,
   type donut, model bars, top-consumers leaderboard, system-costs-by-category panel).
+- 8.5 ✅ 2026-07-10: Quota Lab (guard-decision inputs, the two real estimator variants, drain/top-up
+  shortcuts), Tenants (the identity-switch isolation snapshot plus the honest boundary callouts),
+  and Errors (the catalog grid grouped by source, on-demand triggers rendering the canonical
+  envelope). Fixed a field-name drift in `ErrorCatalogEntryView` and corrected the "quota wall"
+  code to the real `AI_TOKENS_INSUFFICIENT_CREDITS` throughout.

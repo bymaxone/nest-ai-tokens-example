@@ -25,7 +25,7 @@ describe('ErrorBanner', () => {
     render(
       <ErrorBanner
         error={
-          new ApiError('quota.insufficient_balance', 402, 'not enough balance', {
+          new ApiError('AI_TOKENS_INSUFFICIENT_CREDITS', 402, 'not enough balance', {
             balance: '100',
             estimated: '500',
           })

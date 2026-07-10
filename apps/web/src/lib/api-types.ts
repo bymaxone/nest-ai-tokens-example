@@ -517,13 +517,19 @@ export interface BudgetListView {
 
 /* ─────────────────────────────────── errors-demo ────────────────────────────────── */
 
-/** One row of the `GET /errors-demo` catalog listing. */
+/**
+ * One row of the `GET /errors-demo` catalog listing, field for field
+ * against `apps/api/src/errors-demo/error-catalog.ts`'s `ErrorCatalogEntry`
+ * (verbatim server response, no field renaming): `httpStatus` and
+ * `summary`, not `status`/`note`; `availability` is one of four values,
+ * not three (see the phase Reconciliation note).
+ */
 export interface ErrorCatalogEntryView {
   readonly code: string
   readonly source: 'library' | 'app'
-  readonly status: number
-  readonly availability: 'trigger' | 'boot-variant' | 'not-triggerable'
-  readonly note?: string
+  readonly httpStatus: number
+  readonly availability: 'trigger' | 'boot-variant' | 'e2e-only' | 'reserved'
+  readonly summary: string
 }
 
 /** `GET /errors-demo` response. */
