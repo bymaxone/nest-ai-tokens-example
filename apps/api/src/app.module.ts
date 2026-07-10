@@ -10,6 +10,7 @@ import { Module } from '@nestjs/common'
 import { AiModule } from './ai/ai.module.js'
 import { AppController } from './app.controller.js'
 import { AppConfigModule } from './config/app-config.module.js'
+import { ErrorsDemoModule } from './errors-demo/errors-demo.module.js'
 import { HealthModule } from './health/health.module.js'
 import { IdentityModule } from './identity/identity.module.js'
 import { LedgerModule } from './ledger/ledger.module.js'
@@ -25,6 +26,7 @@ import { WorkspaceModule } from './workspace/workspace.module.js'
     AppConfigModule,
     IdentityModule,
     AiModule,
+    ErrorsDemoModule,
     LedgerModule,
     PricingModule,
     QuotaModule,

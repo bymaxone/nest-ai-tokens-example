@@ -25,5 +25,8 @@ import { MockAiModule } from '../ai/mock-ai.module.js'
     WorkspaceEmbeddingService,
     WorkspaceModelsService,
   ],
+  // The errors-demo module drives its marker triggers through the real
+  // command path, so the command service is part of this module's API.
+  exports: [WorkspaceCommandService],
 })
 export class WorkspaceModule {}
