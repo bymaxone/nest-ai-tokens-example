@@ -15,7 +15,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'nest-ai-tokens-example',
-  description: 'AI token metering dashboard — @bymax-one/nest-ai-tokens reference app.',
+  description: 'AI token metering dashboard: @bymax-one/nest-ai-tokens reference app.',
 }
 
 /**

@@ -8,7 +8,7 @@
 > in phases 01-06 supersede the shapes drafted here and in spec §11/§14 (same rule as the phase
 > 01-06 notes). The shared subpath (`dist/shared/index.d.ts`) exports `UsageRecord`, `PriceVersion`,
 > `AccessStatus`, `Budget`/`BudgetStatus`, `AiTokensErrorResponse`, `AI_TOKENS_ERROR_CODES`,
-> `AI_OPERATIONS`, `SERVICE_TIERS`, `formatNanoUsd`, and related money/catalog helpers — NOT the
+> `AI_OPERATIONS`, `SERVICE_TIERS`, `formatNanoUsd`, and related money/catalog helpers, NOT the
 > drafted `TokenTransaction`/`ModelPricing`/`UsageBy*`/`AI_TOKEN_TRANSACTION_TYPES` names. It also
 > ships no `JsonSafe<T>` mapped type (that utility lives only on the server subpath), so the api
 > client's response types are hand-declared wire shapes (bigint money and `Date` fields as `string`,
@@ -23,18 +23,18 @@
 > `provider.rate_limited`) are outside the `AI_TOKENS_ERROR_CODES` union and stay typed as `string`.
 >
 > **Design system.** `design_system.html` documents the production sibling recipe as Tailwind v4 +
-> shadcn, but its own rendering — and the literal `tokens.css`/`globals.css` file targets this task
-> names — is hand-written CSS custom properties and component-recipe classes. This phase ports that
-> hand-written layer VERBATIM (same variable names, same class names, same values) rather than
+> shadcn, but its own rendering (and the literal `tokens.css`/`globals.css` file names this task
+> targets) is hand-written CSS custom properties and component-recipe classes. This phase ports
+> that hand-written layer VERBATIM (same variable names, same class names, same values) rather than
 > adding Tailwind/shadcn/Radix as new dependencies: it is the smaller, equally faithful surface for
 > a skeleton phase whose pages are stubs until phase 08.
 >
 > **CI.** The reusable `node-ci.yml` has no separate "web-test" job: web unit coverage folds into
-> the existing `unit` job through the root `test:cov` script (already `pnpm -r --workspace-concurrency=1
---if-present run test:cov`, serialized) once `apps/web/package.json` carries a `test:cov` script.
-> Setting `has-web: true` turns on the reusable's own `web-build` job. The shared-subpath-only grep
-> is a new repo-specific CI job (mirroring the existing `probe` job), since the reusable has no such
-> input.
+> the existing `unit` job through the root `test:cov` script (already
+> `pnpm -r --workspace-concurrency=1 --if-present run test:cov`, serialized) once
+> `apps/web/package.json` carries a `test:cov` script. Setting `has-web: true` turns on the
+> reusable's own `web-build` job. The shared-subpath-only grep is a new repo-specific CI job
+> (mirroring the existing `probe` job), since the reusable has no such input.
 
 ## Context
 
