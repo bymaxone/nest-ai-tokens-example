@@ -1,6 +1,6 @@
 # Phase 08: Dashboard Pages
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 08
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (page-by-page), §13 (Demonstration Scenarios)
 
@@ -42,6 +42,14 @@ here:
   integer nano-USD decimal string. The TopUpDialog accepts a USD amount and converts it with the
   library's own `floatUsdToNanoUsd` (from the shared subpath), never a hand-rolled parser: the web
   still never invents money math, it only calls the library's documented converter.
+- **Pricing "flush cache" button (task 8.4).** `PricingController`'s own JSDoc states the drafted
+  `POST /pricing/cache/flush` route is intentionally absent: v0.1.0 exposes no public
+  cache-invalidation API (`PricingCatalogService`'s resolution cache is internal and every
+  `upsertPrice` clears it automatically). There is nothing for a flush button to call, so
+  `UpdatePricingForm` states this in its callout instead of rendering a dead button.
+- **Usage "system-costs byCategory + byType" (task 8.4).** `GET /usage/system-costs` has exactly
+  one `groupBy` dimension (`systemCostCategory`); there is no second "by type" grouping on that
+  endpoint. `SystemCostsPanel` renders the one dimension the endpoint provides.
 
 ## Context
 
@@ -276,7 +284,7 @@ Completion Protocol: standard steps; commit `feat(web): ledger page (8.3)`.
 
 ## Task 8.4: Pricing + Usage pages
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: 8.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: 8.1
 
 #### Description
 
@@ -287,12 +295,12 @@ top-consumers leaderboard, system-costs panel grouped by category.
 
 #### Acceptance criteria
 
-- [ ] Price update round-trip shows the closed window + successor on the timeline without a
+- [x] Price update round-trip shows the closed window + successor on the timeline without a
       reload (scenario 4 walkable).
-- [ ] All five usage visualizations render the deterministic seed correctly; granularity switch
+- [x] All five usage visualizations render the deterministic seed correctly; granularity switch
       re-queries.
-- [ ] System-costs panel shows the `reindex` category from phase 05 (scenario 7 walkable).
-- [ ] Component tests; 100% on touched `lib/**`.
+- [x] System-costs panel shows the `reindex` category from phase 05 (scenario 7 walkable).
+- [x] Component tests; 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -462,3 +470,6 @@ Completion Protocol: append `- 8.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 8.3 ✅ 2026-07-10: Ledger page (status/operation/date filters doubling as the debit/credit view,
   paginated table, the `?focus=` deep-linked row inspector with the full-row JSON viewer and the
   two-step confirm refund, and the top-up dialog using the library's `floatUsdToNanoUsd`).
+- 8.4 ✅ 2026-07-10: Pricing page (current table, per-model history timeline with the open window
+  highlighted, the admin update form) and Usage page (period chart with the granularity switch,
+  type donut, model bars, top-consumers leaderboard, system-costs-by-category panel).
