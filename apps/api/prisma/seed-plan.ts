@@ -51,6 +51,9 @@ export const MONTHLY_ALLOCATION_NANO_USD = 50_000_000_000n
 /** Extra trial credit granted to ada only, in nano-USD (10 USD). */
 export const TRIAL_ALLOCATION_NANO_USD = 10_000_000_000n
 
+/** How long ada's trial grant stays redeemable after the epoch, in days. */
+const TRIAL_GRANT_DAYS = 30
+
 // Flat demo rates in nano-USD per million tokens (0.60 / 2.40 / 0.10 USD).
 const CHAT_INPUT_RATE = 600_000_000n
 const CHAT_OUTPUT_RATE = 2_400_000_000n
@@ -61,8 +64,21 @@ const USER_MARKUP_NUMERATOR = 125n
 const USER_MARKUP_DENOMINATOR = 100n
 const USER_MARKUP_DECIMAL = '1.25'
 
+const MS_PER_MINUTE = 60_000
+const MS_PER_HOUR = 3_600_000
 const MS_PER_DAY = 86_400_000
+
+// Shape of the seeded history: how far back it reaches, the chat/embeddings
+// traffic mix, and the token ranges each operation draws from.
 const HISTORY_DAYS = 90
+const CHAT_TRAFFIC_SHARE = 0.7
+const CHAT_INPUT_TOKEN_RANGE = [200, 4_000] as const
+const CHAT_OUTPUT_TOKEN_RANGE = [100, 2_000] as const
+const EMBED_INPUT_TOKEN_RANGE = [500, 8_000] as const
+
+// Internal maintenance rows: one nightly reindex snapshot per offset, per tenant.
+const SYSTEM_REINDEX_TOKENS = 250_000
+const SYSTEM_REINDEX_DAY_OFFSETS = [10, 40] as const
 
 /** Everything the seed writes, in insertion order. */
 export interface SeedPlan {
@@ -151,10 +167,10 @@ function drawUsage(random: () => number): {
   outputTokens: number
   rawCostNanoUsd: bigint
 } {
-  const isChat = random() < 0.7
+  const isChat = random() < CHAT_TRAFFIC_SHARE
   if (isChat) {
-    const inputTokens = drawInt(random, 200, 4_000)
-    const outputTokens = drawInt(random, 100, 2_000)
+    const inputTokens = drawInt(random, ...CHAT_INPUT_TOKEN_RANGE)
+    const outputTokens = drawInt(random, ...CHAT_OUTPUT_TOKEN_RANGE)
     const rawCostNanoUsd =
       (BigInt(inputTokens) * CHAT_INPUT_RATE + BigInt(outputTokens) * CHAT_OUTPUT_RATE) / 1_000_000n
     return {
@@ -166,7 +182,7 @@ function drawUsage(random: () => number): {
       rawCostNanoUsd,
     }
   }
-  const inputTokens = drawInt(random, 500, 8_000)
+  const inputTokens = drawInt(random, ...EMBED_INPUT_TOKEN_RANGE)
   const rawCostNanoUsd = (BigInt(inputTokens) * EMBED_INPUT_RATE) / 1_000_000n
   return {
     operation: 'embeddings',
@@ -188,8 +204,8 @@ function buildUsageRecord(
   const occurredAt = new Date(
     SEED_EPOCH.getTime() -
       drawInt(random, 0, HISTORY_DAYS) * MS_PER_DAY -
-      drawInt(random, 0, 24) * 3_600_000 -
-      drawInt(random, 0, 60) * 60_000,
+      drawInt(random, 0, 24) * MS_PER_HOUR -
+      drawInt(random, 0, 60) * MS_PER_MINUTE,
   )
   const id = `seed-usage-${String(sequence).padStart(4, '0')}`
   return {
@@ -223,7 +239,7 @@ function buildSystemRecord(
   sequence: number,
   daysBeforeEpoch: number,
 ): Prisma.AiUsageRecordCreateManyInput {
-  const inputTokens = 250_000
+  const inputTokens = SYSTEM_REINDEX_TOKENS
   const rawCostNanoUsd = (BigInt(inputTokens) * EMBED_INPUT_RATE) / 1_000_000n
   const occurredAt = new Date(SEED_EPOCH.getTime() - daysBeforeEpoch * MS_PER_DAY)
   const id = `seed-usage-${String(sequence).padStart(4, '0')}`
@@ -267,7 +283,7 @@ export function buildSeedPlan(): SeedPlan {
   const wallets: Prisma.AiWalletCreateManyInput[] = []
   const walletEntries: Prisma.AiWalletEntryCreateManyInput[] = []
   const usageRecords: Prisma.AiUsageRecordCreateManyInput[] = []
-  const trialExpiry = new Date(SEED_EPOCH.getTime() + 30 * MS_PER_DAY)
+  const trialExpiry = new Date(SEED_EPOCH.getTime() + TRIAL_GRANT_DAYS * MS_PER_DAY)
 
   for (const user of DEMO_USERS) {
     const grantAmounts: [string, bigint, Date?][] = [
@@ -287,8 +303,9 @@ export function buildSeedPlan(): SeedPlan {
     }
   }
   for (const tenantId of DEMO_TENANTS) {
-    usageRecords.push(buildSystemRecord(tenantId, usageRecords.length + 1, 10))
-    usageRecords.push(buildSystemRecord(tenantId, usageRecords.length + 1, 40))
+    for (const dayOffset of SYSTEM_REINDEX_DAY_OFFSETS) {
+      usageRecords.push(buildSystemRecord(tenantId, usageRecords.length + 1, dayOffset))
+    }
   }
 
   return {
