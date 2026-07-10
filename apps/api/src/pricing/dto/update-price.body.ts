@@ -40,8 +40,17 @@ const rateFields = {
   tierOutputNanoUsdPerMillion: nanoUsdPerMillion.optional(),
 }
 
-/** The field names counted by the at-least-one-rate refinement. */
-const RATE_FIELD_NAMES = Object.keys(rateFields)
+/**
+ * Whether the parsed body provides at least one rate field. The store
+ * defaults absent rates to zero, so a rate-free update would silently
+ * replace a model's pricing with an all-zero window.
+ *
+ * @param body The parsed body entries.
+ * @returns True when any rate field carries a value.
+ */
+function hasAnyRateField(body: Record<string, unknown>): boolean {
+  return Object.entries(body).some(([key, value]) => key in rateFields && value !== undefined)
+}
 
 /**
  * Body schema for a price update. Requires at least one rate field: the
@@ -62,12 +71,7 @@ export const updatePriceBodySchema = z
     unitRates: z.record(z.string().min(1), nanoUsdPerMillion).optional(),
     ...rateFields,
   })
-  .refine(
-    (body) => RATE_FIELD_NAMES.some((field) => body[field as keyof typeof body] !== undefined),
-    {
-      message: 'at least one rate field is required',
-    },
-  )
+  .refine(hasAnyRateField, { message: 'at least one rate field is required' })
 
 /** The parsed update body. */
 export type UpdatePriceBody = z.infer<typeof updatePriceBodySchema>
