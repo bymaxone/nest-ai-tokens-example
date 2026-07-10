@@ -118,8 +118,10 @@ public.
      before apps/ exists. Run these in every implementer's phase-wide gate. -->
 
 ```bash
-# Web must import ONLY the ./shared subpath, never the server root '.'
-[ ! -d apps/web ] || ! grep -rn "from '@bymax-one/nest-ai-tokens'" apps/web
+# Web must reference ONLY the ./shared subpath, never the server root '.'
+# (catches every reference form: import, export-from, require, dynamic
+# import, single or double quotes; only the /shared subpath is allowed)
+[ ! -d apps/web ] || ! { grep -rn "@bymax-one/nest-ai-tokens" apps/web --include='*.ts' --include='*.tsx' | grep -v "@bymax-one/nest-ai-tokens/shared"; }
 
 # No suppression comments anywhere (types or lint)
 [ ! -d apps ] || ! grep -rnE '@ts-ignore|@ts-nocheck|@ts-expect-error|eslint-disable' apps --include='*.ts' --include='*.tsx'
@@ -133,8 +135,11 @@ public.
 # No real provider secret committed anywhere
 [ ! -d apps ] || ! grep -rnE 'sk-[A-Za-z0-9]{20,}' apps
 
-# No AI-attribution trailers on this branch's commits (checked per PR)
-! { git log --format='%B' origin/main..HEAD | grep -iE 'Co-Authored-By|Generated with Claude|🤖'; }
+# No AI-attribution trailers on this branch's commits (checked per PR).
+# The ref check fails loudly first, so a missing origin/main cannot make the
+# negated grep pass silently.
+git rev-parse --verify --quiet origin/main >/dev/null &&
+  ! { git log --format='%B' origin/main..HEAD | grep -iE 'Co-Authored-By|Generated with Claude|🤖'; }
 ```
 
 ## Security invariants & review focus
