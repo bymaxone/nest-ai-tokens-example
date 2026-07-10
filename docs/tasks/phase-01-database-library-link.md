@@ -1,6 +1,6 @@
 # Phase 01: Postgres, Prisma & Library Link
 
-> **Status**: 👀 Review · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: ✅ Done · **Progress**: 5 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 01
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16 (Prisma Repositories), §21 (Local Stack), §8 (Library Consumption)
 
@@ -50,7 +50,7 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 | 1.2 | `apps/api` package init + Prisma schema + first migration           | ✅     | P0       | M    | 1.1        |
 | 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | ✅     | P0       | M    | 1.2        |
 | 1.4 | Library `file:` link + dual-subpath probe script (CI job)           | ✅     | P0       | S    | 1.2        |
-| 1.5 | Phase close: audit, dashboards, PR + Copilot review                 | 👀     | P0       | S    | 1.1..1.4   |
+| 1.5 | Phase close: audit, dashboards, PR + Copilot review                 | ✅     | P0       | S    | 1.1..1.4   |
 
 ---
 
@@ -332,7 +332,7 @@ Completion Protocol: standard steps; commit `feat(api): link nest-ai-tokens and 
 
 ## Task 1.5: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 1.1..1.4
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 1.1..1.4
 
 #### Description
 
@@ -344,7 +344,7 @@ PR, request the GitHub Copilot review, address all findings, merge with CI green
 - [x] Local gate replay green: `pnpm lint && pnpm typecheck && pnpm --filter api test` plus
       `pnpm infra:up` + migrate + seed (twice) + probe.
 - [x] Dashboards updated (this file, plan, tasks README).
-- [ ] PR `feat(api): phase 01, postgres, prisma and library link` merged squash with branch
+- [x] PR `feat(api): phase 01, postgres, prisma and library link` merged squash with branch
       deleted, Copilot findings all addressed, CI green.
 
 #### Files to create / modify
@@ -400,4 +400,4 @@ Completion Protocol: append `- 1.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 1.2 ✅ 2026-07-10: apps/api package (Prisma 7 + adapter-pg + prisma.config.ts), multi-file schema with the library's shipped fragment verbatim, first migration applied incl. both partial indexes
 - 1.3 ✅ 2026-07-10: deterministic seed (pure plan + idempotent delete-first writer): 3 wallets, 4 grants, 76 usage records across acme/globex incl. 4 reindex system costs; 12 unit tests, 100% coverage; double-run verified against Postgres
 - 1.4 ✅ 2026-07-10: `file:` library link (peers auto-resolved, no openai anywhere), dual-subpath probe (15 exports over `.` + `./shared`), ci.yml replaced by the family thin caller (node-ci reusable + probe job + visibility-gated security), README linking-modes section
-- 1.5 👀 2026-07-10: acceptance audit green (fragment verbatim, no openai, gate replay, seed double-run, probe, zero code/security review findings); PR opened and Copilot review requested; merge owned by the orchestrator
+- 1.5 ✅ 2026-07-10: acceptance audit green (fragment verbatim, no openai, gate replay, seed double-run, probe); PR #5 opened with the Copilot review, both findings fixed (seed clears runtime debit allocations, proven live), squash-merged as `d09f115`, branch deleted, CI green incl. the Library-subpath probe job
