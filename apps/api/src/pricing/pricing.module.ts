@@ -7,12 +7,15 @@
  */
 import { Module } from '@nestjs/common'
 
+import { PricingCatalogService } from './pricing-catalog.service.js'
+import { PricingController } from './pricing.controller.js'
 import { PricingSeedService } from './pricing-seed.service.js'
 import { PrismaModule } from '../prisma/prisma.module.js'
 
 /** Wires the pricing boot seed and the pricing endpoints. */
 @Module({
   imports: [PrismaModule],
-  providers: [PricingSeedService],
+  controllers: [PricingController],
+  providers: [PricingSeedService, PricingCatalogService],
 })
 export class PricingModule {}

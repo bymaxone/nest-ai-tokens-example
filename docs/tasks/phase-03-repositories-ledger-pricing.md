@@ -1,6 +1,6 @@
 # Phase 03: Repositories, Ledger & Pricing API
 
-> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 03
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16, §11 (ledger/pricing routes), §7.2-7.3 (matrix rows 13-36)
 
@@ -65,7 +65,7 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 | 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | ✅     | P0       | M    | 3.1        |
 | 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | ✅     | P0       | S    | 3.2        |
 | 3.4 | `ledger/` REST: list, detail, filters, pagination                              | ✅     | P0       | M    | 3.1        |
-| 3.5 | `pricing/` REST: current, history, update, flush-cache                         | 📋     | P0       | M    | 3.2        |
+| 3.5 | `pricing/` REST: current, history, update, flush-cache                         | ✅     | P0       | M    | 3.2        |
 | 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | 📋     | P0       | S    | 3.1..3.5   |
 
 ---
@@ -364,28 +364,37 @@ Completion Protocol: standard steps; commit `feat(api): ledger read endpoints (3
 
 ## Task 3.5: `pricing/` REST
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 3.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 3.2
 
 #### Description
 
 `GET /pricing` (`getAllCurrentPricing`), `GET /pricing/:model/history` (`getPricingHistory`),
 `PUT /pricing/:model` (library `UpdatePricingDto` + `updatePricing`: closes window, inserts
 successor, invalidates cache), `POST /pricing/cache/flush` (`invalidateCache`). E2E proves the
-window sequence and that a backdated `calculateCost` still uses the old window.
+window sequence and that a backdated `calculateCost` still uses the old window. _Reconciled (see
+the phase note): the current listing is a host-owned open-window read, history/update ride
+`PricingService.getPriceHistory`/`upsertPrice`, the body DTO is a Zod mirror of
+`NewPriceVersion` (digit-string money, no shipped `UpdatePricingDto` exists), the backdated
+proof uses `resolveRate` + `computeCostNanoUsd`, and the cache-flush route is omitted because
+v0.1.0 exposes no public cache-invalidation API (`upsertPrice` clears it internally)._
 
 #### Acceptance criteria
 
-- [ ] Update flow: old open window gains `effectiveTo`; successor row open; cache invalidated
-      (next `getCurrentPricing` reflects the new price immediately).
-- [ ] Backdated cost proof: `calculateCost(model, tokens, 0, oldDate)` uses the closed window
-      (matrix row 32).
-- [ ] Library DTO reused (`UpdatePricingDto`), demonstrating matrix row 88 partially (workspace
-      DTOs complete it in phase 04).
-- [ ] 100% coverage on new files; e2e green.
+- [x] Update flow proven end to end: the old open window gains `effectiveTo` equal to the
+      successor's `effectiveFrom`, the successor is open, and a resolution in the same cache
+      bucket reflects the new price immediately (cache invalidated by `upsertPrice`).
+- [x] Backdated cost proof: a pre-update `resolveRate` lands in the CLOSED window and
+      `computeCostNanoUsd` prices identical usage at exactly 840,000 vs 980,000 nano-USD
+      across the two windows (matrix row 32).
+- [x] The update body mirrors the library's `NewPriceVersion` (documented in JSDoc), accepts
+      money only as digit strings (bigint-exact), requires at least one rate field, and the
+      admin plane is closed: 401 anonymous, 403 non-admin, provenance server-forced `manual`.
+- [x] 100% coverage on new files; e2e green.
 
 #### Files to create / modify
 
-- `apps/api/src/pricing/**`, e2e spec
+- `apps/api/src/pricing/**` (controller, catalog service, DTOs), `src/common/zod-dto.ts`,
+  unit specs, `test/e2e/ledger-pricing-api.e2e-spec.ts` (pricing blocks)
 
 #### Agent prompt
 
@@ -485,3 +494,4 @@ Completion Protocol: append `- 3.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 3.2 ✅ 2026-07-10: proved the pricing half (window predicate, overlap resolution, gapless history, concurrent-upsert race safety, bigint round-trips)
 - 3.3 ✅ 2026-07-10: app-owned idempotent boot pricing seed (snapshot + 3 mock models) with double-boot and concurrent-boot e2e proofs
 - 3.4 ✅ 2026-07-10: ledger read endpoints (filtered, paginated list + owner-checked detail) with plan-exact e2e and 100% unit coverage
+- 3.5 ✅ 2026-07-10: pricing catalog, history, and admin update endpoints with window-sequence, cache-invalidation, and backdated-cost e2e proofs

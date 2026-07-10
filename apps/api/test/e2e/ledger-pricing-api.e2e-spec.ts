@@ -15,14 +15,19 @@ import { fileURLToPath } from 'node:url'
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 import type { INestApplication } from '@nestjs/common'
+import { PricingService, computeCostNanoUsd } from '@bymax-one/nest-ai-tokens'
+import type { NormalizedUsage } from '@bymax-one/nest-ai-tokens'
 import { PostgreSqlContainer } from '@testcontainers/postgresql'
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
 import type { App } from 'supertest/types.js'
 
+import { MODEL_PRICES_SEED } from '@bymax-one/nest-ai-tokens/prices'
+
 import { buildSeedPlan } from '../../prisma/seed-plan.js'
 import { runSeed } from '../../prisma/seed-runner.js'
 import { createApp } from '../../src/bootstrap.js'
+import { MOCK_MODEL_PRICES } from '../../src/pricing/mock-model-prices.js'
 import { PrismaService } from '../../src/prisma/prisma.service.js'
 
 /** The image every tier of this project pins for Postgres. */
@@ -279,5 +284,183 @@ describe('GET /ledger/transactions/:id', () => {
    */
   it('returns 401 without a demo identity', async () => {
     await request(server).get('/ledger/transactions/seed-usage-0001').expect(401)
+  })
+})
+
+describe('GET /pricing', () => {
+  /**
+   * Public current catalog.
+   *
+   * Every boot-seeded open window (library snapshot plus the three mock
+   * models) is listed without an identity, with bigint rates rendered as
+   * decimal strings.
+   */
+  it('lists every open window with JSON-safe rates', async () => {
+    const response = await request(server).get('/pricing').expect(200)
+
+    const items = response.body.items as {
+      model: string
+      inputNanoUsdPerMillion: string
+      effectiveTo: string | null
+    }[]
+    expect(items.length).toBe(MODEL_PRICES_SEED.length + MOCK_MODEL_PRICES.length)
+    expect(items.every((item) => item.effectiveTo === null)).toBe(true)
+    const pro = items.find((item) => item.model === 'mock-chat-pro')
+    expect(pro?.inputNanoUsdPerMillion).toBe('600000000')
+  })
+})
+
+describe('GET /pricing/:model/history', () => {
+  /**
+   * Unknown tuple.
+   *
+   * A model that was never priced for the tuple is a clean 404.
+   */
+  it('returns 404 for an unpriced tuple', async () => {
+    await request(server).get('/pricing/ghost-model/history?provider=mock').expect(404)
+  })
+
+  /**
+   * Validation.
+   *
+   * The provider is required; the Zod pipe rejects its absence with 400.
+   */
+  it('returns 400 without a provider', async () => {
+    const response = await request(server).get('/pricing/mock-chat-pro/history').expect(400)
+
+    expect(response.body.message).toBe('Validation failed')
+  })
+})
+
+describe('PUT /pricing/:model', () => {
+  /** A valid update body raising mock-chat-pro to 0.70 / 2.80 USD per million. */
+  const updateBody = {
+    provider: 'mock',
+    operation: 'chat',
+    inputNanoUsdPerMillion: '700000000',
+    outputNanoUsdPerMillion: '2800000000',
+    reasoningNanoUsdPerMillion: '2800000000',
+  }
+
+  /**
+   * Access control matrix.
+   *
+   * Anonymous updates are 401, authenticated non-admins are 403, and a
+   * rate-free body is 400: the admin plane is closed before any store
+   * write.
+   */
+  it('rejects anonymous, non-admin, and rate-free updates', async () => {
+    await request(server).put('/pricing/mock-chat-pro').send(updateBody).expect(401)
+    await request(server)
+      .put('/pricing/mock-chat-pro')
+      .set('x-demo-user', 'ada')
+      .send(updateBody)
+      .expect(403)
+    await request(server)
+      .put('/pricing/mock-chat-pro')
+      .set('x-demo-user', 'root')
+      .send({ provider: 'mock', operation: 'chat' })
+      .expect(400)
+  })
+
+  /**
+   * The scenario 4 update flow: close the window, insert the successor,
+   * and serve the new price immediately.
+   *
+   * The pre-update resolution primes the in-memory cache; the post-update
+   * resolution uses an `at` in the same TTL bucket (same cache key), so
+   * seeing the NEW price immediately proves `upsertPrice` invalidated the
+   * cache rather than waiting out the five-minute TTL. The history must
+   * show the old window closed exactly at the successor's `effectiveFrom`
+   * (atomic close-and-insert), and the catalog must reflect the new rate.
+   */
+  it('closes the window, inserts the successor, and invalidates the cache', async () => {
+    if (app === undefined) throw new Error('app must be booted')
+    const pricing = app.get(PricingService)
+    const primed = await pricing.resolveRate({
+      provider: 'mock',
+      model: 'mock-chat-pro',
+      operation: 'chat',
+      at: new Date(),
+    })
+    expect(primed?.inputNanoUsdPerMillion).toBe(600_000_000n)
+
+    const response = await request(server)
+      .put('/pricing/mock-chat-pro')
+      .set('x-demo-user', 'root')
+      .send(updateBody)
+      .expect(200)
+
+    expect(response.body.inputNanoUsdPerMillion).toBe('700000000')
+    expect(response.body.effectiveTo).toBeNull()
+    expect(response.body.source).toBe('manual')
+
+    const resolved = await pricing.resolveRate({
+      provider: 'mock',
+      model: 'mock-chat-pro',
+      operation: 'chat',
+      at: new Date(),
+    })
+    expect(resolved?.inputNanoUsdPerMillion).toBe(700_000_000n)
+
+    const history = await request(server)
+      .get('/pricing/mock-chat-pro/history?provider=mock&operation=chat')
+      .expect(200)
+    const windows = history.body.items as { effectiveFrom: string; effectiveTo: string | null }[]
+    expect(windows).toHaveLength(2)
+    expect(windows[0]?.effectiveTo).toBeNull()
+    expect(windows[1]?.effectiveTo).toBe(windows[0]?.effectiveFrom)
+
+    const catalog = await request(server).get('/pricing').expect(200)
+    const pro = (catalog.body.items as { model: string; inputNanoUsdPerMillion: string }[]).find(
+      (item) => item.model === 'mock-chat-pro',
+    )
+    expect(pro?.inputNanoUsdPerMillion).toBe('700000000')
+  })
+
+  /**
+   * Backdated cost proof (point-in-time pricing).
+   *
+   * A resolution dated before the update still lands in the CLOSED window
+   * (never re-rated), and the pure cost engine prices the same usage
+   * differently under the two windows: 1,000 in + 100 out tokens cost
+   * exactly 840,000 nano-USD at the old rates and 980,000 at the new ones.
+   */
+  it('still resolves the closed window for a backdated calculation', async () => {
+    if (app === undefined) throw new Error('app must be booted')
+    const pricing = app.get(PricingService)
+    const usage: NormalizedUsage = {
+      provider: 'mock',
+      model: 'mock-chat-pro',
+      operation: 'chat',
+      inputTokens: 1_000,
+      outputTokens: 100,
+      cacheReadTokens: 0,
+      cacheWrite5mTokens: 0,
+      cacheWrite1hTokens: 0,
+      reasoningTokens: 0,
+      audioInTokens: 0,
+      audioOutTokens: 0,
+      imageInTokens: 0,
+      imageOutTokens: 0,
+    }
+
+    const backdated = await pricing.resolveRate({
+      provider: 'mock',
+      model: 'mock-chat-pro',
+      operation: 'chat',
+      at: new Date('2026-01-01T00:00:00.000Z'),
+    })
+    const current = await pricing.resolveRate({
+      provider: 'mock',
+      model: 'mock-chat-pro',
+      operation: 'chat',
+      at: new Date(),
+    })
+    if (backdated === null || current === null) throw new Error('both windows must resolve')
+
+    expect(backdated.effectiveTo).not.toBeNull()
+    expect(computeCostNanoUsd(usage, backdated).totalNanoUsd).toBe(840_000n)
+    expect(computeCostNanoUsd(usage, current).totalNanoUsd).toBe(980_000n)
   })
 })

@@ -214,6 +214,24 @@ describe('LedgerReadService.detail', () => {
   })
 
   /**
+   * Null-tenant identity.
+   *
+   * The root admin reads under the global tenant (matching the
+   * scopeResolver mapping), so a tenant-owned row is foreign to it and
+   * stays 403 even for the demo admin.
+   */
+  it('throws 403 when a null-tenant identity reads a tenant-owned row', async () => {
+    const { service } = serviceWith(
+      [recordWith({ scope: { type: 'user', id: 'root' } })],
+      summaryWith(1),
+    )
+
+    await expect(service.detail({ id: 'root', tenantId: null }, 'seed-usage-0001')).rejects.toThrow(
+      ForbiddenException,
+    )
+  })
+
+  /**
    * Owned row.
    *
    * The owner receives the full JSON-safe payload, including string money
