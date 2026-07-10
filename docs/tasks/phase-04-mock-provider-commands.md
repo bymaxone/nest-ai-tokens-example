@@ -1,6 +1,6 @@
 # Phase 04: Mock Provider, Commands & Embeddings
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 04
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §12 (Mock Provider), §11 (workspace routes), §4.3 (behavioral contracts 1, 3, 5), §7.4 (matrix rows 37-52, 73-76)
 
@@ -68,7 +68,7 @@ batch), proving the library's transaction guarantees with e2e ledger assertions.
 | 4.1 | Branch + `MockAiProvider` core (token math, canned content, latency knob)       | ✅     | P0       | M    | none       |
 | 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error)        | ✅     | P0       | M    | 4.1        |
 | 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | ✅     | P0       | L    | 4.1        |
-| 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | 📋     | P0       | M    | 4.1        |
+| 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | ✅     | P0       | M    | 4.1        |
 | 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | 📋     | P0       | M    | 4.2..4.4   |
 | 4.6 | Phase close: audit, dashboards, PR + Copilot review                             | 📋     | P0       | S    | 4.1..4.5   |
 
@@ -293,7 +293,7 @@ Completion Protocol: standard steps; commit `feat(api): workspace command endpoi
 
 ## Task 4.4: Embeddings REST + models endpoint
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 4.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 4.1
 
 #### Description
 
@@ -304,10 +304,12 @@ unmarked-handler path).
 
 #### Acceptance criteria
 
-- [ ] Single embed returns vector + tokensUsed + estimatedCost + transactionId.
-- [ ] Batch embed returns vectors + ONE transactionId; e2e asserts `metadata.batchSize`.
-- [ ] `/workspace/models` returns `{ command: { model, pricing }, embedding: { model, pricing } }`.
-- [ ] 100% coverage on new files.
+- [x] Single embed returns vector + tokensUsed + estimatedCost + transactionId.
+- [x] Batch embed returns vectors + ONE transactionId; e2e asserts `metadata.batchSize`.
+      (Reconciled: `UsageRecord` has no metadata column; the batch size persists as the
+      `batch-size:<n>` tag and the e2e asserts it on the single aggregate row.)
+- [x] `/workspace/models` returns `{ command: { model, pricing }, embedding: { model, pricing } }`.
+- [x] 100% coverage on new files.
 
 #### Files to create / modify
 
@@ -476,3 +478,5 @@ Completion Protocol: append `- 4.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 4.3 ✅ 2026-07-10: five workspace command endpoints (Zod DTOs, thin controller, metering via
   MeteringService.record, billing semantics for truncation/invalid-JSON/partial translations)
   plus the updatedAt DB-default migration the raw-SQL store adapter requires; e2e happy paths.
+- 4.4 ✅ 2026-07-10: embed + embed/batch (ONE aggregate record, batch-size tag proven in e2e via
+  the LedgerService port) and the identity-free /workspace/models pricing composition.

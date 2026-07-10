@@ -13,6 +13,8 @@ import { describe, expect, it } from '@jest/globals'
 import { analyzeBodySchema } from './analyze.body.js'
 import { DEFAULT_RESOURCE_ID, MAX_TARGET_LANGUAGES, MAX_TEXT_LENGTH } from './command-fields.js'
 import { customBodySchema } from './custom.body.js'
+import { MAX_BATCH_TEXTS, embedBatchBodySchema } from './embed-batch.body.js'
+import { embedBodySchema } from './embed.body.js'
 import { rewriteBodySchema } from './rewrite.body.js'
 import { summarizeBodySchema } from './summarize.body.js'
 import { translateBodySchema } from './translate.body.js'
@@ -147,5 +149,38 @@ describe('custom body', () => {
     expect(customBodySchema.safeParse({ userPrompt: 'Hi', temperature: 3 }).success).toBe(false)
     expect(customBodySchema.safeParse({ userPrompt: 'Hi', maxTokens: 0 }).success).toBe(false)
     expect(customBodySchema.safeParse({ systemPrompt: 'sys' }).success).toBe(false)
+  })
+})
+
+describe('embed body', () => {
+  /**
+   * Single-embed fields.
+   *
+   * Bounded text parses with the resource default; only the catalog's
+   * embeddings model is accepted; dimensions must be a positive integer.
+   */
+  it('validates text, the single embeddings model, and dimensions', () => {
+    expect(embedBodySchema.parse({ text: 'Hi' }).resourceId).toBe(DEFAULT_RESOURCE_ID)
+    expect(embedBodySchema.parse({ text: 'Hi', model: 'mock-embed' }).model).toBe('mock-embed')
+    expect(embedBodySchema.safeParse({ text: 'Hi', model: 'mock-chat-pro' }).success).toBe(false)
+    expect(embedBodySchema.safeParse({ text: 'Hi', dimensions: 0 }).success).toBe(false)
+    expect(embedBodySchema.safeParse({ text: '' }).success).toBe(false)
+  })
+})
+
+describe('embed batch body', () => {
+  /**
+   * Batch bounds (1..50).
+   *
+   * Empty batches, oversized batches, and empty entries reject; a valid
+   * batch parses in order.
+   */
+  it('bounds the batch size and validates every entry', () => {
+    const oversized = Array.from({ length: MAX_BATCH_TEXTS + 1 }, () => 'x')
+
+    expect(embedBatchBodySchema.parse({ texts: ['a', 'b'] }).texts).toEqual(['a', 'b'])
+    expect(embedBatchBodySchema.safeParse({ texts: [] }).success).toBe(false)
+    expect(embedBatchBodySchema.safeParse({ texts: oversized }).success).toBe(false)
+    expect(embedBatchBodySchema.safeParse({ texts: ['ok', ''] }).success).toBe(false)
   })
 })

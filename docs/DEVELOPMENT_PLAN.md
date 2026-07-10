@@ -29,7 +29,7 @@
 > every phase file mirror this table; when they disagree, this table wins and must be fixed in the
 > same commit.
 >
-> **Overall progress: 24 / 55 tasks (44%) · 4 / 10 phases done**
+> **Overall progress: 25 / 55 tasks (45%) · 4 / 10 phases done**
 > **Active phase:** 04 · **Blockers:** none
 
 | #   | Phase                                | Tasks file                                | Size | Done / Total | %    | Status |
@@ -38,7 +38,7 @@
 | 01  | Postgres, Prisma & Library Link      | `phase-01-database-library-link.md`       | M    | 5 / 5        | 100% | ✅     |
 | 02  | API Skeleton & Module Wiring         | `phase-02-api-skeleton-wiring.md`         | L    | 5 / 5        | 100% | ✅     |
 | 03  | Repositories, Ledger & Pricing API   | `phase-03-repositories-ledger-pricing.md` | L    | 6 / 6        | 100% | ✅     |
-| 04  | Mock Provider, Commands & Embeddings | `phase-04-mock-provider-commands.md`      | L    | 3 / 6        | 50%  | 🔄     |
+| 04  | Mock Provider, Commands & Embeddings | `phase-04-mock-provider-commands.md`      | L    | 4 / 6        | 67%  | 🔄     |
 | 05  | Quota, Credits & Aggregations        | `phase-05-quota-aggregations.md`          | L    | 0 / 6        | 0%   | 📋     |
 | 06  | Multi-Tenant & Error Catalog         | `phase-06-tenants-errors.md`              | M    | 0 / 5        | 0%   | 📋     |
 | 07  | Web Skeleton & Design System         | `phase-07-web-skeleton-design.md`         | M    | 0 / 5        | 0%   | 📋     |

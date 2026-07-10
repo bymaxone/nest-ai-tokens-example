@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url'
 
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals'
 import type { INestApplication } from '@nestjs/common'
+import { LedgerService } from '@bymax-one/nest-ai-tokens'
 import { PostgreSqlContainer } from '@testcontainers/postgresql'
 import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
@@ -163,6 +164,80 @@ describe('workspace commands (happy paths)', () => {
 
     expect(response.body.content).toBe('[mock:mock-chat-lite] Say hi')
     expect(response.body.usage.model).toBe('mock-chat-lite')
+  })
+})
+
+describe('embeddings and models', () => {
+  /**
+   * Single embed end to end (matrix row 46).
+   *
+   * The deterministic 8-dimension unit vector arrives with the usage view
+   * (prompt tokens only: embeddings produce no output tokens).
+   */
+  it('POST /workspace/embed returns the vector and the usage view', async () => {
+    const response = await request(server)
+      .post('/workspace/embed')
+      .set('x-demo-user', 'ada')
+      .send({ text: 'embed me', resourceId: 'doc-5' })
+      .expect(200)
+
+    expect(response.body.vector).toHaveLength(8)
+    expect(response.body.usage).toEqual(usageShape)
+    expect(response.body.usage.model).toBe('mock-embed')
+    expect(response.body.usage.tokensUsed.output).toBe(0)
+  })
+
+  /**
+   * Batch embed writes ONE aggregate record (contract 1, matrix row 47,
+   * scenario 2).
+   *
+   * Five texts produce five vectors but exactly ONE new ledger row,
+   * carrying the `batch-size:5` tag — counted through the same
+   * `LedgerService` port consumers use, before and after the call.
+   */
+  it('POST /workspace/embed/batch writes exactly one aggregate ledger row', async () => {
+    const ledger = (app as INestApplication).get(LedgerService)
+    const filter = { tenantId: 'acme', feature: 'workspace.embed.batch' }
+    const before = await ledger.sumCost(filter)
+
+    const response = await request(server)
+      .post('/workspace/embed/batch')
+      .set('x-demo-user', 'ada')
+      .send({ texts: ['a', 'b', 'c', 'd', 'e'], resourceId: 'doc-6' })
+      .expect(200)
+
+    const after = await ledger.sumCost(filter)
+    const rows = await ledger.query(filter)
+    const batchRow = rows.find((row) => row.id === response.body.usage.transactionId)
+
+    expect(response.body.embeddings).toHaveLength(5)
+    expect(response.body.batchSize).toBe(5)
+    expect(after.records - before.records).toBe(1)
+    expect(batchRow?.tags).toEqual(['resource:doc-6', 'batch-size:5'])
+  })
+
+  /**
+   * Models info without an identity (matrix row 49).
+   *
+   * The read composes default models with current pricing badges and
+   * needs no identity header (the unguarded read).
+   */
+  it('GET /workspace/models serves defaults and pricing identity-free', async () => {
+    const response = await request(server).get('/workspace/models').expect(200)
+
+    expect(response.body.command.model).toBe('mock-chat-pro')
+    expect(response.body.command.models).toEqual(['mock-chat-pro', 'mock-chat-lite'])
+    expect(response.body.command.pricing).toMatchObject({
+      provider: 'mock',
+      model: 'mock-chat-pro',
+      operation: 'chat',
+      inputNanoUsdPerMillion: '600000000',
+      effectiveTo: null,
+    })
+    expect(response.body.embedding).toMatchObject({
+      model: 'mock-embed',
+      pricing: { operation: 'embeddings', inputNanoUsdPerMillion: '100000000' },
+    })
   })
 })
 
