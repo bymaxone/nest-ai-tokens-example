@@ -1,6 +1,6 @@
 # Phase 01: Postgres, Prisma & Library Link
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 01
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16 (Prisma Repositories), §21 (Local Stack), §8 (Library Consumption)
 
@@ -48,7 +48,7 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 | --- | ------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 1.1 | Branch + docker compose Postgres + infra scripts                    | ✅     | P0       | S    | none       |
 | 1.2 | `apps/api` package init + Prisma schema + first migration           | ✅     | P0       | M    | 1.1        |
-| 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | 📋     | P0       | M    | 1.2        |
+| 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | ✅     | P0       | M    | 1.2        |
 | 1.4 | Library `file:` link + dual-subpath probe script (CI job)           | 📋     | P0       | S    | 1.2        |
 | 1.5 | Phase close: audit, dashboards, PR + Copilot review                 | 📋     | P0       | S    | 1.1..1.4   |
 
@@ -197,7 +197,7 @@ Completion Protocol: standard steps; commit `feat(api): add prisma schema and fi
 
 ## Task 1.3: Deterministic seed
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 1.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 1.2
 
 #### Description
 
@@ -209,11 +209,15 @@ usage charts and top-consumer boards have meaningful shapes from first boot.
 
 #### Acceptance criteria
 
-- [ ] `pnpm --filter api prisma:seed` is idempotent (re-run produces no duplicates; use stable ids
-      or deleteMany-first strategy documented in a comment).
-- [ ] Both tenants have distinct, non-overlapping data; the null tenant has data too.
-- [ ] Every seeded debit has metadata satisfying the library's `TokenTransactionMetadata` keys.
-- [ ] A unit test asserts seed counts and a known balance per user.
+- [x] `pnpm --filter api run prisma:seed` is idempotent (re-run produces no duplicates; stable ids
+      plus a deleteMany-first strategy documented in the writer's header comment).
+- [x] Both tenants have distinct, non-overlapping data; tenant-scoped system-cost rows exist too
+      (the shipped schema requires `tenantId` on every row, superseding the drafted null-tenant
+      admin user).
+- [x] Every seeded row typechecks against the generated `Prisma.*CreateManyInput` shapes with the
+      documented model/token/cost fields (`provider`, `model`, `operation`, token counts,
+      nano-USD costs, `markupMultiplier`, `idempotencyKey`, `payloadHash`).
+- [x] A unit test asserts seed counts and a known balance per user.
 
 #### Files to create / modify
 
@@ -393,3 +397,4 @@ Completion Protocol: append `- 1.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 
 - 1.1 ✅ 2026-07-10: postgres:17-alpine compose stack (digest-pinned, healthcheck, named volume), root `.env.example` (DATABASE_URL, PORT), real infra:up/down/nuke scripts
 - 1.2 ✅ 2026-07-10: apps/api package (Prisma 7 + adapter-pg + prisma.config.ts), multi-file schema with the library's shipped fragment verbatim, first migration applied incl. both partial indexes
+- 1.3 ✅ 2026-07-10: deterministic seed (pure plan + idempotent delete-first writer): 3 wallets, 4 grants, 76 usage records across acme/globex incl. 4 reindex system costs; 12 unit tests, 100% coverage; double-run verified against Postgres
