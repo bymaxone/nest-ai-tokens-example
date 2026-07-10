@@ -1,6 +1,6 @@
 # Phase 07: Web Skeleton & Design System
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 👀 Review · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 07
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (Frontend Design), §15 (Design System), §8.2 (shared subpath)
 
@@ -73,7 +73,7 @@ may be mocked until 03-06 endpoints land).
 | 7.1 | Branch + Next.js 16 app init + design tokens/fonts        | ✅     | P0       | M    | none       |
 | 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | ✅     | P0       | M    | 7.1        |
 | 7.3 | Typed api client on the shared subpath + error narrowing  | ✅     | P0       | M    | 7.1        |
-| 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | 📋     | P0       | M    | 7.2, 7.3   |
+| 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | ✅     | P0       | M    | 7.2, 7.3   |
 | 7.5 | Phase close: audit, dashboards, PR + Copilot review       | 📋     | P0       | S    | 7.1..7.4   |
 
 ---
@@ -280,23 +280,29 @@ Completion Protocol: standard steps; commit `feat(web): typed api client on shar
 
 ## Task 7.4: Switcher + Vitest + CI web jobs
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 7.2, 7.3
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 7.2, 7.3
 
 #### Description
 
 The user/tenant switcher (header component listing the demo users, persisting to `localStorage`,
 feeding the api client headers), the Vitest + Testing Library setup with 100% thresholds on
-`lib/**`, and the CI `web-build`/`web-test` jobs appended to the chain.
+`lib/**` and `components/**`, and the CI web build job + a repo-specific import-guard job appended
+to the chain (see the phase Reconciliation note: the reusable has no separate "web-test" job).
 
 #### Acceptance criteria
 
-- [ ] Switcher renders the demo users (ada/grace/linus/root) with tenant badges; selection
-      persists across reloads; client sends the headers.
-- [ ] A live round-trip works: the Overview stub calls `GET /usage/balance` through the client
-      and renders the number (against a locally running api).
-- [ ] `pnpm --filter web test:cov` enforces 100% on `lib/**`; component tests green.
-- [ ] CI gains `web-build` + `web-test` jobs (names contractual); grep step enforcing the
-      shared-only import.
+- [x] Switcher renders the demo users (ada/grace/linus/root) with tenant badges; selection
+      persists across reloads (`localStorage`, hydrated on mount); client sends the headers.
+- [x] A live round-trip works: the Overview page calls `GET /usage/balance` through the client
+      and renders the number. Proven twice: interactively (a real api process) and by an
+      automated integration test (`test/integration/balance-round-trip.integration.test.ts`,
+      `pnpm --filter web run test:integration`) that boots Postgres via Testcontainers and the
+      real `createApp()` boot seam on a random port, never the host's 5432.
+- [x] `pnpm --filter web run test:cov` enforces 100% on `lib/**` and `components/**` (94 tests);
+      component tests green.
+- [x] CI: `has-web: true` turns on the reusable's `web-build` job; web unit coverage folds into
+      the reusable's existing `unit` job (root `test:cov`, no separate "web-test" job exists); a
+      new repo-specific `web-import-guard` job enforces the shared-only import in CI.
 
 #### Files to create / modify
 

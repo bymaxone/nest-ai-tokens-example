@@ -62,8 +62,8 @@ import type {
   UsageReportView,
   UsageRecordView,
   UsageWindowQuery,
-} from './api-types.js'
-import { getApiUrl } from './env.js'
+} from './api-types'
+import { getApiUrl } from './env'
 
 /** A known library error code, or any other host dot-namespaced code. */
 export type ErrorCode = AiTokensErrorCode | (string & {})

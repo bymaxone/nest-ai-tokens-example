@@ -31,6 +31,9 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
+      // vi.mocked(obj.method) is the standard Vitest mocking idiom; the rule's
+      // "extracted from its object" heuristic false-positives on it.
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
   prettier,

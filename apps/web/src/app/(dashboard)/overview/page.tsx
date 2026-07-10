@@ -1,25 +1,26 @@
 /**
- * @fileoverview Overview stub page. Real content (balance, tokens consumed,
- * cost, sparkline) lands with the api client wiring in a later task.
+ * @fileoverview Overview page. The balance tile proves the live api
+ * round-trip (`GET /usage/balance` through the typed client); the tokens
+ * consumed, cost, and sparkline widgets land in a later phase.
  *
  * @layer app/(dashboard)/overview
  */
+import { BalanceCard } from '@/components/overview/BalanceCard'
 import { PageScaffold } from '@/components/shell/PageScaffold'
 import { requireNavItem } from '@/components/shell/nav-items'
 
 const NAV_ITEM = requireNavItem('/overview')
 
 /**
- * The Overview stub page.
+ * The Overview page.
  *
- * @returns The page scaffold with a placeholder content area.
+ * @returns The page scaffold with the live balance tile.
  */
 export default function OverviewPage(): React.JSX.Element {
   return (
     <PageScaffold title={NAV_ITEM.label} description={NAV_ITEM.description}>
-      <div className="empty">
-        <div className="empty__title">Content lands next</div>
-        <p>The balance, usage, and cost widgets wire up once the api client is live.</p>
+      <div className="grid-4">
+        <BalanceCard />
       </div>
     </PageScaffold>
   )

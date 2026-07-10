@@ -7,6 +7,7 @@
  */
 import type { ReactNode } from 'react'
 
+import { IdentitySwitcher } from '@/components/identity-switcher'
 import { Header } from '@/components/shell/Header'
 import { Sidebar } from '@/components/shell/Sidebar'
 
@@ -20,7 +21,7 @@ import { Sidebar } from '@/components/shell/Sidebar'
 export default function DashboardLayout({ children }: { children: ReactNode }): React.JSX.Element {
   return (
     <div className="shell">
-      <Header />
+      <Header rightSlot={<IdentitySwitcher />} />
       <div className="shell__body">
         <Sidebar />
         <main className="main">{children}</main>
