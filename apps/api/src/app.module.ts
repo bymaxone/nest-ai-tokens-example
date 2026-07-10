@@ -10,11 +10,12 @@ import { Module } from '@nestjs/common'
 import { AiModule } from './ai/ai.module.js'
 import { AppController } from './app.controller.js'
 import { AppConfigModule } from './config/app-config.module.js'
+import { HealthModule } from './health/health.module.js'
 import { IdentityModule } from './identity/identity.module.js'
 
 /** The composition root of the API. */
 @Module({
-  imports: [AppConfigModule, IdentityModule, AiModule],
+  imports: [AppConfigModule, IdentityModule, AiModule, HealthModule],
   controllers: [AppController],
 })
 export class AppModule {}

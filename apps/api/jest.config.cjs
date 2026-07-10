@@ -16,8 +16,12 @@ module.exports = {
   rootDir: '.',
   testMatch: ['<rootDir>/prisma/**/*.spec.ts', '<rootDir>/src/**/*.spec.ts'],
   extensionsToTreatAsEsm: ['.ts'],
+  // emitDecoratorMetadata stays off under test: every injection in this app
+  // uses an explicit @Inject (so DI never needs emitted paramtypes) and the
+  // emitted metadata would otherwise add unreachable `typeof` guard branches
+  // to the coverage report. The production build (tsc) keeps it on.
   transform: {
-    '^.+\\.(t|j)s$': ['ts-jest', { useESM: true, tsconfig: '<rootDir>/tsconfig.json' }],
+    '^.+\\.(t|j)s$': ['ts-jest', { useESM: true, tsconfig: { emitDecoratorMetadata: false } }],
   },
   // Strip the .js extension from relative imports so ts-jest resolves the
   // TypeScript sources (NodeNext emits .js specifiers).

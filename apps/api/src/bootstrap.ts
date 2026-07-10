@@ -29,6 +29,9 @@ export async function createApp(): Promise<INestApplication> {
   const app = await NestFactory.create(AppModule, { abortOnError: false })
   app.useGlobalPipes(new ZodValidationPipe())
   app.enableShutdownHooks()
+  // Initialize explicitly: listen() would do it lazily, but the e2e harness
+  // drives the HTTP server without listening on a port.
+  await app.init()
   return app
 }
 

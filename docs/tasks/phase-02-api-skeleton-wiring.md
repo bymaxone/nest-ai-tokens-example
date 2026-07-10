@@ -1,6 +1,6 @@
 # Phase 02: API Skeleton & Module Wiring
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 02
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §9.2 (canonical wiring), §10 (Backend Design), §3 (Architecture)
 
@@ -53,7 +53,7 @@ harness. CI gains `build`, `test`, and `e2e` jobs.
 | 2.1 | Branch + NestJS skeleton (`createApp` seam, Zod pipe, config module)      | ✅     | P0       | M    | none       |
 | 2.2 | Demo identity middleware + user registry                                  | ✅     | P0       | S    | 2.1        |
 | 2.3 | Library wiring: options factory + repository/logger placeholders bindings | ✅     | P0       | M    | 2.2        |
-| 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs       | 📋     | P0       | M    | 2.3        |
+| 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs       | ✅     | P0       | M    | 2.3        |
 | 2.5 | Phase close: audit, dashboards, PR + Copilot review                       | 📋     | P0       | S    | 2.1..2.4   |
 
 ---
@@ -298,7 +298,7 @@ Completion Protocol: standard steps; commit `feat(api): canonical registerAsync 
 
 ## Task 2.4: Health module + e2e harness + CI jobs
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 2.3
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 2.3
 
 #### Description
 
@@ -309,12 +309,16 @@ programmatically), first e2e specs (boot, health, hello, identity 401); CI gains
 
 #### Acceptance criteria
 
-- [ ] `GET /health/ready` returns 503 when the database is unreachable, 200 otherwise.
-- [ ] `pnpm --filter api test:e2e` spins the container, migrates, boots, passes; no shared state
-      between specs; workers bounded.
-- [ ] CI: `build` -> `test` -> `e2e` appended to the needs-chain (job names contractual);
-      e2e uses a Postgres service container in CI (documented difference vs local Testcontainers).
-- [ ] Coverage remains 100% on implemented files.
+- [x] `GET /health/ready` returns 503 when the database is unreachable, 200 otherwise.
+- [x] `pnpm --filter api test:e2e` spins the container, migrates, boots via `createApp()`,
+      passes; no shared state between specs; workers bounded (single worker: one container
+      stack per run).
+- [x] CI: the reusable's `unit` job already gates coverage; its `e2e-api` job is switched on
+      (`run-e2e-api: true` + `e2e-api-command`) and a repo-level `Build API` job compiles the
+      app. The reusable's e2e job runs Testcontainers on the runner's Docker daemon, so no
+      `services:` Postgres block exists in CI either (same mechanism locally and in CI; the
+      drafted service-container difference does not apply to this pipeline).
+- [x] Coverage remains 100% on implemented files.
 
 #### Files to create / modify
 
@@ -434,3 +438,4 @@ Completion Protocol: append `- 2.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 2.1 ✅ 2026-07-10: NestJS 11 skeleton with createApp seam, typed Zod env config (value-free failure report), global Zod validation pipe, JSON hello; 100% coverage on new files.
 - 2.2 ✅ 2026-07-10: demo identity middleware (x-demo-user/x-tenant-id, simulation-labeled) + static registry incl. null-tenant admin; excluded from /health/*; README note; 100% coverage.
 - 2.3 ✅ 2026-07-10: canonical forRootAsync wiring (options factory from typed env, placeholder IAiTokensStore, demo scopeResolver, wallets/budgets from QUOTA_*), host-side paramtypes shim for the esbuild-built dist, GET /health/wiring smoke; 100% coverage.
+- 2.4 ✅ 2026-07-10: health live/ready (Prisma SELECT 1, value-free 503), Testcontainers e2e harness (postgres:17-alpine, prisma migrate deploy, createApp boot, 9 specs incl. bad-URL readiness variant), CI e2e-api on + Build API job; 100% coverage.
