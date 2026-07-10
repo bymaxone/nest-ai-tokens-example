@@ -144,12 +144,14 @@ public.
 # No real provider secret committed anywhere (whole repo, not just apps/)
 ! { grep -rnE 'sk-[A-Za-z0-9]{20,}' . --exclude-dir=.git --exclude-dir=node_modules; }
 
-# No AI-attribution trailers on this branch's commits (checked per PR).
+# No attribution trailers on this branch's commits (checked per PR). By
+# project convention ALL Co-Authored-By trailers are banned (commits carry
+# the operator's identity only), alongside any "Generated with" attribution.
 # The ref check fails loudly WITH a message first, so a missing origin/main
 # cannot make the negated grep pass silently.
 { git rev-parse --verify --quiet origin/main >/dev/null ||
   { echo 'invariant not evaluable: origin/main ref missing'; false; }; } &&
-  ! { git log --format='%B' origin/main..HEAD | grep -iE 'Co-Authored-By|Generated with Claude|🤖'; }
+  ! { git log --format='%B' origin/main..HEAD | grep -iE 'Co-Authored-By|Generated with|🤖'; }
 ```
 
 ## Security invariants & review focus
