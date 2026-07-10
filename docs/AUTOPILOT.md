@@ -41,12 +41,12 @@ below): while the dependency is a `file:` link, the sibling checks apply and
 the registry check does not; once the dependency is `^0.1.0` from a registry,
 the registry check applies and the sibling checks are skipped.
 
-| Applies to | Check (exit 0 = OK, from project root) | On failure |
-|---|---|---|
-| launch, phases 1+ | `docker info` | STOP; operator starts Docker (Postgres compose + Testcontainers e2e need it) |
-| phases 1+, `file:` link mode only | `test -d ../nest-ai-tokens` (the link target resolves; run BEFORE the dist probe below) | mark P<N> ⛔ blocked on "sibling library missing", STOP; operator clones/places `@bymax-one/nest-ai-tokens` beside this repo |
-| phases 1+, `file:` link mode only | `test -d ../nest-ai-tokens/dist` (only after the existence check above passes) | mark P<N> ⛔ blocked on "sibling library not built", STOP; operator runs `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`, then relaunches |
-| phases 1+, registry mode only | `npm view @bymax-one/nest-ai-tokens version` | mark P<N> ⛔ blocked on "library not published", STOP; operator publishes the package (autopilot never publishes) |
+| Applies to                        | Check (exit 0 = OK, from project root)                                                  | On failure                                                                                                                                                       |
+| --------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| launch, phases 1+                 | `docker info`                                                                           | STOP; operator starts Docker (Postgres compose + Testcontainers e2e need it)                                                                                     |
+| phases 1+, `file:` link mode only | `test -d ../nest-ai-tokens` (the link target resolves; run BEFORE the dist probe below) | mark P<N> ⛔ blocked on "sibling library missing", STOP; operator clones/places `@bymax-one/nest-ai-tokens` beside this repo                                     |
+| phases 1+, `file:` link mode only | `test -d ../nest-ai-tokens/dist` (only after the existence check above passes)          | mark P<N> ⛔ blocked on "sibling library not built", STOP; operator runs `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`, then relaunches |
+| phases 1+, registry mode only     | `npm view @bymax-one/nest-ai-tokens version`                                            | mark P<N> ⛔ blocked on "library not published", STOP; operator publishes the package (autopilot never publishes)                                                |
 
 > **⚠ Launch-blocking design decision: resolve BEFORE the first `run`.**
 > The library dependency is `file:../../../nest-ai-tokens` (relative to
@@ -72,18 +72,18 @@ the registry check applies and the sibling checks are skipped.
 <!-- inherit = the orchestrator's own model (the strong tier). Fix sub-agents
      always escalate to inherit when a phase stalls on review/CI findings. -->
 
-| Phase | Model | Rationale |
-|---|---|---|
-| 00 Repo Foundation & CI | `sonnet` | mechanical toolchain scaffold on a fully specified checklist |
-| 01 Postgres, Prisma & Library Link | `inherit` | first contact with the consumed library; subpath resolution and `file:`-link gotchas are the failure mode; exact Prisma reference shapes |
-| 02 API Skeleton & Module Wiring | `inherit` | first real consumption of the library's `registerAsync` factory, DI tokens and provider port; invented library APIs are THE failure mode; identity middleware is security-adjacent |
-| 03 Repositories, Ledger & Pricing | `inherit` | implements both library repository ports (14 methods) with SQL aggregation, race-safe upsert and window logic; contract fidelity plus money-adjacent correctness |
-| 04 Mock Provider, Commands & Embeddings | `inherit` | provider-port contract, command/embedding DTO reuse, and the ledger transaction guarantees (one-per-call, batch aggregate, truncated debits, invalid-JSON no-debit) are subtle |
-| 05 Quota, Credits & Aggregations | `inherit` | security-sensitive: quota guard enforcement (drain then 402), ledger-backed balance resolver, credit/refund money paths; a /security-review would flag all of these |
-| 06 Multi-Tenant & Error Catalog | `inherit` | security-sensitive: tenant isolation (A never sees B) is the canonical tenancy invariant; full 24-code error catalog with no internal leakage |
-| 07 Web Skeleton & Design System | `sonnet` | UI shell on an established API plus verbatim shared design system |
-| 08 Dashboard Pages | `sonnet` | UI pages (feature work) on established endpoints plus the design system |
-| 09 Quality, Docs & Export Audit | `inherit` | final hardening/audit phase: export-audit correctness, 100% coverage close, CI least-privilege verification, acceptance audit against the spec |
+| Phase                                   | Model     | Rationale                                                                                                                                                                          |
+| --------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 00 Repo Foundation & CI                 | `sonnet`  | mechanical toolchain scaffold on a fully specified checklist                                                                                                                       |
+| 01 Postgres, Prisma & Library Link      | `inherit` | first contact with the consumed library; subpath resolution and `file:`-link gotchas are the failure mode; exact Prisma reference shapes                                           |
+| 02 API Skeleton & Module Wiring         | `inherit` | first real consumption of the library's `registerAsync` factory, DI tokens and provider port; invented library APIs are THE failure mode; identity middleware is security-adjacent |
+| 03 Repositories, Ledger & Pricing       | `inherit` | implements both library repository ports (14 methods) with SQL aggregation, race-safe upsert and window logic; contract fidelity plus money-adjacent correctness                   |
+| 04 Mock Provider, Commands & Embeddings | `inherit` | provider-port contract, command/embedding DTO reuse, and the ledger transaction guarantees (one-per-call, batch aggregate, truncated debits, invalid-JSON no-debit) are subtle     |
+| 05 Quota, Credits & Aggregations        | `inherit` | security-sensitive: quota guard enforcement (drain then 402), ledger-backed balance resolver, credit/refund money paths; a /security-review would flag all of these                |
+| 06 Multi-Tenant & Error Catalog         | `inherit` | security-sensitive: tenant isolation (A never sees B) is the canonical tenancy invariant; full 24-code error catalog with no internal leakage                                      |
+| 07 Web Skeleton & Design System         | `sonnet`  | UI shell on an established API plus verbatim shared design system                                                                                                                  |
+| 08 Dashboard Pages                      | `sonnet`  | UI pages (feature work) on established endpoints plus the design system                                                                                                            |
+| 09 Quality, Docs & Export Audit         | `inherit` | final hardening/audit phase: export-audit correctness, 100% coverage close, CI least-privilege verification, acceptance audit against the spec                                     |
 
 **Heavy phases** (silent-death watch widened to ~120 min; gates pull container
 images, install browsers, or run full E2E consolidation): **02** (first
@@ -99,16 +99,16 @@ already-pulled image.
      contractual once branch protection references them. Command names come
      from DEVELOPMENT_PLAN.md Appendix A. -->
 
-| Gate (local command) | Active from |
-|---|---|
-| `pnpm install && pnpm lint && pnpm typecheck && pnpm format:check` | phase 00 |
-| `pnpm build` (once an app exists) | phase 01 |
-| `pnpm infra:up` healthy + `prisma migrate dev` + `prisma db seed` + subpath probe | phase 01 |
-| `pnpm --filter api test:cov` (100% all four metrics on implemented code) | phase 02 |
-| `pnpm --filter api test:e2e` (Testcontainers `postgres:17-alpine`, needs Docker) | phase 02 |
-| `pnpm --filter web test:cov` (100% `lib/**` + component tests) | phase 07 |
-| `pnpm --filter web test:e2e` (shell + one live round-trip) | phase 07 |
-| `pnpm audit:exports` (every library export demonstrated or ⛔-justified) | phase 09 |
+| Gate (local command)                                                              | Active from |
+| --------------------------------------------------------------------------------- | ----------- |
+| `pnpm install && pnpm lint && pnpm typecheck && pnpm format:check`                | phase 00    |
+| `pnpm build` (once an app exists)                                                 | phase 01    |
+| `pnpm infra:up` healthy + `prisma migrate dev` + `prisma db seed` + subpath probe | phase 01    |
+| `pnpm --filter api test:cov` (100% all four metrics on implemented code)          | phase 02    |
+| `pnpm --filter api test:e2e` (Testcontainers `postgres:17-alpine`, needs Docker)  | phase 02    |
+| `pnpm --filter web test:cov` (100% `lib/**` + component tests)                    | phase 07    |
+| `pnpm --filter web test:e2e` (shell + one live round-trip)                        | phase 07    |
+| `pnpm audit:exports` (every library export demonstrated or ⛔-justified)          | phase 09    |
 
 **Expected-skip CI checks**: `CodeQL` and `Scorecard` are wired from phase 00
 but **conditional on repository visibility**. The repo is currently **private**,

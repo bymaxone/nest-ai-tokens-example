@@ -1,6 +1,6 @@
 # Phase 00: Repository Foundation & CI
 
-> **Status**: 👀 Review · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: ✅ Done · **Progress**: 5 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 00
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §23 (Tooling & Conventions), §6 (Repository Layout)
 
@@ -35,7 +35,7 @@ repository-visibility condition, so the pipeline is public-ready while the repo 
 | 0.2 | Lint, format & hooks (ESLint flat, Prettier, husky, commitlint, lint-staged) | ✅     | P0       | S    | 0.1        |
 | 0.3 | Repo hygiene files (LICENSE, README stub, CHANGELOG, renovate, editorconfig) | ✅     | P1       | S    | 0.1        |
 | 0.4 | CI pipeline + conditional security workflows                                 | ✅     | P0       | M    | 0.2        |
-| 0.5 | Phase close: audit, dashboards, PR + Copilot review                          | 👀     | P0       | S    | 0.1..0.4   |
+| 0.5 | Phase close: audit, dashboards, PR + Copilot review                          | ✅     | P0       | S    | 0.1..0.4   |
 
 ---
 
@@ -330,7 +330,7 @@ security workflows (0.4)`.
 
 ## Task 0.5: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 0.1..0.4
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 0.1..0.4
 
 #### Description
 
@@ -344,7 +344,7 @@ and the squash merge are carried out in a follow-up pass once the review lands.
 
 - [x] All 0.1..0.4 acceptance boxes verified ticked against the real tree (not narration).
 - [x] Phase file header, plan dashboard and tasks README rows updated to reflect the open PR.
-- [ ] PR opened with a professional English title/body; Copilot review requested; all findings
+- [x] PR opened with a professional English title/body; Copilot review requested; all findings
       addressed (every severity); CI green; squash-merged with branch deleted.
 
 #### Files to create / modify
@@ -405,4 +405,4 @@ Completion Protocol: append `- 0.5 ✅ YYYY-MM-DD: phase merged in PR #<n>` to t
 - 0.2 ✅ 2026-07-10: ESLint 9 flat config + Prettier 3 + husky (pre-commit/commit-msg) + commitlint + lint-staged wired; commit-msg hook proven to reject a non-conventional message, pre-commit hook proven to block a broken staged file.
 - 0.3 ✅ 2026-07-10: LICENSE (MIT), README stub, CHANGELOG (Keep a Changelog), renovate.json, .editorconfig added.
 - 0.4 ✅ 2026-07-10: `ci.yml` (install -> lint -> typecheck -> format needs-chain, SHA-pinned actions), `codeql.yml` and `scorecard.yml` (visibility-guarded), `dependabot.yml` (github-actions weekly) added.
-- 0.5 👀 2026-07-10: acceptance criteria audited against the working tree, dashboards updated, PR opened and Copilot review requested; addressing findings and the squash merge follow in a subsequent pass.
+- 0.5 ✅ 2026-07-10: acceptance criteria audited against the working tree, dashboards updated, PR #2 opened with the Copilot review requested, 6 review rounds addressed to zero threads, squash-merged as `b9fa431`, branch deleted local + remote, all gates re-verified green on main.

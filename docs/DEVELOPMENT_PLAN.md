@@ -5,7 +5,7 @@
 > [`TECHNICAL_SPECIFICATION.md`](TECHNICAL_SPECIFICATION.md) (the normative blueprint); per-phase
 > task files live under [`docs/tasks/`](tasks/).
 >
-> **Last updated:** 2026-07-06 · **Source spec:** v1.0.0
+> **Last updated:** 2026-07-10 · **Source spec:** v1.0.0
 
 **Status legend:** 📋 ToDo · 🔄 In Progress · 👀 Review · ✅ Done · ⛔ Blocked · 🟡 Partial
 
@@ -29,21 +29,23 @@
 > every phase file mirror this table; when they disagree, this table wins and must be fixed in the
 > same commit.
 >
-> **Overall progress: 4 / 55 tasks (7%) · 0 / 10 phases done**
-> **Active phase:** 00 (Repository Foundation & CI, PR open, review requested) · **Blockers:** none
+> **Overall progress: 5 / 55 tasks (9%) · 1 / 10 phases done**
+> **Active phase:** none · **Blockers:** phase 01 ⛔ blocked on "sibling library not built"
+> (`../nest-ai-tokens/dist` missing; run `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`,
+> and settle the publish-vs-vendor link-mode decision in [`AUTOPILOT.md`](AUTOPILOT.md) before relaunching)
 
-| #   | Phase                                | Tasks file                                | Size | Done / Total | %   | Status |
-| --- | ------------------------------------ | ----------------------------------------- | ---- | ------------ | --- | ------ |
-| 00  | Repository Foundation & CI           | `phase-00-repo-foundation.md`             | M    | 4 / 5        | 80% | 👀     |
-| 01  | Postgres, Prisma & Library Link      | `phase-01-database-library-link.md`       | M    | 0 / 5        | 0%  | 📋     |
-| 02  | API Skeleton & Module Wiring         | `phase-02-api-skeleton-wiring.md`         | L    | 0 / 5        | 0%  | 📋     |
-| 03  | Repositories, Ledger & Pricing API   | `phase-03-repositories-ledger-pricing.md` | L    | 0 / 6        | 0%  | 📋     |
-| 04  | Mock Provider, Commands & Embeddings | `phase-04-mock-provider-commands.md`      | L    | 0 / 6        | 0%  | 📋     |
-| 05  | Quota, Credits & Aggregations        | `phase-05-quota-aggregations.md`          | L    | 0 / 6        | 0%  | 📋     |
-| 06  | Multi-Tenant & Error Catalog         | `phase-06-tenants-errors.md`              | M    | 0 / 5        | 0%  | 📋     |
-| 07  | Web Skeleton & Design System         | `phase-07-web-skeleton-design.md`         | M    | 0 / 5        | 0%  | 📋     |
-| 08  | Dashboard Pages                      | `phase-08-dashboard-pages.md`             | L    | 0 / 6        | 0%  | 📋     |
-| 09  | Quality, Docs & Export Audit         | `phase-09-quality-docs-audit.md`          | L    | 0 / 6        | 0%  | 📋     |
+| #   | Phase                                | Tasks file                                | Size | Done / Total | %    | Status |
+| --- | ------------------------------------ | ----------------------------------------- | ---- | ------------ | ---- | ------ |
+| 00  | Repository Foundation & CI           | `phase-00-repo-foundation.md`             | M    | 5 / 5        | 100% | ✅     |
+| 01  | Postgres, Prisma & Library Link      | `phase-01-database-library-link.md`       | M    | 0 / 5        | 0%   | ⛔     |
+| 02  | API Skeleton & Module Wiring         | `phase-02-api-skeleton-wiring.md`         | L    | 0 / 5        | 0%   | 📋     |
+| 03  | Repositories, Ledger & Pricing API   | `phase-03-repositories-ledger-pricing.md` | L    | 0 / 6        | 0%   | 📋     |
+| 04  | Mock Provider, Commands & Embeddings | `phase-04-mock-provider-commands.md`      | L    | 0 / 6        | 0%   | 📋     |
+| 05  | Quota, Credits & Aggregations        | `phase-05-quota-aggregations.md`          | L    | 0 / 6        | 0%   | 📋     |
+| 06  | Multi-Tenant & Error Catalog         | `phase-06-tenants-errors.md`              | M    | 0 / 5        | 0%   | 📋     |
+| 07  | Web Skeleton & Design System         | `phase-07-web-skeleton-design.md`         | M    | 0 / 5        | 0%   | 📋     |
+| 08  | Dashboard Pages                      | `phase-08-dashboard-pages.md`             | L    | 0 / 6        | 0%   | 📋     |
+| 09  | Quality, Docs & Export Audit         | `phase-09-quality-docs-audit.md`          | L    | 0 / 6        | 0%   | 📋     |
 
 ---
 
