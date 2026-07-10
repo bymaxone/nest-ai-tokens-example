@@ -29,7 +29,7 @@
 > every phase file mirror this table; when they disagree, this table wins and must be fixed in the
 > same commit.
 >
-> **Overall progress: 0 / 55 tasks (0%) · 0 / 10 phases done**
+> **Overall progress: 4 / 55 tasks (7%) · 0 / 10 phases done**
 > **Active phase:** 00 (Repository Foundation & CI, PR open, review requested) · **Blockers:** none
 
 | #   | Phase                                | Tasks file                                | Size | Done / Total | %   | Status |

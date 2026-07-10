@@ -505,34 +505,34 @@ The demo domain is a **multi-tenant AI writing workspace**: users on tenants `ac
 run text commands against documents, the platform meters every call, sells token packs, enforces
 quotas, and audits costs. Endpoint catalogue (all JSON, all Zod-validated):
 
-| Route                                                         | Method | Purpose                                                            |
-| ------------------------------------------------------------- | ------ | ------------------------------------------------------------------ |
-| `/workspace/translate`                                        | POST   | `AiCommandService.translate` (guarded, body estimator)             |
-| `/workspace/summarize`                                        | POST   | `summarize` with style picker                                      |
-| `/workspace/rewrite`                                          | POST   | `rewrite`                                                          |
-| `/workspace/analyze`                                          | POST   | `analyze<T>` with a fixed sentiment/entities schema                |
-| `/workspace/custom`                                           | POST   | `custom` escape hatch                                              |
-| `/workspace/embed`                                            | POST   | `EmbeddingService.generate`                                        |
-| `/workspace/embed/batch`                                      | POST   | `generateBatch` (ONE aggregate transaction)                        |
-| `/workspace/models`                                           | GET    | default models + current pricing badges (unmarked handler)         |
-| `/ledger/transactions`                                        | GET    | filtered, paginated ledger (`@SkipQuota`)                          |
-| `/ledger/transactions/:id`                                    | GET    | single transaction + metadata inspector                            |
-| `/ledger/credits`                                             | POST   | top-up (`purchase`) / allocations (seed types)                     |
-| `/ledger/refund`                                              | POST   | compensating `refund` transaction                                  |
-| `/pricing`                                                    | GET    | all current pricing                                                |
-| `/pricing/:model/history`                                     | GET    | pricing windows timeline                                           |
-| `/pricing/:model`                                             | PUT    | `updatePricing` (closes window, inserts successor)                 |
-| `/pricing/cache/flush`                                        | POST   | `invalidateCache`                                                  |
-| `/usage/balance`                                              | GET    | `getBalance` (`@SkipQuota`)                                        |
-| `/usage/by-period`                                            | GET    | granularity switch day/week/month                                  |
-| `/usage/by-type` · `/usage/by-model`                          | GET    | donut/bar data                                                     |
-| `/usage/top-consumers`                                        | GET    | leaderboard                                                        |
-| `/usage/system-costs`                                         | GET    | system-cost panel data                                             |
-| `/quota/lab/constant` · `/lab/model-based` · `/lab/resolvers` | POST   | estimator variants                                                 |
-| `/system-jobs/reindex`                                        | POST   | bulk embedding as `isSystemCost` (`systemCostCategory: 'reindex'`) |
-| `/system-jobs/agent-decision`                                 | POST   | `agent_decision_assist` with decision metadata                     |
-| `/errors-demo/:code`                                          | POST   | deterministic trigger for each catalog code                        |
-| `/health/live` · `/health/ready`                              | GET    | app health                                                         |
+| Route                                                                     | Method | Purpose                                                            |
+| ------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------ |
+| `/workspace/translate`                                                    | POST   | `AiCommandService.translate` (guarded, body estimator)             |
+| `/workspace/summarize`                                                    | POST   | `summarize` with style picker                                      |
+| `/workspace/rewrite`                                                      | POST   | `rewrite`                                                          |
+| `/workspace/analyze`                                                      | POST   | `analyze<T>` with a fixed sentiment/entities schema                |
+| `/workspace/custom`                                                       | POST   | `custom` escape hatch                                              |
+| `/workspace/embed`                                                        | POST   | `EmbeddingService.generate`                                        |
+| `/workspace/embed/batch`                                                  | POST   | `generateBatch` (ONE aggregate transaction)                        |
+| `/workspace/models`                                                       | GET    | default models + current pricing badges (unmarked handler)         |
+| `/ledger/transactions`                                                    | GET    | filtered, paginated ledger (`@SkipQuota`)                          |
+| `/ledger/transactions/:id`                                                | GET    | single transaction + metadata inspector                            |
+| `/ledger/credits`                                                         | POST   | top-up (`purchase`) / allocations (seed types)                     |
+| `/ledger/refund`                                                          | POST   | compensating `refund` transaction                                  |
+| `/pricing`                                                                | GET    | all current pricing                                                |
+| `/pricing/:model/history`                                                 | GET    | pricing windows timeline                                           |
+| `/pricing/:model`                                                         | PUT    | `updatePricing` (closes window, inserts successor)                 |
+| `/pricing/cache/flush`                                                    | POST   | `invalidateCache`                                                  |
+| `/usage/balance`                                                          | GET    | `getBalance` (`@SkipQuota`)                                        |
+| `/usage/by-period`                                                        | GET    | granularity switch day/week/month                                  |
+| `/usage/by-type` · `/usage/by-model`                                      | GET    | donut/bar data                                                     |
+| `/usage/top-consumers`                                                    | GET    | leaderboard                                                        |
+| `/usage/system-costs`                                                     | GET    | system-cost panel data                                             |
+| `/quota/lab/constant` · `/quota/lab/model-based` · `/quota/lab/resolvers` | POST   | estimator variants                                                 |
+| `/system-jobs/reindex`                                                    | POST   | bulk embedding as `isSystemCost` (`systemCostCategory: 'reindex'`) |
+| `/system-jobs/agent-decision`                                             | POST   | `agent_decision_assist` with decision metadata                     |
+| `/errors-demo/:code`                                                      | POST   | deterministic trigger for each catalog code                        |
+| `/health/live` · `/health/ready`                                          | GET    | app health                                                         |
 
 ---
 
