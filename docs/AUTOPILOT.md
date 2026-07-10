@@ -15,7 +15,8 @@
   `../nest-ai-tokens`, beside this repo.
 - **GitHub repo**: bymaxone/nest-ai-tokens-example (visibility: **private**)
 - **Default branch**: main
-- **Product summary**: The canonical reference / dogfood application for the
+- **Product summary** (target state; the repo starts docs-only and the chain
+  builds toward this): the canonical reference / dogfood application for the
   `@bymax-one/nest-ai-tokens` NestJS library. A pnpm monorepo, `apps/api`
   (NestJS 11) + `apps/web` (Next.js 16), that demonstrates every public export
   and documented behavior of the library against a deterministic
@@ -38,8 +39,8 @@
 | Applies to | Check (exit 0 = OK, from project root) | On failure |
 |---|---|---|
 | launch, phases 1+ | `docker info` | STOP; operator starts Docker (Postgres compose + Testcontainers e2e need it) |
-| phases 1+ | `test -d ../nest-ai-tokens/dist` | mark P<N> ⛔ blocked on "sibling library not built", STOP; operator runs `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`, then relaunches |
-| phases 1+ | `test -d ../nest-ai-tokens` (the `file:` link target resolves) | mark P<N> ⛔ blocked on "sibling library missing", STOP; operator clones/places `@bymax-one/nest-ai-tokens` beside this repo |
+| phases 1+ | `test -d ../nest-ai-tokens` (the `file:` link target resolves; run BEFORE the dist probe below) | mark P<N> ⛔ blocked on "sibling library missing", STOP; operator clones/places `@bymax-one/nest-ai-tokens` beside this repo |
+| phases 1+ | `test -d ../nest-ai-tokens/dist` (only after the existence check above passes) | mark P<N> ⛔ blocked on "sibling library not built", STOP; operator runs `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`, then relaunches |
 
 > **⚠ Launch-blocking design decision: resolve BEFORE the first `run`.**
 > The library dependency is `file:../../../nest-ai-tokens` (relative to
