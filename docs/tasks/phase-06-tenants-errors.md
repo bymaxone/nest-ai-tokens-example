@@ -1,8 +1,52 @@
 # Phase 06: Multi-Tenant & Error Catalog
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-06
+> **Status**: 🔄 In Progress · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 06
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §18 (Multi-Tenant), §19 (Error Handling), §7.7 (matrix rows 2, 10-12, 60-62, 75, 77-83)
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the tenancy and error
+> surfaces drafted here and in spec §18/§19 (same rule as the phase 01-05 notes).
+>
+> **Tenancy.** There is NO `multiTenant` options block and NO `tenantIdResolver`: tenancy flows
+> through the host `scopeResolver` (this app's demo identity -> `MeteringContext` mapping in
+> `ai/ai-tokens.config.ts`) and the `tenantId` column on every table. The drafted
+> `multiTenant.required: true` mode maps to this app's `TENANT_REQUIRED` env knob: the
+> scopeResolver rejects tenant-less identities itself. The drafted `ledger.tenant_required` code
+> does not exist; the documented rejection is the app's `tenant.required` (403, canonical
+> envelope). Default mode: a null-tenant identity falls back to the app's `global` tenant id.
+>
+> **Error catalog.** The drafted 24-code dot-namespaced list does not exist. The REAL runtime
+> surface is the library's 15-code `AI_TOKENS_ERROR_CODES` union raised as `AiTokensException`
+> (`{ error: { code, message, details? } }`, statuses from the internal map:
+> NOT_CONFIGURED 503, INVALID_CONFIG 500, UNKNOWN_PROVIDER 400, USAGE_MALFORMED 422,
+> PRICE_NOT_FOUND 422, FX_REQUIRED 500, BUDGET_EXCEEDED 402, QUOTA_EXCEEDED 429,
+> INSUFFICIENT_CREDITS 402, HOLD_NOT_FOUND 404, HOLD_EXPIRED 410, HOLD_ALREADY_SETTLED 409,
+> IDEMPOTENCY_CONFLICT 409, STREAM_USAGE_MISSING 422, STORE_ERROR 502) plus this app's HOST codes
+> in the mirrored `ApiException` envelope: `provider.rate_limited` 429, `provider.timeout` 504,
+> `provider.empty_response` 502, `provider.content_filter` 400, `provider.api_key_invalid` 401,
+> `provider.unknown_error` 500 (marker throws), `provider.response_truncated` 502,
+> `provider.invalid_json` 502, `command.missing_translations` 502 (command outcomes),
+> `quota.disabled` 503 (feature-block guards) and `tenant.required` 403 (this phase). Drafted-code
+> mappings: `ledger.invalid_input`/`ledger.zero_amount` -> `AI_TOKENS_INVALID_CONFIG` (wallet
+> input validation); `pricing.not_found` -> `AI_TOKENS_PRICE_NOT_FOUND`;
+> `pricing.invalid_date`/`command.missing_parameters`/`embedding.empty_text` -> the app's global
+> Zod validation rejection (400 `{ message: 'Validation failed', issues }`, value-free) — the
+> services never see those inputs; `pricing.overlap` -> NOT an error (the library's `upsertPrice`
+> closes the open row by design); `command.unsupported_command` -> NOT reachable (the route/DTO
+> space is closed over the five commands). Config-time codes (`AI_TOKENS_INVALID_CONFIG` at boot,
+> `AI_TOKENS_FX_REQUIRED`) are proven by task 6.4's boot variants; `AI_TOKENS_NOT_CONFIGURED` is
+> RESERVED in v0.1.0 (defined in the catalog but never raised by the shipped dist) and is
+> documented honestly instead of faked.
+>
+> **Conditional registration.** The drafted "ledger-only module (no provider)" maps to the real
+> feature blocks: `forRoot` without `wallets`/`budgets` registers no `WalletService`/
+> `BudgetService`; `forRootAsync` registers them unconditionally but resolves them to `null`.
+> The drafted `EmbeddingService`/`AiCommandService` do not exist (host-owned workspace services);
+> the drafted `config.invalid_provider_strategy`/`config.missing_repository`/
+> `provider.api_key_missing` boot codes map to `AI_TOKENS_INVALID_CONFIG` (invalid markup /
+> missing store port methods) and `AI_TOKENS_FX_REQUIRED` (non-USD currency without `fx`); there
+> is no provider strategy or OpenAI key surface in the library at all (the app's mock provider is
+> host code and `openai` stays uninstalled).
 
 ## Context
 
