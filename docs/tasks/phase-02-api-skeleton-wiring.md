@@ -1,6 +1,6 @@
 # Phase 02: API Skeleton & Module Wiring
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-06
+> **Status**: 🔄 In Progress · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 02
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §9.2 (canonical wiring), §10 (Backend Design), §3 (Architecture)
 
@@ -11,6 +11,19 @@ into a booting NestJS 11 application with the library registered through the can
 `registerAsync` factory: repository bindings, a placeholder provider (the real `MockAiProvider`
 lands in phase 04), the logger bridge, demo identity, health endpoints, and the Testcontainers e2e
 harness. CI gains `build`, `test`, and `e2e` jobs.
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the API drafted here and
+> in spec §4/§9.2 (same rule as the phase 01 note). The real surface is: registration via
+> `BymaxAiTokensModule.forRootAsync({ imports, inject, useFactory })` (no `registerAsync`, no
+> `isGlobal` flag — the module is `@Global()` by construction); ONE required `store` object
+> implementing `IAiTokensStore` (ledger + pricing ports, wallet/budget ports when those feature
+> blocks are enabled) instead of two repository DI tokens; no provider port (`IAiProvider`),
+> no `defaultModels`, no `quota`/`multiTenant` blocks — enforcement is the opt-in `wallets`/
+> `budgets` blocks plus the host `scopeResolver`, and there is no estimation-tolerance option;
+> no `AuthenticatedRequest` type (the host owns its request identity shape); the
+> `BYMAX_AI_TOKENS_LOGGER` token is reserved (bound `null`, no consumer in v0.1.0), so no logger
+> bridge is wireable yet. Tasks below were executed against the shipped dist/types; acceptance
+> criteria were aligned in the same commits and every mapping is documented in the PR body.
 
 > **Completion Protocol ("standard steps"):** task Status ✅ (block + index) -> checkboxes ->
 > header Progress -> plan dashboard row + overall counter -> tasks README -> Completion log entry
