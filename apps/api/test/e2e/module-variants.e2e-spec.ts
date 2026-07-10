@@ -152,8 +152,10 @@ describe('sync registration: BymaxAiTokensModule.forRoot (matrix row 2)', () => 
 
     try {
       expect(app.get(LedgerService)).toBeInstanceOf(LedgerService)
-      expect(() => app.get(WalletService)).toThrow(/Nest could not find WalletService/)
-      expect(() => app.get(BudgetService)).toThrow(/Nest could not find BudgetService/)
+      // Asserting only THAT resolution throws keeps the proof stable across
+      // Nest versions (the unknown-provider wording is not contractual).
+      expect(() => app.get(WalletService)).toThrow()
+      expect(() => app.get(BudgetService)).toThrow()
     } finally {
       await app.close()
       await prisma.$disconnect()
