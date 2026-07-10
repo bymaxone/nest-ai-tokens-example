@@ -16,4 +16,6 @@ class ResizeObserverStub {
   disconnect(): void {}
 }
 
-globalThis.ResizeObserver = ResizeObserverStub
+// Installed only when jsdom provides no implementation, so a real (or
+// previously stubbed) observer is never clobbered.
+globalThis.ResizeObserver ??= ResizeObserverStub

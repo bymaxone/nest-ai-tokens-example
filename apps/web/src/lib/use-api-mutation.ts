@@ -9,7 +9,7 @@
  */
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { ApiError } from './api-client'
 
@@ -42,7 +42,12 @@ export function useApiMutation<Args extends readonly unknown[], T>(
 ): UseApiMutationResult<Args, T> {
   const [state, setState] = useState<ApiMutationState<T>>({ status: 'idle' })
   const isMountedRef = useRef(true)
-  isMountedRef.current = true
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   const run = useCallback(
     async (...args: Args): Promise<T | undefined> => {

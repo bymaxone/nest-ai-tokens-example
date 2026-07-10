@@ -42,8 +42,6 @@ describe('RewriteCard', () => {
     await waitFor(() => expect(screen.getByText('REWRITTEN')).toBeInTheDocument())
     expect(api.rewrite).toHaveBeenCalledWith({
       text: 'original text',
-      style: undefined,
-      language: undefined,
       model: 'mock-chat-pro',
       resourceId: 'playground-rewrite',
     })

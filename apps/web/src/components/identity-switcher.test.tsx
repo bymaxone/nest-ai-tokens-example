@@ -9,7 +9,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { setIdentity } from '@/lib/identity-store'
 
-import { IdentitySwitcher, getServerSnapshot } from './identity-switcher.js'
+import { IdentitySwitcher } from './identity-switcher.js'
+import { getServerSnapshot } from '@/lib/identity-store'
 
 describe('IdentitySwitcher', () => {
   afterEach(() => {

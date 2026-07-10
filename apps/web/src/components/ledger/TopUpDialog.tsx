@@ -41,8 +41,14 @@ export function TopUpDialog({ onClose, onCredited }: TopUpDialogProps): React.JS
   const typeId = useId()
 
   return (
-    <div className="dialog-overlay" role="dialog" aria-label="Top up balance" onClick={onClose}>
-      <div className="dialog" onClick={(event) => event.stopPropagation()}>
+    <div className="dialog-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Top up balance"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="card__title">Top up balance</div>
         <form
           onSubmit={(event) => {

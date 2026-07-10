@@ -135,3 +135,13 @@ export function identityHeaders(identity: Identity | null): Record<string, strin
   if (identity.tenantId !== null) headers['x-tenant-id'] = identity.tenantId
   return headers
 }
+
+/**
+ * The server-render snapshot for `useSyncExternalStore` consumers: no
+ * selection ever exists on the server pass.
+ *
+ * @returns Always `null`.
+ */
+export function getServerSnapshot(): null {
+  return null
+}

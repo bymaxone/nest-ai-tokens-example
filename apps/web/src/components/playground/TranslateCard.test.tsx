@@ -43,7 +43,6 @@ describe('TranslateCard', () => {
     await waitFor(() => expect(screen.getByText('es: HOLA')).toBeInTheDocument())
     expect(api.translate).toHaveBeenCalledWith({
       text: 'hello',
-      sourceLanguage: undefined,
       targetLanguages: ['es'],
       model: 'mock-chat-pro',
       resourceId: 'playground-translate',

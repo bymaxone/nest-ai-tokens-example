@@ -117,7 +117,11 @@ describe('TopUpDialog', () => {
     await user.click(screen.getByText('Top up balance'))
     expect(onClose).not.toHaveBeenCalled()
 
-    await user.click(screen.getByRole('dialog'))
+    // The backdrop is presentational (the dialog role lives on the panel),
+    // so the test reaches it as the dialog's parent element.
+    const backdrop = screen.getByRole('dialog').parentElement
+    if (backdrop === null) throw new Error('overlay missing')
+    await user.click(backdrop)
     expect(onClose).toHaveBeenCalledOnce()
   })
 })

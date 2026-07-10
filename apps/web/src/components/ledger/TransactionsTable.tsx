@@ -40,8 +40,22 @@ function TransactionRow(props: {
   readonly onSelect: (id: string) => void
 }): React.JSX.Element {
   const { item } = props
+  // Rows are interactive, so they participate in the tab order and respond
+  // to Enter/Space like a native control.
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTableRowElement>): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      props.onSelect(item.id)
+    }
+  }
   return (
-    <tr onClick={() => props.onSelect(item.id)} style={{ cursor: 'pointer' }}>
+    <tr
+      onClick={() => props.onSelect(item.id)}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      aria-label={`Inspect transaction ${shortId(item.id)}`}
+      style={{ cursor: 'pointer' }}
+    >
       <td>{new Date(item.occurredAt).toLocaleString()}</td>
       <td>
         <span className="chip">{item.status}</span>

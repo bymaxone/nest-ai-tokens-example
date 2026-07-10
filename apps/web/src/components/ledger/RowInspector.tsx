@@ -103,8 +103,14 @@ export function RowInspector({
   const refund = useApiMutation(api.refund.bind(api))
 
   return (
-    <div className="overlay" role="dialog" aria-label="Transaction detail" onClick={onClose}>
-      <div className="drawer" onClick={(event) => event.stopPropagation()}>
+    <div className="overlay" role="presentation" onClick={onClose}>
+      <div
+        className="drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Transaction detail"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="card__title">Transaction detail</div>
           <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>

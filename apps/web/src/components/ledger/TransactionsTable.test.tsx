@@ -72,6 +72,29 @@ describe('TransactionsTable', () => {
     expect(onSelect).toHaveBeenCalledWith('txn-77')
   })
 
+  // scenario: rows are keyboard-operable; Enter and Space both select, other keys do not.
+  it('calls onSelect on Enter and Space but not on other keys', async () => {
+    const user = userEvent.setup()
+    const onSelect = vi.fn()
+    render(
+      <TransactionsTable
+        items={[usageRecordFixture({ id: 'txn-88' })]}
+        total={1}
+        offset={0}
+        onOffsetChange={vi.fn()}
+        onSelect={onSelect}
+      />,
+    )
+    const row = screen.getByRole('row', { name: /inspect transaction/i })
+    row.focus()
+    await user.keyboard('{Enter}')
+    expect(onSelect).toHaveBeenCalledWith('txn-88')
+    await user.keyboard(' ')
+    expect(onSelect).toHaveBeenCalledTimes(2)
+    await user.keyboard('{ArrowDown}')
+    expect(onSelect).toHaveBeenCalledTimes(2)
+  })
+
   // scenario: Previous is disabled on the first page; Next advances the offset.
   it('disables Previous on the first page and advances Next', async () => {
     const user = userEvent.setup()

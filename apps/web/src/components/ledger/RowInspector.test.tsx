@@ -127,7 +127,11 @@ describe('RowInspector', () => {
     await user.click(screen.getByText('Transaction detail'))
     expect(onClose).not.toHaveBeenCalled()
 
-    await user.click(screen.getByRole('dialog'))
+    // The backdrop is presentational (the dialog role lives on the drawer),
+    // so the test reaches it as the dialog's parent element.
+    const backdrop = screen.getByRole('dialog').parentElement
+    if (backdrop === null) throw new Error('overlay missing')
+    await user.click(backdrop)
     expect(onClose).toHaveBeenCalledOnce()
   })
 

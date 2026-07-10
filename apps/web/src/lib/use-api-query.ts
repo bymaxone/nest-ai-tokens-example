@@ -13,10 +13,8 @@
 
 import { useCallback, useEffect, useReducer, useState, useSyncExternalStore } from 'react'
 
-import { getServerSnapshot } from '@/components/identity-switcher'
-
 import { ApiError } from './api-client'
-import { getIdentity, subscribe } from './identity-store'
+import { getIdentity, getServerSnapshot, subscribe } from './identity-store'
 
 /** The read hook's fetch state. */
 export type ApiQueryState<T> =

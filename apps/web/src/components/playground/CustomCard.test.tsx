@@ -42,7 +42,6 @@ describe('CustomCard', () => {
 
     await waitFor(() => expect(screen.getByText('RAW CONTENT')).toBeInTheDocument())
     expect(api.custom).toHaveBeenCalledWith({
-      systemPrompt: undefined,
       userPrompt: 'do the thing',
       responseFormat: 'text',
       model: 'mock-chat-pro',
