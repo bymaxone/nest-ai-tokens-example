@@ -12,7 +12,7 @@
  * on any exhausted hard budget (402 spend / 429 tokens-or-count, canonical
  * envelope), and enriches `request.aiTokens` for the interceptor path.
  *
- * @layer quota
+ * @layer ai
  */
 import { Inject, Injectable } from '@nestjs/common'
 import type { CanActivate, ExecutionContext } from '@nestjs/common'

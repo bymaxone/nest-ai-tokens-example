@@ -32,7 +32,7 @@ import type { AccessStatus, Budget, JsonSafe } from '@bymax-one/nest-ai-tokens'
 
 import { LabRunBodyDto } from './dto/lab-run.body.js'
 import { UpsertBudgetBodyDto } from './dto/upsert-budget.body.js'
-import { EnforcementGuard } from './enforcement.guard.js'
+
 import { QuotaBudgetsService } from './quota-budgets.service.js'
 import type { BudgetListResult } from './quota-budgets.service.js'
 import {
@@ -43,6 +43,7 @@ import {
 } from './quota-lab.service.js'
 import type { LabRunResult } from './quota-lab.service.js'
 import { QuotaStatusService } from './quota-status.service.js'
+import { EnforcementGuard } from '../ai/enforcement.guard.js'
 import { MOCK_CHAT_PRESET } from '../ai/mock-usage.presets.js'
 import type { MockChatResponse } from '../ai/mock-ai.types.js'
 import type { AuthenticatedRequest } from '../identity/identity.middleware.js'

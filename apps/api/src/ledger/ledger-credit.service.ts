@@ -174,11 +174,11 @@ export class LedgerCreditService {
       },
     })
     if (entry === null) return null
-    const matches =
+    const isReplayMatch =
       entry.type === 'grant' &&
       entry.amountNanoUsd === body.amountNanoUsd &&
       entry.reason === creditReason(body)
-    if (!matches) {
+    if (!isReplayMatch) {
       throw new AiTokensException('AI_TOKENS_IDEMPOTENCY_CONFLICT', undefined, {
         idempotencyKey: body.idempotencyKey,
       })

@@ -51,7 +51,7 @@ import { WorkspaceModelsService } from './workspace-models.service.js'
 import type { ModelsInfo } from './workspace-models.service.js'
 import type { AuthenticatedRequest } from '../identity/identity.middleware.js'
 import { requireIdentity } from '../identity/require-identity.js'
-import { EnforcementGuard } from '../quota/enforcement.guard.js'
+import { EnforcementGuard } from '../ai/enforcement.guard.js'
 
 /** Serves the workspace command surface. */
 @Controller('workspace')
