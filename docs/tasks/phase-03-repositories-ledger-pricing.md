@@ -1,6 +1,6 @@
 # Phase 03: Repositories, Ledger & Pricing API
 
-> **Status**: 👀 Review · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: ✅ Done · **Progress**: 6 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 03
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16, §11 (ledger/pricing routes), §7.2-7.3 (matrix rows 13-36)
 
@@ -65,8 +65,8 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 | 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | ✅     | P0       | M    | 3.1        |
 | 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | ✅     | P0       | S    | 3.2        |
 | 3.4 | `ledger/` REST: list, detail, filters, pagination                              | ✅     | P0       | M    | 3.1        |
-| 3.5 | `pricing/` REST: current, history, update, flush-cache                         | ✅     | P0       | M    | 3.2        |
-| 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | 👀     | P0       | S    | 3.1..3.5   |
+| 3.5 | `pricing/` REST: current, history, update (cache flush reconciled out)         | ✅     | P0       | M    | 3.2        |
+| 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | ✅     | P0       | S    | 3.1..3.5   |
 
 ---
 
@@ -438,7 +438,7 @@ Completion Protocol: standard steps; commit `feat(api): pricing admin endpoints 
 
 ## Task 3.6: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 3.1..3.5
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 3.1..3.5
 
 #### Description
 
@@ -449,8 +449,8 @@ address every finding, squash-merge on green, delete the branch, log completion.
 
 #### Acceptance criteria
 
-- [ ] All gates green sequentially; all 3.1..3.5 criteria verified against the tree.
-- [ ] Dashboards synced; PR merged with Copilot review resolved; branch gone.
+- [x] All gates green sequentially; all 3.1..3.5 criteria verified against the tree.
+- [x] Dashboards synced; PR squash-merged with the Copilot review resolved; branch gone.
 
 #### Agent prompt
 
@@ -495,3 +495,4 @@ Completion Protocol: append `- 3.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 3.3 ✅ 2026-07-10: app-owned idempotent boot pricing seed (snapshot + 3 mock models) with double-boot and concurrent-boot e2e proofs
 - 3.4 ✅ 2026-07-10: ledger read endpoints (filtered, paginated list + owner-checked detail) with plan-exact e2e and 100% unit coverage
 - 3.5 ✅ 2026-07-10: pricing catalog, history, and admin update endpoints with window-sequence, cache-invalidation, and backdated-cost e2e proofs
+- 3.6 ✅ 2026-07-10: acceptance audit green; PR #10 opened with the Copilot review, one review round addressed (status-default JSDoc, seed-failure stack logging), squash-merged as `8662e63`, branch deleted, CI green (11 checks incl. API e2e).
