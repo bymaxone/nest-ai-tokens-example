@@ -24,9 +24,15 @@ module.exports = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  // Coverage scope: every executable source, minus the bootstrap entrypoint
-  // (`seed.ts` only wires the client and delegates to the covered runner).
-  collectCoverageFrom: ['prisma/**/*.ts', '!prisma/seed.ts', '!**/*.spec.ts'],
+  // Coverage scope: every executable source, minus the bootstrap entrypoints
+  // (`seed.ts` and `main.ts` only wire an entry and delegate to covered code).
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    'prisma/**/*.ts',
+    '!src/main.ts',
+    '!prisma/seed.ts',
+    '!**/*.spec.ts',
+  ],
   coverageThreshold: {
     global: { branches: 100, functions: 100, lines: 100, statements: 100 },
   },

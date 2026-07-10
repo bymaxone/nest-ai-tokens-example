@@ -1,6 +1,6 @@
 # Phase 02: API Skeleton & Module Wiring
 
-> **Status**: 🔄 In Progress · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 02
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §9.2 (canonical wiring), §10 (Backend Design), §3 (Architecture)
 
@@ -50,7 +50,7 @@ harness. CI gains `build`, `test`, and `e2e` jobs.
 
 | ID  | Task                                                                      | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 2.1 | Branch + NestJS skeleton (`createApp` seam, Zod pipe, config module)      | 📋     | P0       | M    | none       |
+| 2.1 | Branch + NestJS skeleton (`createApp` seam, Zod pipe, config module)      | ✅     | P0       | M    | none       |
 | 2.2 | Demo identity middleware + user registry                                  | 📋     | P0       | S    | 2.1        |
 | 2.3 | Library wiring: options factory + repository/logger placeholders bindings | 📋     | P0       | M    | 2.2        |
 | 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs       | 📋     | P0       | M    | 2.3        |
@@ -60,7 +60,7 @@ harness. CI gains `build`, `test`, and `e2e` jobs.
 
 ## Task 2.1: Branch + NestJS skeleton
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -71,13 +71,14 @@ modules.
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-02-api-skeleton-wiring` created with `git switch -c`.
-- [ ] NestJS 11 deps added (`@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`,
-      `reflect-metadata`, `rxjs`); versions verified against current docs.
-- [ ] Env config: Zod schema covering the spec §9.1 rows implemented so far; boot fails fast with
+- [x] Branch `feat/phase-02-api-skeleton-wiring` created with `git switch -c`.
+- [x] NestJS 11 deps added (`@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`,
+      `reflect-metadata`, `rxjs` at 11.1.x); versions verified against current docs.
+- [x] Env config: Zod schema covering the spec §9.1 rows implemented so far; boot fails fast with
       an aggregated, value-free error report on invalid env.
-- [ ] `pnpm --filter api dev` boots; `GET /` returns a JSON hello naming the example.
-- [ ] Unit tests for the env schema and pipe; coverage 100% on files added.
+- [x] `pnpm --filter api dev` boots (Nest CLI watch); `GET /` returns a JSON hello naming the
+      example (verified against the compiled `dist/main.js` boot path).
+- [x] Unit tests for the env schema and pipe; coverage 100% on files added.
 
 #### Files to create / modify
 
@@ -420,3 +421,5 @@ Completion Protocol: append `- 2.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 2.1 ✅ 2026-07-10: NestJS 11 skeleton with createApp seam, typed Zod env config (value-free failure report), global Zod validation pipe, JSON hello; 100% coverage on new files.
