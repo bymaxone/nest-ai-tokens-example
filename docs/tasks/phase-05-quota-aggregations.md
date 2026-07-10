@@ -1,6 +1,6 @@
 # Phase 05: Quota, Credits & Aggregations
 
-> **Status**: 👀 Review · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: ✅ Done · **Progress**: 6 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 05
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §17 (Quota), §11 (usage/quota/system-jobs routes), §7.5-7.6 (matrix rows 53-72, 84-85)
 
@@ -82,7 +82,7 @@ metadata). After this phase the drain-then-402 scenario is walkable.
 | 5.3 | Credits + refund endpoints (`purchase`, allocations, `refund`)                             | ✅     | P0       | S    | 5.1        |
 | 5.4 | `usage/` REST: balance, by-period/type/model, top consumers, system costs                  | ✅     | P0       | M    | 5.1        |
 | 5.5 | `system-jobs/`: reindex (system cost) + agent-decision metadata                            | ✅     | P1       | S    | 5.4        |
-| 5.6 | Phase close: audit, dashboards, PR + Copilot review                                        | 👀     | P0       | S    | 5.1..5.5   |
+| 5.6 | Phase close: audit, dashboards, PR + Copilot review                                        | ✅     | P0       | S    | 5.1..5.5   |
 
 ---
 
@@ -453,7 +453,7 @@ Completion Protocol: standard steps; commit `feat(api): system jobs simulations 
 
 ## Task 5.6: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 5.1..5.5
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 5.1..5.5
 - **Note**: gates replayed green (unit 363 tests at 100% on all four metrics; e2e 107 tests across
   11 Testcontainers suites), every 5.1-5.5 acceptance criterion audited against the tree, code and
   security reviews at zero findings; the PR is open with the Copilot review requested. Merge,
@@ -467,7 +467,7 @@ addressed, squash-merge on green, delete branch, log.
 
 #### Acceptance criteria
 
-- [ ] Gates green sequentially; all criteria verified; dashboards synced; PR merged; branch gone.
+- [x] Gates green sequentially; all criteria verified; dashboards synced; PR squash-merged; branch gone.
 
 #### Agent prompt
 
@@ -511,3 +511,4 @@ Completion Protocol: append `- 5.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 5.3 ✅ 2026-07-10: credits (grant with backdated effectiveAt + replay pre-check) and refund (orchestrated reversal) endpoints with exact-delta e2e proofs
 - 5.4 ✅ 2026-07-10: usage analytics surface (balance + five summarize dimensions) with exact seed-plan e2e assertions and bounded query validation
 - 5.5 ✅ 2026-07-10: system-jobs simulations (admin-gated reindex batch + agent-decision assist) with reserved system-cost fields and exclusion proofs
+- 5.6 ✅ 2026-07-10: acceptance audit green (phase resumed once after a transient API-access interruption, no work lost); PR #14 opened with the Copilot review, 2 review rounds addressed (four money-path edges + resolved-window cap, each with a locking spec), squash-merged as `8166344`, branch deleted, CI green (367 unit at 100%, 107 e2e).
