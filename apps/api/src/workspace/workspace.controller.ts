@@ -5,12 +5,30 @@
  * calls, the billing semantics, and the metering. Commands respond 200
  * (they run an operation; the created ledger row is a side effect the
  * response references by `transactionId`). `GET /workspace/models` is
- * deliberately identity-free: it meters nothing and stays the unguarded
- * read the quota surface will contrast against.
+ * deliberately identity-free: it meters nothing and carries NO guard, the
+ * inert path the enforcement surface contrasts against.
+ *
+ * Enforcement: every metered handler wears the null-tolerant
+ * `EnforcementGuard` (the library's `BudgetGuard` underneath), so an
+ * exhausted hard budget rejects pre-handler and a missing identity rejects
+ * 401 through the module `scopeResolver`; wallet enforcement itself happens
+ * in the services via tolerance-scaled spend holds. Opting OUT is metadata
+ * absence, not a marker decorator: an unguarded handler is never checked
+ * and an un-`@Meter`ed handler is never intercepted.
  *
  * @layer workspace
  */
-import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Post, Req } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common'
 
 import { AnalyzeBodyDto } from './dto/analyze.body.js'
 import { CustomBodyDto } from './dto/custom.body.js'
@@ -33,6 +51,7 @@ import { WorkspaceModelsService } from './workspace-models.service.js'
 import type { ModelsInfo } from './workspace-models.service.js'
 import type { AuthenticatedRequest } from '../identity/identity.middleware.js'
 import { requireIdentity } from '../identity/require-identity.js'
+import { EnforcementGuard } from '../ai/enforcement.guard.js'
 
 /** Serves the workspace command surface. */
 @Controller('workspace')
@@ -57,6 +76,7 @@ export class WorkspaceController {
    */
   @Post('translate')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(EnforcementGuard)
   translate(
     @Req() request: AuthenticatedRequest,
     @Body() body: TranslateBodyDto,
@@ -73,6 +93,7 @@ export class WorkspaceController {
    */
   @Post('summarize')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(EnforcementGuard)
   summarize(
     @Req() request: AuthenticatedRequest,
     @Body() body: SummarizeBodyDto,
@@ -89,6 +110,7 @@ export class WorkspaceController {
    */
   @Post('rewrite')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(EnforcementGuard)
   rewrite(
     @Req() request: AuthenticatedRequest,
     @Body() body: RewriteBodyDto,
@@ -105,6 +127,7 @@ export class WorkspaceController {
    */
   @Post('analyze')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(EnforcementGuard)
   analyze(
     @Req() request: AuthenticatedRequest,
     @Body() body: AnalyzeBodyDto,
@@ -121,6 +144,7 @@ export class WorkspaceController {
    */
   @Post('custom')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(EnforcementGuard)
   custom(@Req() request: AuthenticatedRequest, @Body() body: CustomBodyDto): Promise<CustomResult> {
     return this.commands.custom(requireIdentity(request), body)
   }
@@ -134,6 +158,7 @@ export class WorkspaceController {
    */
   @Post('embed')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(EnforcementGuard)
   embed(@Req() request: AuthenticatedRequest, @Body() body: EmbedBodyDto): Promise<EmbedResult> {
     return this.embeddings.embed(requireIdentity(request), body)
   }
@@ -148,6 +173,7 @@ export class WorkspaceController {
    */
   @Post('embed/batch')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(EnforcementGuard)
   embedBatch(
     @Req() request: AuthenticatedRequest,
     @Body() body: EmbedBatchBodyDto,
