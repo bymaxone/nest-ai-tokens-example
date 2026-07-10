@@ -1,6 +1,6 @@
 # Phase 04: Mock Provider, Commands & Embeddings
 
-> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 04
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §12 (Mock Provider), §11 (workspace routes), §4.3 (behavioral contracts 1, 3, 5), §7.4 (matrix rows 37-52, 73-76)
 
@@ -69,7 +69,7 @@ batch), proving the library's transaction guarantees with e2e ledger assertions.
 | 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error)        | ✅     | P0       | M    | 4.1        |
 | 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | ✅     | P0       | L    | 4.1        |
 | 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | ✅     | P0       | M    | 4.1        |
-| 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | 📋     | P0       | M    | 4.2..4.4   |
+| 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | ✅     | P0       | M    | 4.2..4.4   |
 | 4.6 | Phase close: audit, dashboards, PR + Copilot review                             | 📋     | P0       | S    | 4.1..4.5   |
 
 ---
@@ -358,7 +358,7 @@ Completion Protocol: standard steps; commit `feat(api): embedding endpoints and 
 
 ## Task 4.5: Transaction-guarantee e2e suite
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 4.2..4.4
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 4.2..4.4
 
 #### Description
 
@@ -369,11 +369,12 @@ metadata; `resourceId` lands in metadata.
 
 #### Acceptance criteria
 
-- [ ] A dedicated e2e file table-tests the guarantees with before/after repository counts and
-      metadata assertions.
-- [ ] Truncation case: ledger +1 AND response 502 `provider.response_truncated`.
-- [ ] Bad-JSON case: ledger +0 AND response 502 `provider.invalid_json`.
-- [ ] Matrix rows 43-45, 52 provably covered (cite the spec rows in describe blocks).
+- [x] A dedicated e2e file table-tests the guarantees with before/after repository counts and
+      metadata assertions. (Counts go through the `LedgerService` port, never raw SQL; the
+      metadata assertions target the persisted `tags`.)
+- [x] Truncation case: ledger +1 AND response 502 `provider.response_truncated`.
+- [x] Bad-JSON case: ledger +0 AND response 502 `provider.invalid_json`.
+- [x] Matrix rows 43-45, 52 provably covered (cite the spec rows in describe blocks).
 
 #### Files to create / modify
 
@@ -480,3 +481,6 @@ Completion Protocol: append `- 4.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
   plus the updatedAt DB-default migration the raw-SQL store adapter requires; e2e happy paths.
 - 4.4 ✅ 2026-07-10: embed + embed/batch (ONE aggregate record, batch-size tag proven in e2e via
   the LedgerService port) and the identity-free /workspace/models pricing composition.
+- 4.5 ✅ 2026-07-10: transaction-guarantees e2e (delta 1 per command/embed, ONE batch aggregate,
+  truncation debits then 502, bad JSON never debits, resource tag filterable; rows 43-45, 47, 52
+  cited in describe blocks).
