@@ -132,13 +132,14 @@ public.
 # No placeholder files (user-global rule + plan Guiding Principle 9)
 ! { find . -path ./node_modules -prune -o \( -name '.gitkeep' -o -name '.keep' \) -print | grep .; }
 
-# No real provider secret committed anywhere
-[ ! -d apps ] || ! grep -rnE 'sk-[A-Za-z0-9]{20,}' apps
+# No real provider secret committed anywhere (whole repo, not just apps/)
+! { grep -rnE 'sk-[A-Za-z0-9]{20,}' . --exclude-dir=.git --exclude-dir=node_modules; }
 
 # No AI-attribution trailers on this branch's commits (checked per PR).
-# The ref check fails loudly first, so a missing origin/main cannot make the
-# negated grep pass silently.
-git rev-parse --verify --quiet origin/main >/dev/null &&
+# The ref check fails loudly WITH a message first, so a missing origin/main
+# cannot make the negated grep pass silently.
+{ git rev-parse --verify --quiet origin/main >/dev/null ||
+  { echo 'invariant not evaluable: origin/main ref missing'; false; }; } &&
   ! { git log --format='%B' origin/main..HEAD | grep -iE 'Co-Authored-By|Generated with Claude|🤖'; }
 ```
 
