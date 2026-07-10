@@ -1,6 +1,6 @@
 # Phase 00: Repository Foundation & CI
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-06
+> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 00
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §23 (Tooling & Conventions), §6 (Repository Layout)
 
@@ -31,7 +31,7 @@ repository-visibility condition, so the pipeline is public-ready while the repo 
 
 | ID | Task | Status | Priority | Size | Depends on |
 | --- | --- | --- | --- | --- | --- |
-| 0.1 | Branch + workspace root (pnpm, tsconfig, scripts) | 📋 | P0 | S | none |
+| 0.1 | Branch + workspace root (pnpm, tsconfig, scripts) | ✅ | P0 | S | none |
 | 0.2 | Lint, format & hooks (ESLint flat, Prettier, husky, commitlint, lint-staged) | 📋 | P0 | S | 0.1 |
 | 0.3 | Repo hygiene files (LICENSE, README stub, CHANGELOG, renovate, editorconfig) | 📋 | P1 | S | 0.1 |
 | 0.4 | CI pipeline + conditional security workflows | 📋 | P0 | M | 0.2 |
@@ -41,7 +41,7 @@ repository-visibility condition, so the pipeline is public-ready while the repo 
 
 ## Task 0.1: Branch + workspace root
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: none
 
 #### Description
 
@@ -52,14 +52,14 @@ Create the phase branch and the pnpm workspace skeleton: root `package.json` (pr
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-00-repo-foundation` created with `git switch -c`.
-- [ ] `package.json` root: `private: true`, workspaces `apps/*`, scripts `lint`, `typecheck`,
+- [x] Branch `feat/phase-00-repo-foundation` created with `git switch -c`.
+- [x] `package.json` root: `private: true`, workspaces `apps/*`, scripts `lint`, `typecheck`,
       `format`, `format:check`, `test`, `build`, `dev`, `infra:up/down/nuke` (infra scripts may
       no-op until phase 01 wires compose, but must exist and exit 0 with a clear message).
-- [ ] `tsconfig.base.json` strict flags exactly as spec §23; `pnpm typecheck` runs project-less
+- [x] `tsconfig.base.json` strict flags exactly as spec §23; `pnpm typecheck` runs project-less
       and exits 0.
-- [ ] `.nvmrc` = `24`; `engines.node` = `>=24`.
-- [ ] `pnpm install` succeeds on a clean clone.
+- [x] `.nvmrc` = `24`; `engines.node` = `>=24`.
+- [x] `pnpm install` succeeds on a clean clone.
 
 #### Files to create / modify
 
@@ -397,3 +397,4 @@ Completion Protocol: append `- 0.5 ✅ YYYY-MM-DD: phase merged in PR #<n>` to t
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+- 0.1 ✅ 2026-07-10: pnpm workspace root scaffolded (package.json, pnpm-workspace.yaml, .nvmrc, strict tsconfig.base.json, .gitignore); `pnpm install` and `pnpm typecheck` green.
