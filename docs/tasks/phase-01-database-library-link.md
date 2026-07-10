@@ -344,8 +344,8 @@ PR, request the GitHub Copilot review, address all findings, merge with CI green
 - [x] Local gate replay green: `pnpm lint && pnpm typecheck && pnpm --filter api test` plus
       `pnpm infra:up` + migrate + seed (twice) + probe.
 - [x] Dashboards updated (this file, plan, tasks README).
-- [x] PR `feat(api): phase 01, postgres, prisma and library link` merged squash with branch
-      deleted, Copilot findings all addressed, CI green.
+- [x] PR `feat(api): phase 01, postgres, prisma and library link` squash-merged; branch
+      deleted; Copilot findings all addressed; CI green.
 
 #### Files to create / modify
 
