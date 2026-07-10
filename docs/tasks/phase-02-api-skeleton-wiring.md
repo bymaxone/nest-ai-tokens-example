@@ -8,9 +8,10 @@
 
 Phases 00-01 delivered tooling, data layer, and the linked library. This phase turns `apps/api`
 into a booting NestJS 11 application with the library registered through the canonical
-`BymaxAiTokensModule.forRootAsync` factory (see the reconciliation note below): the store binding,
-a placeholder store (the real `MockAiProvider` lands in phase 04), demo identity, health
-endpoints, and the Testcontainers e2e harness. CI gains `build`, `test`, and `e2e` jobs.
+`BymaxAiTokensModule.forRootAsync` factory (see the reconciliation note below): the store binding
+with a placeholder store (the Prisma-backed `IAiTokensStore` implementation replaces it in phase
+03), demo identity, health endpoints, and the Testcontainers e2e harness. CI gains `build`,
+`test`, and `e2e` jobs.
 
 > **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the API drafted here and
 > in spec §4/§9.2 (same rule as the phase 01 note). The real surface is: registration via
