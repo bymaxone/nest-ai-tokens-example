@@ -1,10 +1,6 @@
 # Phase 01: Postgres, Prisma & Library Link
 
-> **Status**: ⛔ Blocked · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-10
-> **Blocker**: sibling library not built (`../nest-ai-tokens/dist` missing; run
-> `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`) and the
-> publish-vs-vendor link-mode decision in [`../AUTOPILOT.md`](../AUTOPILOT.md)
-> §External preconditions is unresolved for worktree/CI resolution.
+> **Status**: 👀 Review · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 01
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16 (Prisma Repositories), §21 (Local Stack), §8 (Library Consumption)
 
@@ -15,6 +11,13 @@ the Postgres data layer (docker compose, Prisma schema mirroring the library's r
 migration, deterministic seed) and the library dependency itself, linked via `file:` until the
 package is published, with a probe script proving both subpaths resolve. No NestJS app yet.
 
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the shapes drafted here
+> and in spec §16. The reference schema is the seven-model fragment shipped at
+> `dist/prisma/schema.prisma.fragment` (BigInt nano-USD money, `tenantId` on every table, two
+> PostgreSQL partial indexes in the shipped SQL), and the public export names differ from the
+> draft. Tasks were executed against the shipped dist/types (the source of truth); acceptance
+> criteria below were aligned in the same commits.
+
 > **Completion Protocol (referenced by every task below as "standard steps"):** set the task's
 > Status ✅ in its block and the Task index; tick its acceptance checkboxes; bump the header
 > Progress counter; update the Phase 01 row in `docs/DEVELOPMENT_PLAN.md` (and overall counter) and
@@ -23,8 +26,10 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 
 ## Rules-of-phase
 
-1. Prisma models replicate the library's reference schemas exactly: `Int` amount, `Jsonb`
-   metadata, `Decimal(10,6)` prices, all documented indexes; no extra opinion.
+1. Prisma models replicate the library's reference schema exactly: a verbatim copy of the shipped
+   `dist/prisma/schema.prisma.fragment` (seven models, BigInt nano-USD money, `Decimal(10,4)`
+   markup multiplier, `Json?` metadata columns, every documented index plus the two PostgreSQL
+   partial indexes from the shipped `migrations/0001_init.sql`); no extra opinion.
 2. The seed is deterministic (stable ids, stable dates) so charts and tests assert exact values.
 3. The library is consumed as an external package (`file:../../../nest-ai-tokens`), never copied,
    never a workspace member.
@@ -41,17 +46,17 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 
 | ID  | Task                                                                | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 1.1 | Branch + docker compose Postgres + infra scripts                    | 📋     | P0       | S    | none       |
-| 1.2 | `apps/api` package init + Prisma schema + first migration           | 📋     | P0       | M    | 1.1        |
-| 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | 📋     | P0       | M    | 1.2        |
-| 1.4 | Library `file:` link + dual-subpath probe script (CI job)           | 📋     | P0       | S    | 1.2        |
-| 1.5 | Phase close: audit, dashboards, PR + Copilot review                 | 📋     | P0       | S    | 1.1..1.4   |
+| 1.1 | Branch + docker compose Postgres + infra scripts                    | ✅     | P0       | S    | none       |
+| 1.2 | `apps/api` package init + Prisma schema + first migration           | ✅     | P0       | M    | 1.1        |
+| 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | ✅     | P0       | M    | 1.2        |
+| 1.4 | Library `file:` link + dual-subpath probe script (CI job)           | ✅     | P0       | S    | 1.2        |
+| 1.5 | Phase close: audit, dashboards, PR + Copilot review                 | 👀     | P0       | S    | 1.1..1.4   |
 
 ---
 
 ## Task 1.1: Branch + docker compose Postgres + infra scripts
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: none
 
 #### Description
 
@@ -61,10 +66,10 @@ scripts replacing the phase 00 stubs.
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-01-database-library-link` created with `git switch -c`.
-- [ ] `pnpm infra:up` waits for the healthcheck; `infra:nuke` removes the volume.
-- [ ] `.env.example` documents `DATABASE_URL` and `PORT` (more rows join in later phases).
-- [ ] No credentials beyond local-only `postgres/postgres` defaults.
+- [x] Branch `feat/phase-01-database-library-link` created with `git switch -c`.
+- [x] `pnpm infra:up` waits for the healthcheck; `infra:nuke` removes the volume.
+- [x] `.env.example` documents `DATABASE_URL` and `PORT` (more rows join in later phases).
+- [x] No credentials beyond local-only `postgres/postgres` defaults.
 
 #### Files to create / modify
 
@@ -115,7 +120,7 @@ scripts (1.1)`.
 
 ## Task 1.2: `apps/api` package init + Prisma schema + first migration
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 1.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 1.1
 
 #### Description
 
@@ -125,11 +130,13 @@ indexes, `@@map` table names), the first migration, and `prisma:*` scripts.
 
 #### Acceptance criteria
 
-- [ ] `apps/api/prisma/schema.prisma` mirrors both reference models field for field, including
-      the six transaction indexes and the four pricing indexes.
-- [ ] `pnpm --filter api prisma:migrate:dev` creates the tables against the compose Postgres.
-- [ ] `amount` is `Int`; prices are `Decimal @db.Decimal(10, 6)`; `metadata` is `Json?`.
-- [ ] `pnpm typecheck` green with the generated client.
+- [x] `apps/api/prisma/schema/ai-tokens.prisma` is a verbatim copy of the library's shipped
+      `dist/prisma/schema.prisma.fragment` (all seven models, field for field, every index).
+- [x] `pnpm --filter api run prisma:migrate:dev` creates the tables against the compose Postgres,
+      including the two partial indexes from the shipped `migrations/0001_init.sql`.
+- [x] Money columns are `BigInt` nano-USD; `markupMultiplier` is `Decimal @db.Decimal(10, 4)`;
+      `extraUnits`/`unitRates`/`softThresholds` are the documented `Json` columns.
+- [x] `pnpm typecheck` green with the generated client.
 
 #### Files to create / modify
 
@@ -190,7 +197,7 @@ Completion Protocol: standard steps; commit `feat(api): add prisma schema and fi
 
 ## Task 1.3: Deterministic seed
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 1.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 1.2
 
 #### Description
 
@@ -202,11 +209,15 @@ usage charts and top-consumer boards have meaningful shapes from first boot.
 
 #### Acceptance criteria
 
-- [ ] `pnpm --filter api prisma:seed` is idempotent (re-run produces no duplicates; use stable ids
-      or deleteMany-first strategy documented in a comment).
-- [ ] Both tenants have distinct, non-overlapping data; the null tenant has data too.
-- [ ] Every seeded debit has metadata satisfying the library's `TokenTransactionMetadata` keys.
-- [ ] A unit test asserts seed counts and a known balance per user.
+- [x] `pnpm --filter api run prisma:seed` is idempotent (re-run produces no duplicates; stable ids
+      plus a deleteMany-first strategy documented in the writer's header comment).
+- [x] Both tenants have distinct, non-overlapping data; tenant-scoped system-cost rows exist too
+      (the shipped schema requires `tenantId` on every row, superseding the drafted null-tenant
+      admin user).
+- [x] Every seeded row typechecks against the generated `Prisma.*CreateManyInput` shapes with the
+      documented model/token/cost fields (`provider`, `model`, `operation`, token counts,
+      nano-USD costs, `markupMultiplier`, `idempotencyKey`, `payloadHash`).
+- [x] A unit test asserts seed counts and a known balance per user.
 
 #### Files to create / modify
 
@@ -256,22 +267,23 @@ Completion Protocol: standard steps; commit `feat(api): add deterministic demo s
 
 ## Task 1.4: Library `file:` link + dual-subpath probe
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 1.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 1.2
 
 #### Description
 
 Add `@bymax-one/nest-ai-tokens` as `file:../../../nest-ai-tokens` in `apps/api`, plus
 `scripts/probe-subpaths.mjs` that imports the server subpath (Node ESM) and the shared subpath and
-asserts key exports exist (`BymaxAiTokensModule`, `AI_TOKENS_ERROR_CODES`,
-`DEFAULT_OPENAI_PRICING_2026`, `AI_TOKEN_TRANSACTION_TYPES`). CI gains a `probe` step. Document
-the three linking modes in the README (spec §8.1).
+asserts key shipped exports exist (`BymaxAiTokensModule`, `AiTokensException`,
+`AI_TOKENS_ERROR_CODES`, the core services on `.`; `AI_OPERATIONS`, `PROVIDER_IDS`,
+`TOKEN_CATEGORIES`, `WALLET_ENTRY_TYPES`, the cost helpers on `./shared`). CI gains a `probe`
+job. Document the three linking modes in the README (spec §8.1).
 
 #### Acceptance criteria
 
-- [ ] `pnpm install` resolves the local package; `openai` is NOT in any lockfile entry.
-- [ ] `node scripts/probe-subpaths.mjs` exits 0 and prints the probed export names.
-- [ ] CI runs the probe after install.
-- [ ] README gains the linking-modes section (file: now, ^0.1.0 after publish).
+- [x] `pnpm install` resolves the local package; `openai` is NOT in any lockfile entry.
+- [x] `node scripts/probe-subpaths.mjs` exits 0 and prints the probed export names.
+- [x] CI runs the probe on every PR (dedicated `probe` job in the thin-caller workflow).
+- [x] README gains the linking-modes section (file: now, ^0.1.0 after publish).
 
 #### Files to create / modify
 
@@ -320,7 +332,7 @@ Completion Protocol: standard steps; commit `feat(api): link nest-ai-tokens and 
 
 ## Task 1.5: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 1.1..1.4
+- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 1.1..1.4
 
 #### Description
 
@@ -329,9 +341,9 @@ PR, request the GitHub Copilot review, address all findings, merge with CI green
 
 #### Acceptance criteria
 
-- [ ] Local gate replay green: `pnpm lint && pnpm typecheck && pnpm --filter api test` plus
-      `pnpm infra:up` + migrate + seed + probe.
-- [ ] Dashboards updated (this file, plan, tasks README).
+- [x] Local gate replay green: `pnpm lint && pnpm typecheck && pnpm --filter api test` plus
+      `pnpm infra:up` + migrate + seed (twice) + probe.
+- [x] Dashboards updated (this file, plan, tasks README).
 - [ ] PR `feat(api): phase 01, postgres, prisma and library link` merged squash with branch
       deleted, Copilot findings all addressed, CI green.
 
@@ -383,3 +395,9 @@ Completion Protocol: append `- 1.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 1.1 ✅ 2026-07-10: postgres:17-alpine compose stack (digest-pinned, healthcheck, named volume), root `.env.example` (DATABASE_URL, PORT), real infra:up/down/nuke scripts
+- 1.2 ✅ 2026-07-10: apps/api package (Prisma 7 + adapter-pg + prisma.config.ts), multi-file schema with the library's shipped fragment verbatim, first migration applied incl. both partial indexes
+- 1.3 ✅ 2026-07-10: deterministic seed (pure plan + idempotent delete-first writer): 3 wallets, 4 grants, 76 usage records across acme/globex incl. 4 reindex system costs; 12 unit tests, 100% coverage; double-run verified against Postgres
+- 1.4 ✅ 2026-07-10: `file:` library link (peers auto-resolved, no openai anywhere), dual-subpath probe (15 exports over `.` + `./shared`), ci.yml replaced by the family thin caller (node-ci reusable + probe job + visibility-gated security), README linking-modes section
+- 1.5 👀 2026-07-10: acceptance audit green (fragment verbatim, no openai, gate replay, seed double-run, probe, zero code/security review findings); PR opened and Copilot review requested; merge owned by the orchestrator

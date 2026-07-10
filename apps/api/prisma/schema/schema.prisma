@@ -1,0 +1,19 @@
+// Datasource and generator for apps/api.
+//
+// This is a multi-file Prisma schema: `prisma.config.ts` points the CLI at
+// this folder and every sibling *.prisma file contributes models. The library
+// models live in `ai-tokens.prisma`, a verbatim copy of the schema fragment
+// shipped by @bymax-one/nest-ai-tokens (its documented consumption path), so
+// upgrades reduce to diffing that one file against the package's
+// `dist/prisma/schema.prisma.fragment`.
+//
+// No `url` here: the CLI reads it from `prisma.config.ts` and the runtime
+// client connects through the `@prisma/adapter-pg` driver adapter.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}

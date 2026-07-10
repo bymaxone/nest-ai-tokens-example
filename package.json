@@ -46,9 +46,9 @@
     "test": "pnpm -r --workspace-concurrency=1 --if-present run test",
     "test:cov": "pnpm -r --workspace-concurrency=1 --if-present run test:cov",
     "test:e2e": "pnpm -r --workspace-concurrency=1 --if-present run test:e2e",
-    "infra:up": "echo \"infra arrives in a later change\" && exit 0",
-    "infra:down": "echo \"infra arrives in a later change\" && exit 0",
-    "infra:nuke": "echo \"infra arrives in a later change\" && exit 0",
+    "infra:up": "docker compose up -d --wait",
+    "infra:down": "docker compose down",
+    "infra:nuke": "docker compose down -v",
     "prepare": "husky"
   },
   "devDependencies": {

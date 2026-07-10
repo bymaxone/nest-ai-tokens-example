@@ -1,0 +1,35 @@
+'use strict'
+
+/**
+ * Jest configuration for apps/api unit suites (ESM via ts-jest).
+ *
+ * Workers are bounded to half the cores as a memory guard: every worker loads
+ * its own module graph, including the locally linked library, so an unbounded
+ * pool multiplies peak memory.
+ *
+ * @type {import('jest').Config}
+ */
+module.exports = {
+  testEnvironment: 'node',
+  maxWorkers: '50%',
+  moduleFileExtensions: ['js', 'json', 'ts'],
+  rootDir: '.',
+  testMatch: ['<rootDir>/prisma/**/*.spec.ts', '<rootDir>/src/**/*.spec.ts'],
+  extensionsToTreatAsEsm: ['.ts'],
+  transform: {
+    '^.+\\.(t|j)s$': ['ts-jest', { useESM: true, tsconfig: '<rootDir>/tsconfig.json' }],
+  },
+  // Strip the .js extension from relative imports so ts-jest resolves the
+  // TypeScript sources (NodeNext emits .js specifiers).
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
+  // Coverage scope: every executable source, minus the bootstrap entrypoint
+  // (`seed.ts` only wires the client and delegates to the covered runner).
+  collectCoverageFrom: ['prisma/**/*.ts', '!prisma/seed.ts', '!**/*.spec.ts'],
+  coverageThreshold: {
+    global: { branches: 100, functions: 100, lines: 100, statements: 100 },
+  },
+  coverageReporters: ['text', 'text-summary', 'json-summary'],
+  coverageDirectory: 'coverage',
+}
