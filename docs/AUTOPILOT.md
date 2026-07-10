@@ -120,14 +120,16 @@ public.
 ```bash
 # Web must reference ONLY the ./shared subpath, never the server root '.'
 # (catches every reference form: import, export-from, require, dynamic
-# import, single or double quotes; only the /shared subpath is allowed)
-[ ! -d apps/web ] || ! { grep -rn "@bymax-one/nest-ai-tokens" apps/web --include='*.ts' --include='*.tsx' | grep -v "@bymax-one/nest-ai-tokens/shared"; }
+# import, single or double quotes; only the exact /shared subpath is
+# excluded, terminated by a quote or a deeper /, so lookalikes such as
+# /shared2 stay flagged)
+[ ! -d apps/web ] || ! { grep -rn "@bymax-one/nest-ai-tokens" apps/web --include='*.ts' --include='*.tsx' | grep -vE "@bymax-one/nest-ai-tokens/shared['\"/]"; }
 
 # No suppression comments anywhere (types or lint)
 [ ! -d apps ] || ! grep -rnE '@ts-ignore|@ts-nocheck|@ts-expect-error|eslint-disable' apps --include='*.ts' --include='*.tsx'
 
 # process.env confined to the config/env layer (ai-tokens.config.ts + env schema)
-[ ! -d apps ] || ! { grep -rn "process\.env" apps --include='*.ts' | grep -vE 'ai-tokens\.config\.ts|env\.(ts|schema\.ts)|\.spec\.ts|\.e2e-spec\.ts'; }
+[ ! -d apps ] || ! { grep -rn "process\.env" apps --include='*.ts' --include='*.tsx' | grep -vE 'ai-tokens\.config\.ts|env\.(ts|schema\.ts)|\.spec\.ts|\.e2e-spec\.ts'; }
 
 # No placeholder files (user-global rule + plan Guiding Principle 9);
 # prunes .git and node_modules at ANY depth (pnpm workspaces nest them)
