@@ -14,6 +14,7 @@ import { ForbiddenException, UnauthorizedException } from '@nestjs/common'
 import type { ExecutionContext } from '@nestjs/common'
 import { floatUsdToNanoUsd } from '@bymax-one/nest-ai-tokens'
 import type { BymaxAiTokensModuleOptions, MeteringContext } from '@bymax-one/nest-ai-tokens'
+import { z } from 'zod'
 
 import type { EnvConfig } from '../config/env.js'
 import type { AuthenticatedRequest } from '../identity/identity.middleware.js'
@@ -131,21 +132,34 @@ export function buildAiTokensOptions(
 }
 
 /**
+ * Parsed-space mirror of the environment shape: `envSchema` itself parses
+ * from raw env-var strings (coercions, `stringbool`), so it cannot revalidate
+ * an already-parsed object. The `z.ZodType<EnvConfig>` annotation keeps this
+ * mirror from drifting away from the real config type.
+ */
+const parsedEnvShape: z.ZodType<EnvConfig> = z.object({
+  DATABASE_URL: z.string(),
+  PORT: z.number(),
+  AI_PROVIDER_MODE: z.enum(['mock', 'openai-optin']),
+  QUOTA_ENABLED: z.boolean(),
+  QUOTA_TOLERANCE: z.number(),
+  QUOTA_MINIMUM_BALANCE: z.number(),
+  TENANT_REQUIRED: z.boolean(),
+  PRICING_CACHE_TTL_MS: z.number(),
+})
+
+/**
  * Narrow the value injected for `ENV_CONFIG` (the library's async factory is
- * typed over `unknown` arguments).
+ * typed over `unknown` arguments). Every field the options factory consumes
+ * is structurally verified, so a miswired DI token fails here with one clear
+ * error instead of surfacing later as a confusing option value.
  *
  * @param value The injected value.
  * @returns The typed environment configuration.
  * @throws {Error} when the container resolved an unexpected value.
  */
 export function assertEnvConfig(value: unknown): EnvConfig {
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { DATABASE_URL?: unknown }).DATABASE_URL === 'string'
-  ) {
-    return value as EnvConfig
-  }
+  if (parsedEnvShape.safeParse(value).success) return value as EnvConfig
   throw new Error('ENV_CONFIG resolved to an unexpected value')
 }
 

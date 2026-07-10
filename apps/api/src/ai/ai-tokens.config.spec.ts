@@ -210,6 +210,16 @@ describe('DI narrowing helpers', () => {
     ['a null env', null],
     ['an env without DATABASE_URL', { PORT: 3001 }],
     ['a primitive', 42],
+    [
+      'an env with a valid DATABASE_URL but a mistyped QUOTA_ENABLED',
+      { ...envWith(), QUOTA_ENABLED: 'yes' },
+    ],
+    [
+      'an env missing PRICING_CACHE_TTL_MS',
+      Object.fromEntries(
+        Object.entries(envWith()).filter(([key]) => key !== 'PRICING_CACHE_TTL_MS'),
+      ),
+    ],
   ])('assertEnvConfig rejects %s', (_label, value) => {
     expect(() => assertEnvConfig(value)).toThrow('ENV_CONFIG resolved to an unexpected value')
   })

@@ -28,8 +28,8 @@ const POSTGRES_IMAGE = 'postgres:17-alpine'
 /** The app package root (cwd for the Prisma CLI, which reads prisma.config.ts). */
 const APP_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
-let container: StartedPostgreSqlContainer
-let app: INestApplication
+let container: StartedPostgreSqlContainer | undefined
+let app: INestApplication | undefined
 let server: App
 
 /**
@@ -53,10 +53,18 @@ beforeAll(async () => {
   server = app.getHttpServer() as App
 })
 
-/** Teardown order matters: app first (pools, reaper timer), then container. */
+/**
+ * Teardown order matters: app first (pools, reaper timer), then container.
+ * Both steps are guarded so a failed `beforeAll` (container, migration, or
+ * boot) cannot mask its own error with an undefined access here, and the
+ * container is stopped even when closing the app throws.
+ */
 afterAll(async () => {
-  await app.close()
-  await container.stop()
+  try {
+    await app?.close()
+  } finally {
+    await container?.stop()
+  }
 })
 
 describe('boot and hello', () => {

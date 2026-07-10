@@ -129,7 +129,7 @@ describe('parseEnv', () => {
     } catch (error) {
       const { report } = error as EnvValidationError
       expect(report.length).toBeGreaterThanOrEqual(3)
-      expect(report.every((line) => /^[A-Z_.]+|\(root\)/.test(line))).toBe(true)
+      expect(report.every((line) => /^(?:[A-Z_.]+|\(root\)): /.test(line))).toBe(true)
     }
   })
 
