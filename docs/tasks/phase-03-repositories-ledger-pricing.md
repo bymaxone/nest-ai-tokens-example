@@ -23,8 +23,8 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 > a later phase); `findActive`/`closeCurrentWindow`/`upsertIfMissing` -> `resolveRate` (window
 > predicate in SQL) and `upsertPrice` (atomic close-and-insert under a per-tuple advisory xact
 > lock plus a partial unique index on the single open row); `findAllCurrent` has no port
-> equivalent, so the "all current pricing" read is a host-owned Prisma query (`effectiveTo:
-null`); `AiTokenTransactionService.getUserTransactions` -> `LedgerService.query` + `sumCost`
+> equivalent, so the "all current pricing" read is a host-owned Prisma query on the open rows;
+> `AiTokenTransactionService.getUserTransactions` -> `LedgerService.query` + `sumCost`
 > (the shipped filter has no `type`/`onlyDebits`/`onlyCredits`/`order`: costs are unsigned,
 > corrections are compensating records, and the adapter orders `createdAt` ascending);
 > `UpdatePricingDto` -> `NewPriceVersion` (Zod mirror); `invalidateCache()` has NO public
