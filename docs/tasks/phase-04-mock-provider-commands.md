@@ -1,6 +1,6 @@
 # Phase 04: Mock Provider, Commands & Embeddings
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-06
+> **Status**: 🔄 In Progress · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 04
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §12 (Mock Provider), §11 (workspace routes), §4.3 (behavioral contracts 1, 3, 5), §7.4 (matrix rows 37-52, 73-76)
 
@@ -10,6 +10,37 @@ The deterministic heart of the example. This phase replaces the echo provider wi
 `MockAiProvider` (token math, canned content, failure-injection markers) and ships the workspace
 REST surface exercising `AiCommandService` (all five commands) and `EmbeddingService` (single +
 batch), proving the library's transaction guarantees with e2e ledger assertions.
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the shapes drafted here
+> and in spec §12/§11/§4.3 (same rule as the phase 01-03 notes). v0.1.0 ships NO `IAiProvider`
+> port, no `MockAiProvider`/`NoOpAiProvider`/`OpenAiProvider`, no `AiCommandService`, no
+> `EmbeddingService`, and no exported command DTOs: inference stays host code, and the library
+> meters it through `MeteringService.record({ usage, preset, context })` (post-hoc, observe-only
+> by default) with `ProviderPreset`/`UsageNormalizer` as the extension points. Mappings applied:
+> `MockAiProvider implements IAiProvider` -> an app-owned `MockAiProvider` service that stands in
+> for a provider SDK (deterministic token math, canned task-directive content, failure markers,
+> latency knob) and returns OpenAI-compatible response shapes; "swap the echo provider binding"
+> -> nothing to swap (phases 02/03 never bound a provider; the mock ships in its own module);
+> `AiCommandService.translate/summarize/rewrite/analyze/custom` and
+> `EmbeddingService.generate/generateBatch` -> app workspace services that call the mock and
+> meter each call exactly once via `MeteringService.record` (the batch embeds record ONE
+> aggregate usage). The app defines its own chat/embedding normalizers (the shipped
+> `normalizeOpenAiCompatibleUsage` leaves `provider: ''` and has no embeddings variant), stamped
+> `provider: 'mock'` so rating hits the seeded mock price rows. Provider failure codes
+> (`provider.rate_limited`, `provider.timeout`, ...) do NOT exist in the shipped
+> `AI_TOKENS_ERROR_CODES` (that catalog covers config/pricing/ledger/wallet/budget concerns), so
+> the drafted "throw `AiTokensException(code, ...)`" is unimplementable for provider failures;
+> instead the mock throws an app-owned `WorkspaceApiException` (an `HttpException` producing the
+> SAME `{ error: { code, message, details } }` envelope shape the library uses) with `provider.*`
+> and `command.*` codes. `UsageRecord` has no free-form `metadata` column: `resourceId` lands in
+> the persisted `tags` (`resource:<id>`) and `metadata.batchSize` reconciles to a
+> `batch-size:<n>` tag on the single aggregate record. `getDefaultModel`/`getCurrentPricing` ->
+> app constants plus `PricingService.resolveRate` composed by `/workspace/models`. Repeated
+> identical calls must each append (delta 1 per call), so `record()` is invoked WITHOUT a
+> content-derived idempotency key (the library then keys each append with a random UUID, its
+> documented non-deduplicating mode). Partial translations debit like truncation (real tokens
+> were produced) and then surface `command.missing_translations`; an unparseable JSON body does
+> not debit (`provider.invalid_json`), matching §4.3 contract 5.
 
 > **Completion Protocol ("standard steps"):** task Status ✅ (block + index) -> checkboxes ->
 > header Progress -> plan dashboard row + overall counter -> tasks README -> Completion log entry
