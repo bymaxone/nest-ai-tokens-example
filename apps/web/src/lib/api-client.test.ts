@@ -96,7 +96,7 @@ describe('ApiClient', () => {
     const client = new ApiClient({ baseUrl: 'http://api.test' })
     await client.getLiveness()
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(init.headers).toEqual({ 'content-type': 'application/json' })
+    expect(init.headers).toEqual({ accept: 'application/json' })
   })
 
   it('parses the canonical envelope and throws a matching ApiError on a non-2xx response', async () => {

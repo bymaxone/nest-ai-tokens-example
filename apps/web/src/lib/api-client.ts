@@ -92,7 +92,7 @@ function parseErrorEnvelope(body: unknown): ErrorEnvelope['error'] | undefined {
   const { code, message } = error as { code?: unknown; message?: unknown }
   if (typeof code !== 'string' || typeof message !== 'string') return undefined
   const details = (error as { details?: unknown }).details
-  const hasDetails = typeof details === 'object' && details !== null
+  const hasDetails = typeof details === 'object' && details !== null && !Array.isArray(details)
   return { code, message, ...(hasDetails ? { details: details as Record<string, unknown> } : {}) }
 }
 
@@ -200,7 +200,10 @@ export class ApiClient {
       response = await fetch(`${this.baseUrl}${path}`, {
         ...init,
         headers: {
-          'content-type': 'application/json',
+          accept: 'application/json',
+          // content-type is only meaningful with a body; sending it on
+          // bodyless GETs forces an avoidable CORS preflight.
+          ...(init.body === undefined ? {} : { 'content-type': 'application/json' }),
           ...this.headerProvider(),
           ...init.headers,
         },

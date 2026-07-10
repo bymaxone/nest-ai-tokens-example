@@ -43,6 +43,7 @@ interface ApiBootstrapModule {
 
 let container: StartedPostgreSqlContainer | undefined
 let app: LiveNestApp | undefined
+let previousDatabaseUrl: string | undefined
 let client: ApiClient
 
 /**
@@ -60,6 +61,7 @@ beforeAll(async () => {
     env: { ...process.env, DATABASE_URL: databaseUrl },
     stdio: 'pipe',
   })
+  previousDatabaseUrl = process.env['DATABASE_URL']
   process.env['DATABASE_URL'] = databaseUrl
 
   // Cross-package import of the api's boot seam. The specifier is built at
@@ -85,6 +87,13 @@ beforeAll(async () => {
  * Teardown order matters: app first (pools, reaper timer), then container.
  */
 afterAll(async () => {
+  // Restore the ambient env so the container URL cannot leak into any test
+  // that runs later in this Node process.
+  if (previousDatabaseUrl === undefined) {
+    delete process.env['DATABASE_URL']
+  } else {
+    process.env['DATABASE_URL'] = previousDatabaseUrl
+  }
   try {
     await app?.close()
   } finally {

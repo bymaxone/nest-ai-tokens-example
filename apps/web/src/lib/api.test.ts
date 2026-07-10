@@ -30,7 +30,7 @@ describe('api singleton', () => {
     setIdentity(null)
     await api.getLiveness()
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(init.headers).toEqual({ 'content-type': 'application/json' })
+    expect(init.headers).toEqual({ accept: 'application/json' })
   })
 
   // scenario: the store's current selection travels as the demo headers.
