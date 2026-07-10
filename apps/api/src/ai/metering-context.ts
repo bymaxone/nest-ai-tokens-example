@@ -9,7 +9,7 @@
  *
  * @layer ai
  */
-import type { MeteringContext } from '@bymax-one/nest-ai-tokens'
+import type { MeteringContext, WalletRef } from '@bymax-one/nest-ai-tokens'
 
 import { GLOBAL_TENANT_ID } from './ai-tokens.config.js'
 import type { DemoIdentity } from '../identity/identity.middleware.js'
@@ -23,6 +23,17 @@ import type { DemoIdentity } from '../identity/identity.middleware.js'
  */
 export function tenantIdOf(identity: DemoIdentity): string {
   return identity.tenantId ?? GLOBAL_TENANT_ID
+}
+
+/**
+ * The wallet owner reference of an identity (user-owned wallets; the
+ * tenant mapping mirrors the module `scopeResolver`).
+ *
+ * @param identity The request identity.
+ * @returns The wallet owner reference.
+ */
+export function walletRefOf(identity: DemoIdentity): WalletRef {
+  return { tenantId: tenantIdOf(identity), ownerType: 'user', ownerId: identity.id }
 }
 
 /**

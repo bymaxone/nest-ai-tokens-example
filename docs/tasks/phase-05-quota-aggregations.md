@@ -1,6 +1,6 @@
 # Phase 05: Quota, Credits & Aggregations
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 05
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §17 (Quota), §11 (usage/quota/system-jobs routes), §7.5-7.6 (matrix rows 53-72, 84-85)
 
@@ -80,7 +80,7 @@ metadata). After this phase the drain-then-402 scenario is walkable.
 | 5.1 | Branch + ledger-backed balance resolver + guard on workspace                               | ✅     | P0       | M    | none       |
 | 5.2 | Estimators: body-size on commands, constant + model-based + resolver overrides in `quota/` | ✅     | P0       | M    | 5.1        |
 | 5.3 | Credits + refund endpoints (`purchase`, allocations, `refund`)                             | ✅     | P0       | S    | 5.1        |
-| 5.4 | `usage/` REST: balance, by-period/type/model, top consumers, system costs                  | 📋     | P0       | M    | 5.1        |
+| 5.4 | `usage/` REST: balance, by-period/type/model, top consumers, system costs                  | ✅     | P0       | M    | 5.1        |
 | 5.5 | `system-jobs/`: reindex (system cost) + agent-decision metadata                            | 📋     | P1       | S    | 5.4        |
 | 5.6 | Phase close: audit, dashboards, PR + Copilot review                                        | 📋     | P0       | S    | 5.1..5.5   |
 
@@ -317,20 +317,26 @@ Completion Protocol: standard steps; commit `feat(api): credits and refund endpo
 
 ## Task 5.4: `usage/` REST
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 5.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 5.1
 
 #### Description
 
-The full `UsageAggregatorService` surface as chart-ready endpoints: `GET /usage/balance`
-(`@SkipQuota`), `/usage/by-period` (granularity `day|week|month`, from/to), `/usage/by-type`,
-`/usage/by-model`, `/usage/top-consumers` (topN), `/usage/system-costs` (category filter).
+(Reconciled onto v0.1.0; see the phase note.) The full `UsageReportService.summarize` surface as
+chart-ready endpoints: `GET /usage/balance` (`WalletService.getBalance`, unmetered/unguarded),
+`/usage/by-period` (granularity `day|week|month`, bounded from/to), `/usage/by-type` (the
+`feature` dimension), `/usage/by-model`, `/usage/top-consumers` (tenant-wide `scope` grouping,
+host-ordered, topN), `/usage/system-costs` (category filter, `isSystemCost: true`).
 
 #### Acceptance criteria
 
-- [ ] Every aggregator method is called by exactly one endpoint; shapes returned verbatim.
-- [ ] Seed-based e2e asserts exact aggregation values for a known user/tenant/window.
-- [ ] `@SkipQuota` demonstrated on the balance route (matrix row 58).
-- [ ] 100% coverage.
+- [x] Every implementable dimension is served by exactly one endpoint; `UsageSummary` rows are
+      returned verbatim (JSON-safe: bigint money as decimal strings), never reshaped.
+- [x] Seed-based e2e asserts EXACT aggregation values (records, tokens, bigint costs) computed
+      independently from the seed plan for ada/acme over a fixed window, per feature, model,
+      month bucket, consumer ranking, and system-cost category.
+- [x] Skip semantics demonstrated on the balance route (matrix row 58 reconciled): no guard, no
+      `@Meter`, and an e2e-proven zero ledger delta across every lifecycle status.
+- [x] 100% coverage.
 
 #### Files to create / modify
 
@@ -493,3 +499,4 @@ Completion Protocol: append `- 5.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 5.1 ✅ 2026-07-10: hold-based enforcement on all seven metered workspace handlers (tolerance-scaled estimators, EnforcementGuard, drain-then-blocked e2e)
 - 5.2 ✅ 2026-07-10: quota lab (declarative constant + model-based estimators), access status read, budgets admin surface with pre-handler block e2e
 - 5.3 ✅ 2026-07-10: credits (grant with backdated effectiveAt + replay pre-check) and refund (orchestrated reversal) endpoints with exact-delta e2e proofs
+- 5.4 ✅ 2026-07-10: usage analytics surface (balance + five summarize dimensions) with exact seed-plan e2e assertions and bounded query validation

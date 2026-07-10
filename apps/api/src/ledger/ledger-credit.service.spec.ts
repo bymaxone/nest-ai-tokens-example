@@ -30,7 +30,6 @@ import {
   CREDIT_EFFECTIVE_BACKDATE_MS,
   DEFAULT_REFUND_REASON,
   LedgerCreditService,
-  walletRefOf,
 } from './ledger-credit.service.js'
 import { ApiException } from '../common/api-exception.js'
 import type { DemoIdentity } from '../identity/identity.middleware.js'
@@ -97,19 +96,6 @@ function serviceWith(walletsEnabled = true) {
   )
   return { service, grant, getBalance, findById, reverse, findWallet, findEntry }
 }
-
-describe('walletRefOf', () => {
-  /**
-   * Owner mapping.
-   *
-   * The credited wallet is the caller's user-owned wallet under the
-   * scopeResolver's tenant mapping (global for null tenants).
-   */
-  it('maps the identity to its user wallet ref', () => {
-    expect(walletRefOf(ada)).toEqual({ tenantId: 'acme', ownerType: 'user', ownerId: 'ada' })
-    expect(walletRefOf({ id: 'root', tenantId: null }).tenantId).toBe('global')
-  })
-})
 
 describe('credit', () => {
   /**

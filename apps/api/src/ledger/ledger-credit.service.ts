@@ -41,7 +41,7 @@ import type { JsonSafe, UsageRecord, WalletRef } from '@bymax-one/nest-ai-tokens
 
 import type { CreditBody, CreditType } from './dto/credit.body.js'
 import type { RefundBody } from './dto/refund.body.js'
-import { tenantIdOf } from '../ai/metering-context.js'
+import { tenantIdOf, walletRefOf } from '../ai/metering-context.js'
 import { ApiException } from '../common/api-exception.js'
 import type { DemoIdentity } from '../identity/identity.middleware.js'
 import { PrismaService } from '../prisma/prisma.service.js'
@@ -235,17 +235,6 @@ export class LedgerCreditService {
     }
     return this.wallets
   }
-}
-
-/**
- * The wallet owner reference of an identity (user-owned wallets; the tenant
- * mapping mirrors the module `scopeResolver`).
- *
- * @param identity The request identity.
- * @returns The wallet owner reference.
- */
-export function walletRefOf(identity: DemoIdentity): WalletRef {
-  return { tenantId: tenantIdOf(identity), ownerType: 'user', ownerId: identity.id }
 }
 
 /**

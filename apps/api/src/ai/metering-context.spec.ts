@@ -11,7 +11,7 @@
 import { describe, expect, it } from '@jest/globals'
 
 import { GLOBAL_TENANT_ID } from './ai-tokens.config.js'
-import { buildMeteringContext, tenantIdOf } from './metering-context.js'
+import { buildMeteringContext, tenantIdOf, walletRefOf } from './metering-context.js'
 
 describe('tenantIdOf', () => {
   /**
@@ -24,6 +24,23 @@ describe('tenantIdOf', () => {
   it('returns the identity tenant or the global fallback', () => {
     expect(tenantIdOf({ id: 'ada', tenantId: 'acme' })).toBe('acme')
     expect(tenantIdOf({ id: 'root', tenantId: null })).toBe(GLOBAL_TENANT_ID)
+  })
+})
+
+describe('walletRefOf', () => {
+  /**
+   * Owner mapping.
+   *
+   * Wallets are user-owned under the scopeResolver's tenant mapping, so
+   * every feature (credits, balance, drains) targets the same wallet row.
+   */
+  it('maps the identity to its user wallet ref', () => {
+    expect(walletRefOf({ id: 'ada', tenantId: 'acme' })).toEqual({
+      tenantId: 'acme',
+      ownerType: 'user',
+      ownerId: 'ada',
+    })
+    expect(walletRefOf({ id: 'root', tenantId: null }).tenantId).toBe(GLOBAL_TENANT_ID)
   })
 })
 

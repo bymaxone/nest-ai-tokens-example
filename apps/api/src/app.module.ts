@@ -15,6 +15,7 @@ import { IdentityModule } from './identity/identity.module.js'
 import { LedgerModule } from './ledger/ledger.module.js'
 import { PricingModule } from './pricing/pricing.module.js'
 import { QuotaModule } from './quota/quota.module.js'
+import { UsageModule } from './usage/usage.module.js'
 import { WorkspaceModule } from './workspace/workspace.module.js'
 
 /** The composition root of the API. */
@@ -26,6 +27,7 @@ import { WorkspaceModule } from './workspace/workspace.module.js'
     LedgerModule,
     PricingModule,
     QuotaModule,
+    UsageModule,
     WorkspaceModule,
     HealthModule,
   ],
