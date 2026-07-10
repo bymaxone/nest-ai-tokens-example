@@ -56,7 +56,7 @@ export interface TriggerEntry {
 }
 
 /** The demo-labeled feature prefix every trigger-side write carries. */
-export const ERRORS_DEMO_FEATURE_PREFIX = 'errors-demo'
+const ERRORS_DEMO_FEATURE_PREFIX = 'errors-demo'
 
 /**
  * A debit no demo wallet can ever cover: nine billion USD in nano-USD,

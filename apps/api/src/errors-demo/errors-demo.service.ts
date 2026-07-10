@@ -123,7 +123,9 @@ export class ErrorsDemoService {
    * @throws {ApiException} `quota.disabled` (503) when the trigger needs a disabled feature block.
    */
   async trigger(identity: DemoIdentity, code: string): Promise<never> {
-    const entry = TRIGGERS[code]
+    // Own-key lookup only: a prototype-chain name ('constructor', ...) in
+    // the URL parameter must be an unknown code, never an object member.
+    const entry = Object.hasOwn(TRIGGERS, code) ? TRIGGERS[code] : undefined
     if (entry === undefined) throw notTriggerable(code)
     if (entry.requires === 'wallets' && this.wallets === null) throw quotaDisabled()
     if (entry.requires === 'budgets' && this.budgets === null) throw quotaDisabled()

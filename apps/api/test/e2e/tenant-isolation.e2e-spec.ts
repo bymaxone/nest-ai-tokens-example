@@ -61,9 +61,11 @@ let app: INestApplication | undefined
 let server: App
 
 /** Boot the production wiring against the running container. */
-async function bootApp(): Promise<void> {
-  app = await createApp()
-  server = app.getHttpServer() as App
+async function bootApp(): Promise<INestApplication> {
+  const booted = await createApp()
+  app = booted
+  server = booted.getHttpServer() as App
+  return booted
 }
 
 /** Container up + migrate once; the default-mode app boots and seeds. */
@@ -80,8 +82,8 @@ beforeAll(async () => {
   process.env.DATABASE_URL = databaseUrl
   process.env.PORT = '0'
   delete process.env.TENANT_REQUIRED
-  await bootApp()
-  await runSeed(app!.get(PrismaService))
+  const booted = await bootApp()
+  await runSeed(booted.get(PrismaService))
 })
 
 /** App first (pools, timers), then the container; both guarded. */

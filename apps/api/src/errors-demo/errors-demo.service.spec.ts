@@ -88,6 +88,24 @@ describe('ErrorsDemoService.trigger dispatch', () => {
   })
 
   /**
+   * Prototype-chain probe.
+   *
+   * A URL parameter naming an inherited object member ('constructor')
+   * must be treated as an unknown code (own-key lookup only), never
+   * dereferenced as a registry entry.
+   */
+  it('treats prototype-chain names as unknown codes', async () => {
+    expect.assertions(2)
+
+    try {
+      await serviceWith({}).trigger(ada, 'constructor')
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiException)
+      expect((error as ApiException).code).toBe('errors_demo.unknown_code')
+    }
+  })
+
+  /**
    * Honest non-triggerable rejection.
    *
    * A catalog code that is boot-variant/e2e-only/reserved must answer 501
