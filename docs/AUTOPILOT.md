@@ -36,11 +36,17 @@
      root), and what to do on failure. STOP is the default; autopilot never
      polls for external events the repo cannot influence. -->
 
+The library rows depend on the **selected link mode** (see the decision note
+below): while the dependency is a `file:` link, the sibling checks apply and
+the registry check does not; once the dependency is `^0.1.0` from a registry,
+the registry check applies and the sibling checks are skipped.
+
 | Applies to | Check (exit 0 = OK, from project root) | On failure |
 |---|---|---|
 | launch, phases 1+ | `docker info` | STOP; operator starts Docker (Postgres compose + Testcontainers e2e need it) |
-| phases 1+ | `test -d ../nest-ai-tokens` (the `file:` link target resolves; run BEFORE the dist probe below) | mark P<N> ⛔ blocked on "sibling library missing", STOP; operator clones/places `@bymax-one/nest-ai-tokens` beside this repo |
-| phases 1+ | `test -d ../nest-ai-tokens/dist` (only after the existence check above passes) | mark P<N> ⛔ blocked on "sibling library not built", STOP; operator runs `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`, then relaunches |
+| phases 1+, `file:` link mode only | `test -d ../nest-ai-tokens` (the link target resolves; run BEFORE the dist probe below) | mark P<N> ⛔ blocked on "sibling library missing", STOP; operator clones/places `@bymax-one/nest-ai-tokens` beside this repo |
+| phases 1+, `file:` link mode only | `test -d ../nest-ai-tokens/dist` (only after the existence check above passes) | mark P<N> ⛔ blocked on "sibling library not built", STOP; operator runs `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`, then relaunches |
+| phases 1+, registry mode only | `npm view @bymax-one/nest-ai-tokens version` | mark P<N> ⛔ blocked on "library not published", STOP; operator publishes the package (autopilot never publishes) |
 
 > **⚠ Launch-blocking design decision: resolve BEFORE the first `run`.**
 > The library dependency is `file:../../../nest-ai-tokens` (relative to
