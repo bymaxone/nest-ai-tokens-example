@@ -1,6 +1,6 @@
 # Phase 06: Multi-Tenant & Error Catalog
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 06
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §18 (Multi-Tenant), §19 (Error Handling), §7.7 (matrix rows 2, 10-12, 60-62, 75, 77-83)
 
@@ -79,7 +79,7 @@ this phase every row of the coverage matrix that belongs to the backend is demon
 | ID  | Task                                                                   | Status | Priority | Size | Depends on |
 | --- | ---------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 6.1 | Branch + tenant isolation proofs (both modes)                          | ✅     | P0       | M    | none       |
-| 6.2 | `errors-demo/` triggers: ledger, pricing, embedding/command codes      | 📋     | P0       | M    | none       |
+| 6.2 | `errors-demo/` triggers: ledger, pricing, embedding/command codes      | ✅     | P0       | M    | none       |
 | 6.3 | `errors-demo/` provider codes + backdate helper                        | 📋     | P0       | S    | 6.2        |
 | 6.4 | Module boot variants (sync, ledger-only, invalid configs, missing key) | 📋     | P0       | M    | 6.1        |
 | 6.5 | Phase close: audit, dashboards, PR + Copilot review                    | 📋     | P0       | S    | 6.1..6.4   |
@@ -151,7 +151,7 @@ Completion Protocol: standard steps; commit `test(api): tenant isolation proofs 
 
 ## Task 6.2: `errors-demo/` triggers: ledger, pricing, embedding/command
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -164,11 +164,15 @@ with a note instead of faking it).
 
 #### Acceptance criteria
 
-- [ ] Each supported code returns its documented HTTP status and canonical envelope.
-- [ ] An e2e table-test walks every code in this task's scope asserting status + `error.code` +
-      message from `AI_TOKENS_ERROR_CODES`.
-- [ ] Untriggerable codes respond `501` with an honest explanation payload (and the spec matrix
-      is updated with the ⛔ + reason if any).
+- [x] Each supported code returns its documented HTTP status and canonical envelope (reconciled:
+      the 12 library codes triggerable at runtime plus `command.missing_translations`; the drafted
+      `ledger.*`/`pricing.*`/`embedding.*` codes map per the phase Reconciliation note).
+- [x] An e2e table-test walks every code in this task's scope asserting status + `error.code` +
+      the shipped canonical message verbatim, plus the state-safety contract (non-billing walk
+      moves neither balance nor settled ledger).
+- [x] Untriggerable codes respond `501` with an honest explanation payload
+      (`errors_demo.not_triggerable` with availability + reason; unknown codes 404 with the
+      supported list, value-free).
 
 #### Files to create / modify
 
@@ -403,3 +407,6 @@ Completion Protocol: append `- 6.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 
 - 6.1 ✅ 2026-07-10: tenant isolation e2e (both modes) + strict-tenancy `tenant.required` 403 at
   the identity middleware choke point and the scopeResolver (defense in depth).
+- 6.2 ✅ 2026-07-10: errors-demo module (catalog + `POST /errors-demo/:code`), 13 deterministic
+  triggers with state-safety guarantees, honest 501/404 policy, e2e table walk with verbatim
+  canonical messages.
