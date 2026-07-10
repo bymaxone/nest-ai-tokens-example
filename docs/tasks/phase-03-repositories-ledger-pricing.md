@@ -132,7 +132,7 @@ predicate, highest `effectiveFrom` on overlap), `findHistory`, `findAllCurrent`,
 #### Acceptance criteria
 
 - [ ] Window predicate exactly: `effectiveFrom <= date AND (effectiveTo IS NULL OR
-effectiveTo >= date)`; overlap resolution picks max `effectiveFrom`.
+  effectiveTo >= date)`; overlap resolution picks max `effectiveFrom`.
 - [ ] `upsertIfMissing` tolerates a concurrent insert (unique violation -> fetch existing).
 - [ ] Binding swapped in `ai.module.ts`; placeholders deleted.
 - [ ] 100% coverage incl. integration specs on windows and history ordering.
