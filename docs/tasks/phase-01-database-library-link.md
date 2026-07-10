@@ -1,6 +1,6 @@
 # Phase 01: Postgres, Prisma & Library Link
 
-> **Status**: 🔄 In Progress · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 01
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16 (Prisma Repositories), §21 (Local Stack), §8 (Library Consumption)
 
@@ -37,7 +37,7 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 
 | ID  | Task                                                                | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 1.1 | Branch + docker compose Postgres + infra scripts                    | 📋     | P0       | S    | none       |
+| 1.1 | Branch + docker compose Postgres + infra scripts                    | ✅     | P0       | S    | none       |
 | 1.2 | `apps/api` package init + Prisma schema + first migration           | 📋     | P0       | M    | 1.1        |
 | 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | 📋     | P0       | M    | 1.2        |
 | 1.4 | Library `file:` link + dual-subpath probe script (CI job)           | 📋     | P0       | S    | 1.2        |
@@ -47,7 +47,7 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 
 ## Task 1.1: Branch + docker compose Postgres + infra scripts
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: none
 
 #### Description
 
@@ -57,10 +57,10 @@ scripts replacing the phase 00 stubs.
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-01-database-library-link` created with `git switch -c`.
-- [ ] `pnpm infra:up` waits for the healthcheck; `infra:nuke` removes the volume.
-- [ ] `.env.example` documents `DATABASE_URL` and `PORT` (more rows join in later phases).
-- [ ] No credentials beyond local-only `postgres/postgres` defaults.
+- [x] Branch `feat/phase-01-database-library-link` created with `git switch -c`.
+- [x] `pnpm infra:up` waits for the healthcheck; `infra:nuke` removes the volume.
+- [x] `.env.example` documents `DATABASE_URL` and `PORT` (more rows join in later phases).
+- [x] No credentials beyond local-only `postgres/postgres` defaults.
 
 #### Files to create / modify
 
@@ -379,3 +379,5 @@ Completion Protocol: append `- 1.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 1.1 ✅ 2026-07-10: postgres:17-alpine compose stack (digest-pinned, healthcheck, named volume), root `.env.example` (DATABASE_URL, PORT), real infra:up/down/nuke scripts
