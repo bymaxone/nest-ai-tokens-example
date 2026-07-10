@@ -48,7 +48,7 @@ the registry check applies and the sibling checks are skipped.
 | phases 1+, `file:` link mode only | `test -d ../nest-ai-tokens/dist` (only after the existence check above passes)          | mark P<N> ⛔ blocked on "sibling library not built", STOP; operator runs `pnpm -C ../nest-ai-tokens install && pnpm -C ../nest-ai-tokens build`, then relaunches |
 | phases 1+, registry mode only     | `npm view @bymax-one/nest-ai-tokens version`                                            | mark P<N> ⛔ blocked on "library not published", STOP; operator publishes the package (autopilot never publishes)                                                |
 
-> **Link-mode decision (operator, 2026-07-10): local `file:` link, family
+> **Link-mode decision (operator-approved): local `file:` link, family
 > convention.** The library is NOT published for now; the dependency stays
 > `file:../../../nest-ai-tokens` exactly as in the sibling reference apps
 > (`nest-storage-example` is the model to follow). The registry-mode row above
@@ -66,10 +66,10 @@ the registry check applies and the sibling checks are skipped.
 >   builds it before `pnpm install`, so the `file:` dependency resolves with no
 >   pipeline edits when the dep later becomes a registry range.
 > - **Implementer worktrees** (`.claude/worktrees/agent-*`): the orchestrator
->   maintains a gitignored symlink `.claude/worktrees/nest-ai-tokens` pointing
+>   maintains a git-ignored symlink `.claude/worktrees/nest-ai-tokens` pointing
 >   at the real sibling, so `file:../../../nest-ai-tokens` resolves from inside
->   any agent worktree. Never committed (`.claude/` is gitignored); re-create it
->   after a clean checkout.
+>   any agent worktree. Never committed (`.claude/` is git-ignored); re-create
+>   it after a clean checkout.
 >
 > The repo is private today and goes public later; the visibility-gated
 > workflows (CodeQL and Scorecard today, plus dependency review once the
