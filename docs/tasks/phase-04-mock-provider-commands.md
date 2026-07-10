@@ -1,6 +1,6 @@
 # Phase 04: Mock Provider, Commands & Embeddings
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-06
+> **Status**: 👀 Review · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 04
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §12 (Mock Provider), §11 (workspace routes), §4.3 (behavioral contracts 1, 3, 5), §7.4 (matrix rows 37-52, 73-76)
 
@@ -10,6 +10,37 @@ The deterministic heart of the example. This phase replaces the echo provider wi
 `MockAiProvider` (token math, canned content, failure-injection markers) and ships the workspace
 REST surface exercising `AiCommandService` (all five commands) and `EmbeddingService` (single +
 batch), proving the library's transaction guarantees with e2e ledger assertions.
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the shapes drafted here
+> and in spec §12/§11/§4.3 (same rule as the phase 01-03 notes). v0.1.0 ships NO `IAiProvider`
+> port, no `MockAiProvider`/`NoOpAiProvider`/`OpenAiProvider`, no `AiCommandService`, no
+> `EmbeddingService`, and no exported command DTOs: inference stays host code, and the library
+> meters it through `MeteringService.record({ usage, preset, context })` (post-hoc, observe-only
+> by default) with `ProviderPreset`/`UsageNormalizer` as the extension points. Mappings applied:
+> `MockAiProvider implements IAiProvider` -> an app-owned `MockAiProvider` service that stands in
+> for a provider SDK (deterministic token math, canned task-directive content, failure markers,
+> latency knob) and returns OpenAI-compatible response shapes; "swap the echo provider binding"
+> -> nothing to swap (phases 02/03 never bound a provider; the mock ships in its own module);
+> `AiCommandService.translate/summarize/rewrite/analyze/custom` and
+> `EmbeddingService.generate/generateBatch` -> app workspace services that call the mock and
+> meter each call exactly once via `MeteringService.record` (the batch embeds record ONE
+> aggregate usage). The app defines its own chat/embedding normalizers (the shipped
+> `normalizeOpenAiCompatibleUsage` leaves `provider: ''` and has no embeddings variant), stamped
+> `provider: 'mock'` so rating hits the seeded mock price rows. Provider failure codes
+> (`provider.rate_limited`, `provider.timeout`, ...) do NOT exist in the shipped
+> `AI_TOKENS_ERROR_CODES` (that catalog covers config/pricing/ledger/wallet/budget concerns), so
+> the drafted "throw `AiTokensException(code, ...)`" is unimplementable for provider failures;
+> instead the mock throws an app-owned `WorkspaceApiException` (an `HttpException` producing the
+> SAME `{ error: { code, message, details } }` envelope shape the library uses) with `provider.*`
+> and `command.*` codes. `UsageRecord` has no free-form `metadata` column: `resourceId` lands in
+> the persisted `tags` (`resource:<id>`) and `metadata.batchSize` reconciles to a
+> `batch-size:<n>` tag on the single aggregate record. `getDefaultModel`/`getCurrentPricing` ->
+> app constants plus `PricingService.resolveRate` composed by `/workspace/models`. Repeated
+> identical calls must each append (delta 1 per call), so `record()` is invoked WITHOUT a
+> content-derived idempotency key (the library then keys each append with a random UUID, its
+> documented non-deduplicating mode). Partial translations debit like truncation (real tokens
+> were produced) and then surface `command.missing_translations`; an unparseable JSON body does
+> not debit (`provider.invalid_json`), matching §4.3 contract 5.
 
 > **Completion Protocol ("standard steps"):** task Status ✅ (block + index) -> checkboxes ->
 > header Progress -> plan dashboard row + overall counter -> tasks README -> Completion log entry
@@ -34,18 +65,18 @@ batch), proving the library's transaction guarantees with e2e ledger assertions.
 
 | ID  | Task                                                                            | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 4.1 | Branch + `MockAiProvider` core (token math, canned content, latency knob)       | 📋     | P0       | M    | none       |
-| 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error)        | 📋     | P0       | M    | 4.1        |
-| 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | 📋     | P0       | L    | 4.1        |
-| 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | 📋     | P0       | M    | 4.1        |
-| 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | 📋     | P0       | M    | 4.2..4.4   |
-| 4.6 | Phase close: audit, dashboards, PR + Copilot review                             | 📋     | P0       | S    | 4.1..4.5   |
+| 4.1 | Branch + `MockAiProvider` core (token math, canned content, latency knob)       | ✅     | P0       | M    | none       |
+| 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error)        | ✅     | P0       | M    | 4.1        |
+| 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | ✅     | P0       | L    | 4.1        |
+| 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | ✅     | P0       | M    | 4.1        |
+| 4.5 | Transaction-guarantee e2e suite (deltas, batch aggregate, truncation, bad JSON) | ✅     | P0       | M    | 4.2..4.4   |
+| 4.6 | Phase close: audit, dashboards, PR + Copilot review                             | 👀     | P0       | S    | 4.1..4.5   |
 
 ---
 
 ## Task 4.1: Branch + `MockAiProvider` core
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -56,12 +87,14 @@ constructor latency knob (0 in tests). Replaces the echo provider binding.
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-04-mock-provider-commands` created with `git switch -c`.
-- [ ] Token math matches spec §12 exactly and is unit-tested with fixed fixtures.
-- [ ] Content is deterministic and parseable (translations tagged per language, JSON for
+- [x] Branch `feat/phase-04-mock-provider-commands` created with `git switch -c`.
+- [x] Token math matches spec §12 exactly and is unit-tested with fixed fixtures.
+- [x] Content is deterministic and parseable (translations tagged per language, JSON for
       `json_object` format built from the request).
-- [ ] Echo provider deleted; binding swapped; JSDoc documents how to adapt to a real SDK.
-- [ ] 100% coverage on the provider.
+- [x] Echo provider deleted; binding swapped; JSDoc documents how to adapt to a real SDK.
+      (Reconciled: phases 02/03 never bound a provider, so there was nothing to delete; the
+      mock ships in its own `MockAiModule` and its JSDoc carries the real-SDK adaptation guide.)
+- [x] 100% coverage on the provider.
 
 #### Files to create / modify
 
@@ -120,7 +153,7 @@ Completion Protocol: standard steps; commit `feat(api): deterministic mock ai pr
 
 ## Task 4.2: Failure injection
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 4.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 4.1
 
 #### Description
 
@@ -133,11 +166,14 @@ costs stay stable.
 
 #### Acceptance criteria
 
-- [ ] Every marker maps to its documented outcome; a table-driven unit spec walks all of them.
-- [ ] Thrown failures use the library's `AiTokensException` + `AI_TOKENS_ERROR_CODES` constants
-      (imported, not re-declared).
-- [ ] Degraded responses keep valid `UsageInfo` (the guarantees suite in 4.5 depends on it).
-- [ ] 100% coverage.
+- [x] Every marker maps to its documented outcome; a table-driven unit spec walks all of them.
+- [x] Thrown failures use the library's `AiTokensException` + `AI_TOKENS_ERROR_CODES` constants
+      (imported, not re-declared). (Reconciled: the shipped catalog has NO provider-failure
+      codes, so thrown failures use the app-owned `ApiException` producing the library's exact
+      envelope shape; see the phase Reconciliation note.)
+- [x] Degraded responses keep valid `UsageInfo` (the guarantees suite in 4.5 depends on it).
+      (Reconciled: valid OpenAI-compatible `usage` blocks the app normalizers read.)
+- [x] 100% coverage.
 
 #### Files to create / modify
 
@@ -189,7 +225,7 @@ Completion Protocol: standard steps; commit `feat(api): failure injection marker
 
 ## Task 4.3: Workspace commands REST
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: 4.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: 4.1
 
 #### Description
 
@@ -200,11 +236,13 @@ result (content, tokensUsed, estimatedCost, model, transactionId). No quota guar
 
 #### Acceptance criteria
 
-- [ ] All five endpoints live and Zod-validated; per-call `model` override supported.
-- [ ] Responses expose the library result verbatim plus the request `resourceId`.
-- [ ] `analyze` uses the fixed sentiment/entities JSON schema from the spec and returns typed
+- [x] All five endpoints live and Zod-validated; per-call `model` override supported.
+- [x] Responses expose the library result verbatim plus the request `resourceId`.
+      (Reconciled: the library result is a `UsageRecord`; responses embed its verbatim token
+      split, exact bigint costs as decimal strings, and the record id as `transactionId`.)
+- [x] `analyze` uses the fixed sentiment/entities JSON schema from the spec and returns typed
       output.
-- [ ] Unit + e2e happy paths green; 100% coverage on new files.
+- [x] Unit + e2e happy paths green; 100% coverage on new files.
 
 #### Files to create / modify
 
@@ -255,7 +293,7 @@ Completion Protocol: standard steps; commit `feat(api): workspace command endpoi
 
 ## Task 4.4: Embeddings REST + models endpoint
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 4.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 4.1
 
 #### Description
 
@@ -266,10 +304,12 @@ unmarked-handler path).
 
 #### Acceptance criteria
 
-- [ ] Single embed returns vector + tokensUsed + estimatedCost + transactionId.
-- [ ] Batch embed returns vectors + ONE transactionId; e2e asserts `metadata.batchSize`.
-- [ ] `/workspace/models` returns `{ command: { model, pricing }, embedding: { model, pricing } }`.
-- [ ] 100% coverage on new files.
+- [x] Single embed returns vector + tokensUsed + estimatedCost + transactionId.
+- [x] Batch embed returns vectors + ONE transactionId; e2e asserts `metadata.batchSize`.
+      (Reconciled: `UsageRecord` has no metadata column; the batch size persists as the
+      `batch-size:<n>` tag and the e2e asserts it on the single aggregate row.)
+- [x] `/workspace/models` returns `{ command: { model, pricing }, embedding: { model, pricing } }`.
+- [x] 100% coverage on new files.
 
 #### Files to create / modify
 
@@ -318,7 +358,7 @@ Completion Protocol: standard steps; commit `feat(api): embedding endpoints and 
 
 ## Task 4.5: Transaction-guarantee e2e suite
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 4.2..4.4
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 4.2..4.4
 
 #### Description
 
@@ -329,11 +369,12 @@ metadata; `resourceId` lands in metadata.
 
 #### Acceptance criteria
 
-- [ ] A dedicated e2e file table-tests the guarantees with before/after repository counts and
-      metadata assertions.
-- [ ] Truncation case: ledger +1 AND response 502 `provider.response_truncated`.
-- [ ] Bad-JSON case: ledger +0 AND response 502 `provider.invalid_json`.
-- [ ] Matrix rows 43-45, 52 provably covered (cite the spec rows in describe blocks).
+- [x] A dedicated e2e file table-tests the guarantees with before/after repository counts and
+      metadata assertions. (Counts go through the `LedgerService` port, never raw SQL; the
+      metadata assertions target the persisted `tags`.)
+- [x] Truncation case: ledger +1 AND response 502 `provider.response_truncated`.
+- [x] Bad-JSON case: ledger +0 AND response 502 `provider.invalid_json`.
+- [x] Matrix rows 43-45, 52 provably covered (cite the spec rows in describe blocks).
 
 #### Files to create / modify
 
@@ -381,7 +422,7 @@ Completion Protocol: standard steps; commit `test(api): transaction guarantee pr
 
 ## Task 4.6: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 4.1..4.5
+- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 4.1..4.5
 
 #### Description
 
@@ -391,8 +432,9 @@ findings addressed, squash-merge on green, delete branch, log.
 
 #### Acceptance criteria
 
-- [ ] Gates green sequentially (lint, typecheck, build, test:cov 100%, test:e2e).
-- [ ] Dashboards synced; PR merged with review resolved; branch gone.
+- [x] Gates green sequentially (lint, typecheck, build, test:cov 100%, test:e2e).
+- [ ] Dashboards synced; PR merged with review resolved; branch gone. (PR opened and review
+      requested; the merge, thread resolution, and branch deletion are handled after review.)
 
 #### Agent prompt
 
@@ -430,3 +472,18 @@ Completion Protocol: append `- 4.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 4.1 ✅ 2026-07-10: deterministic mock inference core (MockAiProvider + content protocol +
+  app-owned presets + latency knob wired from MOCK_LATENCY_MS), 100% coverage.
+- 4.2 ✅ 2026-07-10: failure-injection engine (9 markers: 6 throw with pinned HTTP statuses, 3
+  degrade modes), marker-stripped token math, table-driven spec, 100% coverage.
+- 4.3 ✅ 2026-07-10: five workspace command endpoints (Zod DTOs, thin controller, metering via
+  MeteringService.record, billing semantics for truncation/invalid-JSON/partial translations)
+  plus the updatedAt DB-default migration the raw-SQL store adapter requires; e2e happy paths.
+- 4.4 ✅ 2026-07-10: embed + embed/batch (ONE aggregate record, batch-size tag proven in e2e via
+  the LedgerService port) and the identity-free /workspace/models pricing composition.
+- 4.5 ✅ 2026-07-10: transaction-guarantees e2e (delta 1 per command/embed, ONE batch aggregate,
+  truncation debits then 502, bad JSON never debits, resource tag filterable; rows 43-45, 47, 52
+  cited in describe blocks).
+- 4.6 👀 2026-07-10: gates replayed green, criteria audited, dashboards synced; PR #12 opened
+  with the Copilot review requested (merge and branch deletion follow the review).

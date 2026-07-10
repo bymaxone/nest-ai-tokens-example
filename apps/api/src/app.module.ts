@@ -14,10 +14,19 @@ import { HealthModule } from './health/health.module.js'
 import { IdentityModule } from './identity/identity.module.js'
 import { LedgerModule } from './ledger/ledger.module.js'
 import { PricingModule } from './pricing/pricing.module.js'
+import { WorkspaceModule } from './workspace/workspace.module.js'
 
 /** The composition root of the API. */
 @Module({
-  imports: [AppConfigModule, IdentityModule, AiModule, LedgerModule, PricingModule, HealthModule],
+  imports: [
+    AppConfigModule,
+    IdentityModule,
+    AiModule,
+    LedgerModule,
+    PricingModule,
+    WorkspaceModule,
+    HealthModule,
+  ],
   controllers: [AppController],
 })
 export class AppModule {}

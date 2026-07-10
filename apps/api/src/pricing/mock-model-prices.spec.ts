@@ -10,7 +10,8 @@
  */
 import { describe, expect, it } from '@jest/globals'
 
-import { MOCK_MODEL_PRICES, MOCK_PRICE_SOURCE, MOCK_PROVIDER_ID } from './mock-model-prices.js'
+import { MOCK_MODEL_PRICES, MOCK_PRICE_SOURCE } from './mock-model-prices.js'
+import { MOCK_PROVIDER_ID } from '../ai/mock-models.js'
 
 describe('MOCK_MODEL_PRICES', () => {
   /**

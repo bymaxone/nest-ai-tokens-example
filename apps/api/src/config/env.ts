@@ -58,6 +58,12 @@ export const envSchema = z.object({
   TENANT_REQUIRED: z.stringbool().default(false),
   /** In-memory price-rate cache TTL handed to `pricing.cacheTtlMs`. */
   PRICING_CACHE_TTL_MS: z.coerce.number().int().positive().default(300_000),
+  /**
+   * Artificial latency (milliseconds) the deterministic mock inference layer
+   * adds to every call, so a dashboard shows a believable spinner. Zero (the
+   * default, and the only value tests use) skips the delay entirely.
+   */
+  MOCK_LATENCY_MS: z.coerce.number().int().min(0).default(0),
 })
 
 /** The parsed, typed environment configuration. */

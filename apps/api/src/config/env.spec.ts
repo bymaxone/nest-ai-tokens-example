@@ -38,6 +38,7 @@ describe('parseEnv', () => {
       QUOTA_MINIMUM_BALANCE: 0,
       TENANT_REQUIRED: false,
       PRICING_CACHE_TTL_MS: 300_000,
+      MOCK_LATENCY_MS: 0,
     })
   })
 
@@ -57,6 +58,7 @@ describe('parseEnv', () => {
       QUOTA_MINIMUM_BALANCE: '-5',
       TENANT_REQUIRED: 'true',
       PRICING_CACHE_TTL_MS: '60000',
+      MOCK_LATENCY_MS: '250',
     })
 
     expect(env).toEqual({
@@ -68,6 +70,7 @@ describe('parseEnv', () => {
       QUOTA_MINIMUM_BALANCE: -5,
       TENANT_REQUIRED: true,
       PRICING_CACHE_TTL_MS: 60_000,
+      MOCK_LATENCY_MS: 250,
     })
   })
 
@@ -137,7 +140,8 @@ describe('parseEnv', () => {
    * Numeric boundaries.
    *
    * PORT must be an integer within the TCP range; QUOTA_TOLERANCE and
-   * PRICING_CACHE_TTL_MS must be strictly positive.
+   * PRICING_CACHE_TTL_MS must be strictly positive; MOCK_LATENCY_MS must be
+   * a non-negative integer.
    */
   it.each([
     ['PORT above the TCP range', { PORT: '70000' }],
@@ -146,6 +150,8 @@ describe('parseEnv', () => {
     ['a zero PRICING_CACHE_TTL_MS', { PRICING_CACHE_TTL_MS: '0' }],
     ['an unknown AI_PROVIDER_MODE', { AI_PROVIDER_MODE: 'real' }],
     ['a non-boolean QUOTA_ENABLED', { QUOTA_ENABLED: 'maybe' }],
+    ['a negative MOCK_LATENCY_MS', { MOCK_LATENCY_MS: '-1' }],
+    ['a fractional MOCK_LATENCY_MS', { MOCK_LATENCY_MS: '10.5' }],
   ])('rejects %s', (_label, overrides) => {
     expect(() => parseEnv({ DATABASE_URL: VALID_URL, ...overrides })).toThrow(EnvValidationError)
   })
