@@ -130,7 +130,10 @@ export class PricingSeedService implements OnApplicationBootstrap {
       const inserted = await this.seed()
       if (inserted > 0) this.logger.log(`Seeded ${inserted} price rows`)
     } catch (error) {
-      this.logger.error(`Pricing seed failed: ${describeSeedError(error)}`)
+      // The stack goes to the logger's trace argument: it makes seed
+      // failures diagnosable and carries no secret material.
+      const stack = error instanceof Error ? error.stack : undefined
+      this.logger.error(`Pricing seed failed: ${describeSeedError(error)}`, stack)
     }
   }
 

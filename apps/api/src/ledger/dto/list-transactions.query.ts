@@ -74,7 +74,12 @@ export const listTransactionsQuerySchema = z
     operation: z.enum(AI_OPERATIONS).optional(),
     /** Response service tier. */
     serviceTier: z.enum(SERVICE_TIERS).optional(),
-    /** Lifecycle statuses, comma separated; omitted = posted + reversed. */
+    /**
+     * Lifecycle statuses, comma separated. The schema passes an omitted
+     * value through untouched; the library's ledger query then applies its
+     * own documented default (the balance-contributing `posted` and
+     * `reversed` statuses).
+     */
     status: statusListSchema.optional(),
     /** Restrict to platform-absorbed rows (true) or user traffic (false). */
     isSystemCost: z.stringbool().optional(),

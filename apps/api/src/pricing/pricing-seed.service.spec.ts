@@ -148,16 +148,44 @@ describe('PricingSeedService.onApplicationBootstrap', () => {
    * outage), so a failing seed must be logged and swallowed at the boot
    * hook, never aborting application startup.
    */
-  it('logs and survives a seed failure', async () => {
+  it('logs and survives a seed failure, attaching the stack trace', async () => {
+    const failure = new Error('database unreachable')
     const prisma = {
-      $transaction: () => Promise.reject(new Error('database unreachable')),
+      $transaction: () => Promise.reject(failure),
     } as unknown as PrismaService
     const service = new PricingSeedService(prisma)
     const errorLog = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined)
 
     await expect(service.onApplicationBootstrap()).resolves.toBeUndefined()
 
-    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('Pricing seed failed'))
+    expect(errorLog).toHaveBeenCalledWith(
+      expect.stringContaining('Pricing seed failed'),
+      failure.stack,
+    )
+    errorLog.mockRestore()
+  })
+
+  /**
+   * Boot hook resilience on a non-Error rejection.
+   *
+   * Driver layers can reject with plain values; those carry no stack, so the
+   * logger receives an undefined trace argument and the message stays
+   * value-free.
+   */
+  it('logs a stackless failure when the rejection is not an Error', async () => {
+    // A misbehaving driver rejecting with a plain value at runtime; the cast
+    // exists only because the lint rule (rightly) forbids authoring such
+    // rejections in first-party code.
+    const plainValueRejection = 'driver payload' as unknown as Error
+    const prisma = {
+      $transaction: () => Promise.reject(plainValueRejection),
+    } as unknown as PrismaService
+    const service = new PricingSeedService(prisma)
+    const errorLog = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined)
+
+    await expect(service.onApplicationBootstrap()).resolves.toBeUndefined()
+
+    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining('Pricing seed failed'), undefined)
     errorLog.mockRestore()
   })
 })
