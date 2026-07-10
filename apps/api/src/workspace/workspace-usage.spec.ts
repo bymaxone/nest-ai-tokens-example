@@ -2,28 +2,14 @@
  * Unit tests for the workspace response glue.
  *
  * Layer: unit.
- * Goal: prove the correlation tags render with their documented prefixes
- * and that the usage view renders bigint money as decimal strings plus
+ * Goal: prove the usage view renders bigint money as decimal strings plus
  * the library formatting.
  * Mocks: none.
  */
 import { describe, expect, it } from '@jest/globals'
 
-import { batchSizeTag, resourceTag, usageViewOf } from './workspace-usage.js'
+import { usageViewOf } from './workspace-usage.js'
 import { recordWith } from '../../test/fixtures/usage-record.fixture.js'
-
-describe('tags', () => {
-  /**
-   * Tag rendering.
-   *
-   * The prefixes are the ledger-filterable correlation contract: resource
-   * references and batch sizes must render exactly as documented.
-   */
-  it('renders resource and batch-size tags with their prefixes', () => {
-    expect(resourceTag('doc-7')).toBe('resource:doc-7')
-    expect(batchSizeTag(5)).toBe('batch-size:5')
-  })
-})
 
 describe('usageViewOf', () => {
   /**

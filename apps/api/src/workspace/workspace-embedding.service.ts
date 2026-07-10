@@ -17,6 +17,7 @@ import type { HoldEstimate, UsageRecord } from '@bymax-one/nest-ai-tokens'
 
 import type { EmbedBatchBody } from './dto/embed-batch.body.js'
 import type { EmbedBody } from './dto/embed.body.js'
+import { batchSizeTag, resourceTag } from '../ai/correlation-tags.js'
 import { buildMeteringContext } from '../ai/metering-context.js'
 import { runWithHold } from '../ai/metered-call.js'
 import {
@@ -24,7 +25,7 @@ import {
   estimateBatchTokens,
   estimateTextTokens,
 } from './workspace-estimators.js'
-import { batchSizeTag, resourceTag, usageViewOf } from './workspace-usage.js'
+import { usageViewOf } from './workspace-usage.js'
 import type { WorkspaceUsageView } from './workspace-usage.js'
 import { MOCK_EMBEDDING_MODEL } from '../ai/mock-models.js'
 import { MockAiProvider } from '../ai/mock-ai.provider.js'

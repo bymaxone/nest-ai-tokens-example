@@ -1,6 +1,6 @@
 # Phase 05: Quota, Credits & Aggregations
 
-> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 05
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §17 (Quota), §11 (usage/quota/system-jobs routes), §7.5-7.6 (matrix rows 53-72, 84-85)
 
@@ -81,7 +81,7 @@ metadata). After this phase the drain-then-402 scenario is walkable.
 | 5.2 | Estimators: body-size on commands, constant + model-based + resolver overrides in `quota/` | ✅     | P0       | M    | 5.1        |
 | 5.3 | Credits + refund endpoints (`purchase`, allocations, `refund`)                             | ✅     | P0       | S    | 5.1        |
 | 5.4 | `usage/` REST: balance, by-period/type/model, top consumers, system costs                  | ✅     | P0       | M    | 5.1        |
-| 5.5 | `system-jobs/`: reindex (system cost) + agent-decision metadata                            | 📋     | P1       | S    | 5.4        |
+| 5.5 | `system-jobs/`: reindex (system cost) + agent-decision metadata                            | ✅     | P1       | S    | 5.4        |
 | 5.6 | Phase close: audit, dashboards, PR + Copilot review                                        | 📋     | P0       | S    | 5.1..5.5   |
 
 ---
@@ -383,21 +383,27 @@ Completion Protocol: standard steps; commit `feat(api): usage aggregation endpoi
 
 ## Task 5.5: `system-jobs/`: reindex + agent decision
 
-- **Status**: 📋 ToDo · **Priority**: P1 · **Size**: S · **Depends on**: 5.4
+- **Status**: ✅ Done · **Priority**: P1 · **Size**: S · **Depends on**: 5.4
 
 #### Description
 
-`POST /system-jobs/reindex` runs a batch embedding flagged `isSystemCost: true`,
-`systemCostCategory: 'reindex'` (excluded from user reports, visible in `/usage/system-costs`);
-`POST /system-jobs/agent-decision` records a `record()` transaction of type
-`agent_decision_assist` with `decisionId`/`strategy`/`confidence`/`reasoning` metadata.
+(Reconciled onto v0.1.0; see the phase note.) `POST /system-jobs/reindex` (admin-gated) runs ONE
+batch embedding over a deterministic fixture corpus flagged `isSystemCost: true`,
+`systemCostCategory: 'reindex'`, tenant-scoped (excluded from user reports, visible in
+`/usage/system-costs`); `POST /system-jobs/agent-decision` records a deterministic 25-token
+assist under feature `agent.decision-assist` with `correlationId: decisionId` and
+`strategy:`/`confidence:` tags (the reserved metadata mapping; `reasoning` echoed, never
+persisted).
 
 #### Acceptance criteria
 
-- [ ] Reindex rows appear in system-costs aggregation and NOT in the user's by-type report
-      (matrix rows 71, 84).
-- [ ] Agent-decision row proves the seventh transaction type + its metadata keys (row 85, 13).
-- [ ] 100% coverage.
+- [x] Reindex rows appear in the system-costs aggregation (beside the seeded snapshots) and NOT
+      in any user or tenant-wide by-type report (matrix rows 71, 84); the record is
+      tenant-scoped, unenforced, and correlation-tagged.
+- [x] Agent-decision row proves the seventh transaction kind and its reserved metadata keys
+      (rows 85, 13): correlationId, strategy/confidence tags, agent-decision category, wallet
+      untouched (platform-absorbed), queryable through the ledger list by feature.
+- [x] 100% coverage.
 
 #### Files to create / modify
 
@@ -500,3 +506,4 @@ Completion Protocol: append `- 5.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 5.2 ✅ 2026-07-10: quota lab (declarative constant + model-based estimators), access status read, budgets admin surface with pre-handler block e2e
 - 5.3 ✅ 2026-07-10: credits (grant with backdated effectiveAt + replay pre-check) and refund (orchestrated reversal) endpoints with exact-delta e2e proofs
 - 5.4 ✅ 2026-07-10: usage analytics surface (balance + five summarize dimensions) with exact seed-plan e2e assertions and bounded query validation
+- 5.5 ✅ 2026-07-10: system-jobs simulations (admin-gated reindex batch + agent-decision assist) with reserved system-cost fields and exclusion proofs

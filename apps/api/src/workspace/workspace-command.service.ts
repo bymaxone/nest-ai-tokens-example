@@ -26,6 +26,7 @@ import type { CustomBody } from './dto/custom.body.js'
 import type { RewriteBody } from './dto/rewrite.body.js'
 import type { SummarizeBody } from './dto/summarize.body.js'
 import type { TranslateBody } from './dto/translate.body.js'
+import { resourceTag } from '../ai/correlation-tags.js'
 import { buildMeteringContext } from '../ai/metering-context.js'
 import { runWithHold } from '../ai/metered-call.js'
 import type { MeteredCall } from '../ai/metered-call.js'
@@ -39,7 +40,7 @@ import {
   missingTranslationsError,
   responseTruncatedError,
 } from './workspace-errors.js'
-import { resourceTag, usageViewOf } from './workspace-usage.js'
+import { usageViewOf } from './workspace-usage.js'
 import type { WorkspaceUsageView } from './workspace-usage.js'
 import { MOCK_SENTIMENTS } from '../ai/mock-content.js'
 import type { MockAnalysis } from '../ai/mock-content.js'
