@@ -12,10 +12,11 @@ import { AppController } from './app.controller.js'
 import { AppConfigModule } from './config/app-config.module.js'
 import { HealthModule } from './health/health.module.js'
 import { IdentityModule } from './identity/identity.module.js'
+import { PricingModule } from './pricing/pricing.module.js'
 
 /** The composition root of the API. */
 @Module({
-  imports: [AppConfigModule, IdentityModule, AiModule, HealthModule],
+  imports: [AppConfigModule, IdentityModule, AiModule, PricingModule, HealthModule],
   controllers: [AppController],
 })
 export class AppModule {}

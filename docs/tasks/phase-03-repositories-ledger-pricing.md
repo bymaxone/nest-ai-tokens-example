@@ -1,6 +1,6 @@
 # Phase 03: Repositories, Ledger & Pricing API
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 03
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16, §11 (ledger/pricing routes), §7.2-7.3 (matrix rows 13-36)
 
@@ -63,7 +63,7 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 | --- | ------------------------------------------------------------------------------ | ------ | -------- | ---- | ---------- |
 | 3.1 | Branch + `PrismaTokenTransactionRepository` (8 methods, SQL aggregation)       | ✅     | P0       | L    | none       |
 | 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | ✅     | P0       | M    | 3.1        |
-| 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | 📋     | P0       | S    | 3.2        |
+| 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | ✅     | P0       | S    | 3.2        |
 | 3.4 | `ledger/` REST: list, detail, filters, pagination                              | 📋     | P0       | M    | 3.1        |
 | 3.5 | `pricing/` REST: current, history, update, flush-cache                         | 📋     | P0       | M    | 3.2        |
 | 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | 📋     | P0       | S    | 3.1..3.5   |
@@ -224,26 +224,33 @@ Completion Protocol: standard steps; commit `feat(api): prisma model pricing rep
 
 ## Task 3.3: Boot pricing seed + idempotency e2e
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 3.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 3.2
 
 #### Description
 
 With real repositories, the library's `pricing.seedDefaults: true` + `customSeed:
 MOCK_MODEL_PRICING` boot seeding becomes live. Prove it: an e2e boots the app twice against one
 database and asserts pricing rows are created once (idempotent), covering
-`DEFAULT_OPENAI_PRICING_2026` presence and the three mock models.
+`DEFAULT_OPENAI_PRICING_2026` presence and the three mock models. _Reconciled (see the phase
+note): the app owns the boot seed (`PricingSeedService`, advisory-locked and existence-checked)
+because the shipped `seedFromSnapshot` re-runs on sequential fresh boots; the seed writes
+`MODEL_PRICES_SEED` plus `MOCK_MODEL_PRICES` (three mock models)._
 
 #### Acceptance criteria
 
-- [ ] First boot creates default snapshot rows + mock models; second boot changes nothing
-      (counts stable, `updatedAt` untouched).
-- [ ] The e2e asserts a known default row (`gpt-4o-mini`) and `mock-chat-pro` resolve via
-      `findActive` at now.
-- [ ] Matrix rows 35-36 marked demonstrated in the spec (edit the Status cells if placeholders).
+- [x] First boot creates the snapshot rows + the three mock models; a second sequential boot
+      changes nothing (row count and the full row snapshot are byte-identical; the append-only
+      schema carries no `updatedAt`, so identical ids and values prove no rewrite).
+- [x] The e2e asserts a known snapshot row (`gpt-5-mini`; the shipped snapshot carries no
+      `gpt-4o-mini`) and `mock-chat-pro` resolve via `PricingService.resolveRate` at now.
+- [x] A concurrent double boot is tolerated (advisory lock + re-check; count still exact).
+- [x] Matrix rows 35-36 remain ✅ in the spec (no status edit needed).
 
 #### Files to create / modify
 
-- `apps/api/test/e2e/pricing-seed.e2e-spec.ts`, spec §7 status touch-up if needed
+- `apps/api/src/pricing/pricing-seed.service.ts`, `pricing/mock-model-prices.ts`,
+  `pricing/pricing.module.ts`, `src/app.module.ts`, unit specs,
+  `apps/api/test/e2e/pricing-seed.e2e-spec.ts`
 
 #### Agent prompt
 
@@ -466,3 +473,4 @@ Completion Protocol: append `- 3.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 
 - 3.1 ✅ 2026-07-10: bound the shipped `PrismaAiTokensStore` (ledger half proven vs the seed plan), deleted the placeholder store
 - 3.2 ✅ 2026-07-10: proved the pricing half (window predicate, overlap resolution, gapless history, concurrent-upsert race safety, bigint round-trips)
+- 3.3 ✅ 2026-07-10: app-owned idempotent boot pricing seed (snapshot + 3 mock models) with double-boot and concurrent-boot e2e proofs
