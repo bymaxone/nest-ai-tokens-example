@@ -136,9 +136,6 @@ export function responseIdFor(payload: unknown): string {
  */
 @Injectable()
 export class MockAiProvider {
-  /** Provider identity, matching the seeded mock price rows. */
-  readonly name = 'mock'
-
   /** The artificial per-call latency (0 disables the delay). */
   private readonly latencyMs: number
 
