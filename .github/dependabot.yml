@@ -1,0 +1,8 @@
+# Renovate handles npm dependency updates (see renovate.json); Dependabot is
+# scoped to GitHub Actions only, keeping the pinned commit SHAs current.
+version: 2
+updates:
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'

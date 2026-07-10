@@ -1,6 +1,6 @@
 # Phase 00: Repository Foundation & CI
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 00
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §23 (Tooling & Conventions), §6 (Repository Layout)
 
@@ -34,7 +34,7 @@ repository-visibility condition, so the pipeline is public-ready while the repo 
 | 0.1 | Branch + workspace root (pnpm, tsconfig, scripts)                            | ✅     | P0       | S    | none       |
 | 0.2 | Lint, format & hooks (ESLint flat, Prettier, husky, commitlint, lint-staged) | ✅     | P0       | S    | 0.1        |
 | 0.3 | Repo hygiene files (LICENSE, README stub, CHANGELOG, renovate, editorconfig) | ✅     | P1       | S    | 0.1        |
-| 0.4 | CI pipeline + conditional security workflows                                 | 📋     | P0       | M    | 0.2        |
+| 0.4 | CI pipeline + conditional security workflows                                 | ✅     | P0       | M    | 0.2        |
 | 0.5 | Phase close: audit, dashboards, PR + Copilot review                          | 📋     | P0       | S    | 0.1..0.4   |
 
 ---
@@ -255,7 +255,7 @@ files (0.3)`.
 
 ## Task 0.4: CI pipeline + conditional security workflows
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 0.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 0.2
 
 #### Description
 
@@ -267,11 +267,11 @@ actions updates (Renovate handles npm).
 
 #### Acceptance criteria
 
-- [ ] CI triggers on `pull_request` to `main` and on `push` to `main`.
-- [ ] Actions SHA-pinned; explicit least-privilege `permissions:` per workflow.
-- [ ] CodeQL/Scorecard jobs carry a visibility condition (skip cleanly while private) and a
+- [x] CI triggers on `pull_request` to `main` and on `push` to `main`.
+- [x] Actions SHA-pinned; explicit least-privilege `permissions:` per workflow.
+- [x] CodeQL/Scorecard jobs carry a visibility condition (skip cleanly while private) and a
       comment stating they activate when the repo goes public.
-- [ ] The phase PR itself runs install -> lint -> typecheck -> format green.
+- [x] The phase PR itself runs install -> lint -> typecheck -> format green.
 
 #### Files to create / modify
 
@@ -401,3 +401,4 @@ Completion Protocol: append `- 0.5 ✅ YYYY-MM-DD: phase merged in PR #<n>` to t
 - 0.1 ✅ 2026-07-10: pnpm workspace root scaffolded (package.json, pnpm-workspace.yaml, .nvmrc, strict tsconfig.base.json, .gitignore); `pnpm install` and `pnpm typecheck` green.
 - 0.2 ✅ 2026-07-10: ESLint 9 flat config + Prettier 3 + husky (pre-commit/commit-msg) + commitlint + lint-staged wired; commit-msg hook proven to reject a non-conventional message, pre-commit hook proven to block a broken staged file.
 - 0.3 ✅ 2026-07-10: LICENSE (MIT), README stub, CHANGELOG (Keep a Changelog), renovate.json, .editorconfig added.
+- 0.4 ✅ 2026-07-10: `ci.yml` (install -> lint -> typecheck -> format needs-chain, SHA-pinned actions), `codeql.yml` and `scorecard.yml` (visibility-guarded), `dependabot.yml` (github-actions weekly) added.
