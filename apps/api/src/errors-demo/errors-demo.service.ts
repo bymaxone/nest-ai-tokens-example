@@ -89,6 +89,17 @@ export class ErrorsDemoService {
       operation: 'chat',
       at: body.date,
     })
+    // Strict mode makes resolveRate throw on a miss; a null can only mean
+    // the module was rewired non-strict, which this demo does not support.
+    // Checked BEFORE the estimate so the misconfigured path always yields
+    // this deterministic rejection instead of whatever the estimate throws.
+    if (pricing === null) {
+      throw new ApiException(
+        'errors_demo.pricing_unavailable',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'No rate resolved for the supplied date; the demo expects strict pricing.',
+      )
+    }
     const cost = await this.metering.estimateCost({
       provider: body.provider,
       model: body.model,
@@ -97,15 +108,6 @@ export class ErrorsDemoService {
       maxOutputTokens: body.completionTokens,
       at: body.date,
     })
-    // Strict mode makes resolveRate throw on a miss; a null can only mean
-    // the module was rewired non-strict, which this demo does not support.
-    if (pricing === null) {
-      throw new ApiException(
-        'errors_demo.pricing_unavailable',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        'No rate resolved for the supplied date; the demo expects strict pricing.',
-      )
-    }
     return { pricing: toJsonSafe(pricing), cost: toJsonSafe(cost) }
   }
 
