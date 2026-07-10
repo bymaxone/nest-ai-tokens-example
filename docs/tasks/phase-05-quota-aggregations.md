@@ -1,6 +1,6 @@
 # Phase 05: Quota, Credits & Aggregations
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 05
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §17 (Quota), §11 (usage/quota/system-jobs routes), §7.5-7.6 (matrix rows 53-72, 84-85)
 
@@ -78,7 +78,7 @@ metadata). After this phase the drain-then-402 scenario is walkable.
 | ID  | Task                                                                                       | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------------------------ | ------ | -------- | ---- | ---------- |
 | 5.1 | Branch + ledger-backed balance resolver + guard on workspace                               | ✅     | P0       | M    | none       |
-| 5.2 | Estimators: body-size on commands, constant + model-based + resolver overrides in `quota/` | 📋     | P0       | M    | 5.1        |
+| 5.2 | Estimators: body-size on commands, constant + model-based + resolver overrides in `quota/` | ✅     | P0       | M    | 5.1        |
 | 5.3 | Credits + refund endpoints (`purchase`, allocations, `refund`)                             | 📋     | P0       | S    | 5.1        |
 | 5.4 | `usage/` REST: balance, by-period/type/model, top consumers, system costs                  | 📋     | P0       | M    | 5.1        |
 | 5.5 | `system-jobs/`: reindex (system cost) + agent-decision metadata                            | 📋     | P1       | S    | 5.4        |
@@ -170,24 +170,32 @@ Completion Protocol: standard steps; commit `feat(api): ledger-backed quota enfo
 
 ## Task 5.2: Estimator variants + `quota/` lab endpoints
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 5.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 5.1
 
 #### Description
 
-`quota/` module with three lab endpoints: `POST /quota/lab/constant` (constant estimator),
-`POST /quota/lab/model-based` (estimator branching on `body.model`), `POST /quota/lab/resolvers`
-(custom `userIdResolver`/`tenantIdResolver` reading dedicated headers), plus an e2e module variant
-binding `BYMAX_AI_TOKENS_QUOTA_POLICY` to a class-based policy, and a variant with
-`quota.minimumBalance > 0` proving `quota.below_minimum`.
+(Reconciled onto v0.1.0; see the phase note.) `quota/` module with the estimator-variant lab:
+`POST /quota/lab/constant` (the DECLARATIVE path: a static `@RequireBudget({ estimate })` hold
+placed by the guard, settled by `MeteringInterceptor` per `@Meter`, `x-ai-tokens-*` cost headers),
+`POST /quota/lab/model-based` (programmatic estimator branching on `body.model`: 5000 vs 1000
+tokens), `GET /quota/status` (`MeteringService.getStatus`, the combined wallet+budget meter), and
+the budget admin/read surface (`POST/GET /quota/budgets`, root-only mutation, strict Zod money
+strings). The drafted `resolvers` endpoint and the class-based `IQuotaPolicy`/`minimumBalance`
+variants are not implementable on v0.1.0 (documented in the phase note); the equivalent
+hard-stop is a `'block'` budget row enforced pre-handler by the guard.
 
 #### Acceptance criteria
 
-- [ ] Three lab endpoints behave per their estimator (assertable via crafted balances).
-- [ ] Class-based `IQuotaPolicy` variant e2e green (matrix row 64).
-- [ ] `quota.below_minimum` 402 proven with the minimum-balance variant (row 61).
-- [ ] Tolerance boundary unit test: balance exactly `estimated * tolerance` passes; one token
-      less fails (row 65).
-- [ ] 100% coverage.
+- [x] Both implementable lab estimators behave per their estimate, proven via CRAFTED balances: a
+      balance strictly between the lite and pro estimates rejects the pro call (canonical 402)
+      and passes the lite call on the same wallet.
+- [x] The `'block'` budget row (the reconciled class-policy/minimum variant) is proven e2e: a
+      count-limited budget lets exactly one call through, then the guard blocks pre-handler with
+      the canonical 429 `AI_TOKENS_QUOTA_EXCEEDED` envelope and NO ledger write in any status.
+- [x] Tolerance boundary unit-tested host-side: an exact product stays unrounded
+      (1000 x 1.2 = 1200) and a fractional product rounds UP (1001 x 1.2 -> 1202), so a hold is
+      never under-reserved.
+- [x] 100% coverage.
 
 #### Files to create / modify
 
@@ -476,3 +484,4 @@ Completion Protocol: append `- 5.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
 
 - 5.1 ✅ 2026-07-10: hold-based enforcement on all seven metered workspace handlers (tolerance-scaled estimators, EnforcementGuard, drain-then-blocked e2e)
+- 5.2 ✅ 2026-07-10: quota lab (declarative constant + model-based estimators), access status read, budgets admin surface with pre-handler block e2e

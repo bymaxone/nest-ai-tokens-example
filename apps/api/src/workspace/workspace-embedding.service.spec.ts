@@ -16,7 +16,7 @@ import type { UsageRecord } from '@bymax-one/nest-ai-tokens'
 
 import { embedBatchBodySchema } from './dto/embed-batch.body.js'
 import { embedBodySchema } from './dto/embed.body.js'
-import { PROVIDER_FAILURE_REASON } from './metered-call.js'
+import { PROVIDER_FAILURE_REASON } from '../ai/metered-call.js'
 import {
   EMBEDDING_FEATURES,
   WorkspaceEmbeddingService,

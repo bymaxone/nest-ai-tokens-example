@@ -13,7 +13,7 @@
 | 02    | `phase-02-api-skeleton-wiring.md`         | 5 / 5 | ✅     | NestJS 11 skeleton, demo identity, `forRootAsync` wiring, e2e harness                                                  |
 | 03    | `phase-03-repositories-ledger-pricing.md` | 6 / 6 | ✅     | Prisma repositories (both ports), pricing seed, ledger + pricing REST                                                  |
 | 04    | `phase-04-mock-provider-commands.md`      | 6 / 6 | ✅     | `MockAiProvider` + failure injection, commands, embeddings, transaction guarantees                                     |
-| 05    | `phase-05-quota-aggregations.md`          | 1 / 6 | 🔄     | quota guard + estimators, credits/refund, usage aggregations, system jobs                                              |
+| 05    | `phase-05-quota-aggregations.md`          | 2 / 6 | 🔄     | quota guard + estimators, credits/refund, usage aggregations, system jobs                                              |
 | 06    | `phase-06-tenants-errors.md`              | 0 / 5 | 📋     | tenant isolation + required mode, full error catalog, module variants                                                  |
 | 07    | `phase-07-web-skeleton-design.md`         | 0 / 5 | 📋     | Next.js 16 + shared design system + typed api client + switcher                                                        |
 | 08    | `phase-08-dashboard-pages.md`             | 0 / 6 | 📋     | the eight dashboard pages                                                                                              |

@@ -7,7 +7,7 @@
  * contract whether the response settles (`settle`, debits actuals) or is
  * abandoned (`abandon`, restores the reservation without billing).
  *
- * @layer workspace
+ * @layer ai
  */
 import type {
   HoldEstimate,

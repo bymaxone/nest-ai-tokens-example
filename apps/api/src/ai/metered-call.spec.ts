@@ -13,7 +13,7 @@
 import { describe, expect, it, jest } from '@jest/globals'
 
 import { PROVIDER_FAILURE_REASON, runWithHold } from './metered-call.js'
-import { MOCK_CHAT_PRESET } from '../ai/mock-usage.presets.js'
+import { MOCK_CHAT_PRESET } from './mock-usage.presets.js'
 import { holdWith, meteringWith } from '../../test/fixtures/metering.fixture.js'
 import { recordWith } from '../../test/fixtures/usage-record.fixture.js'
 

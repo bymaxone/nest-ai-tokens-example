@@ -21,7 +21,7 @@ import { customBodySchema } from './dto/custom.body.js'
 import { rewriteBodySchema } from './dto/rewrite.body.js'
 import { summarizeBodySchema } from './dto/summarize.body.js'
 import { translateBodySchema } from './dto/translate.body.js'
-import { PROVIDER_FAILURE_REASON } from './metered-call.js'
+import { PROVIDER_FAILURE_REASON } from '../ai/metered-call.js'
 import {
   WORKSPACE_FEATURES,
   WorkspaceCommandService,

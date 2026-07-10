@@ -1,7 +1,8 @@
 /**
- * @fileoverview Shared metering glue for the workspace: the context
- * builder (identity to `MeteringContext`, resource correlation as tags)
- * and the usage view every workspace response embeds.
+ * @fileoverview Shared response glue for the workspace: the resource and
+ * batch-size correlation tags plus the usage view every workspace response
+ * embeds. The identity-to-context builder lives in `ai/metering-context.ts`
+ * where every metered feature shares it.
  *
  * `UsageRecord` has no free-form metadata column by design (the immutable
  * ledger never stores request payloads), so the resource reference and the
@@ -11,10 +12,7 @@
  * @layer workspace
  */
 import { formatNanoUsd } from '@bymax-one/nest-ai-tokens'
-import type { MeteringContext, UsageRecord } from '@bymax-one/nest-ai-tokens'
-
-import { GLOBAL_TENANT_ID } from '../ai/ai-tokens.config.js'
-import type { DemoIdentity } from '../identity/identity.middleware.js'
+import type { UsageRecord } from '@bymax-one/nest-ai-tokens'
 
 /** Tag prefix correlating a usage record to the document it served. */
 export const RESOURCE_TAG_PREFIX = 'resource:'
@@ -40,32 +38,6 @@ export function resourceTag(resourceId: string): string {
  */
 export function batchSizeTag(size: number): string {
   return `${BATCH_SIZE_TAG_PREFIX}${size}`
-}
-
-/**
- * Build the per-call metering context for a workspace call. Deliberately
- * WITHOUT an idempotency key: repeated identical calls are distinct work
- * and must each append their own ledger row (the library's documented
- * non-deduplicating mode keys each append with a random UUID). The tenant
- * mapping matches the module `scopeResolver` (null-tenant identities meter
- * under the global tenant).
- *
- * @param identity The verified-by-simulation request identity.
- * @param feature The logical operation, e.g. `workspace.translate`.
- * @param tags The persisted correlation tags (resource, batch size).
- * @returns The context handed to `MeteringService.record`.
- */
-export function buildMeteringContext(
-  identity: DemoIdentity,
-  feature: string,
-  tags: readonly string[],
-): MeteringContext {
-  return {
-    tenantId: identity.tenantId ?? GLOBAL_TENANT_ID,
-    scope: { type: 'user', id: identity.id },
-    feature,
-    tags: [...tags],
-  }
 }
 
 /** The metering summary every workspace response embeds. */
