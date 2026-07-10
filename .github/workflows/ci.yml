@@ -1,10 +1,13 @@
 # CI: thin caller of the org-wide reusable pipeline (bymaxone/.github).
 #
-# The generic gates (install, lint, typecheck, format, unit coverage) live in
-# bymaxone/.github so every repo shares one definition; the shared setup action
-# clones and builds the sibling library beside the workspace so the `file:`
-# dependency resolves. Stages whose subjects do not exist in this repo yet
-# (web build, API e2e, export audit, mutation) are disabled via inputs and get
+# The generic gates (install, lint, typecheck, format, unit coverage, web
+# build) live in bymaxone/.github so every repo shares one definition; the
+# shared setup action clones and builds the sibling library beside the
+# workspace so the `file:` dependency resolves. Web unit coverage folds into
+# the reusable's own "unit" job through the root `test:cov` script (no
+# separate "web-test" job exists in the reusable); the Playwright web-e2e
+# stage stays off until a suite ships. Stages whose subjects do not exist in
+# this repo yet (export audit, mutation) are disabled via inputs and get
 # switched on as the apps grow. The reusable's job names are the CI contract
 # for branch protection.
 name: CI
@@ -29,7 +32,10 @@ jobs:
     uses: bymaxone/.github/.github/workflows/node-ci.yml@v1
     with:
       library-repo: bymaxone/nest-ai-tokens
-      has-web: false
+      has-web: true
+      # No Playwright suite ships this phase; the web-build job alone proves
+      # the production Next.js compile stays green.
+      run-e2e-web: false
       # The reusable's e2e-api job runs on the runner's Docker daemon via
       # Testcontainers (random mapped ports), so no `services:` block and no
       # fixed host port are involved; the suite provisions its own Postgres.
@@ -40,6 +46,26 @@ jobs:
       # the Testcontainers connection URI at runtime.
       database-url: postgresql://localhost:5432/ai_tokens_example
       post-install: pnpm --filter api run prisma:generate
+
+  # Repo-specific gate: apps/web must import ONLY the library's browser-safe
+  # shared subpath, never the server root. The reusable has no such input.
+  web-import-guard:
+    name: Web shared-subpath import guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Fail on any server-subpath import inside apps/web
+        run: |
+          if grep -rn "@bymax-one/nest-ai-tokens" apps/web --include='*.ts' --include='*.tsx' \
+              | grep -vE "@bymax-one/nest-ai-tokens/shared['\"/]"; then
+            echo "apps/web must import only the '/shared' subpath." >&2
+            exit 1
+          fi
 
   # Repo-specific gate: the API production build (the reusable only builds
   # web apps; this repo ships an API whose compile must stay green).

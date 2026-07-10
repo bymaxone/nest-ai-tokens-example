@@ -30,7 +30,7 @@
 > same commit.
 >
 > **Overall progress: 38 / 55 tasks (69%) · 7 / 10 phases done**
-> **Active phase:** none · **Blockers:** none
+> **Active phase:** 07 · **Blockers:** none
 
 | #   | Phase                                | Tasks file                                | Size | Done / Total | %    | Status |
 | --- | ------------------------------------ | ----------------------------------------- | ---- | ------------ | ---- | ------ |
@@ -41,7 +41,7 @@
 | 04  | Mock Provider, Commands & Embeddings | `phase-04-mock-provider-commands.md`      | L    | 6 / 6        | 100% | ✅     |
 | 05  | Quota, Credits & Aggregations        | `phase-05-quota-aggregations.md`          | L    | 6 / 6        | 100% | ✅     |
 | 06  | Multi-Tenant & Error Catalog         | `phase-06-tenants-errors.md`              | M    | 5 / 5        | 100% | ✅     |
-| 07  | Web Skeleton & Design System         | `phase-07-web-skeleton-design.md`         | M    | 0 / 5        | 0%   | 📋     |
+| 07  | Web Skeleton & Design System         | `phase-07-web-skeleton-design.md`         | M    | 4 / 5        | 80%  | 👀     |
 | 08  | Dashboard Pages                      | `phase-08-dashboard-pages.md`             | L    | 0 / 6        | 0%   | 📋     |
 | 09  | Quality, Docs & Export Audit         | `phase-09-quality-docs-audit.md`          | L    | 0 / 6        | 0%   | 📋     |
 

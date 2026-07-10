@@ -1,8 +1,40 @@
 # Phase 07: Web Skeleton & Design System
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-06
+> **Status**: 👀 Review · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 07
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (Frontend Design), §15 (Design System), §8.2 (shared subpath)
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 and the REAL `apps/api` surface built
+> in phases 01-06 supersede the shapes drafted here and in spec §11/§14 (same rule as the phase
+> 01-06 notes). The shared subpath (`dist/shared/index.d.ts`) exports `UsageRecord`, `PriceVersion`,
+> `AccessStatus`, `Budget`/`BudgetStatus`, `AiTokensErrorResponse`, `AI_TOKENS_ERROR_CODES`,
+> `AI_OPERATIONS`, `SERVICE_TIERS`, `formatNanoUsd`, and related money/catalog helpers, NOT the
+> drafted `TokenTransaction`/`ModelPricing`/`UsageBy*`/`AI_TOKEN_TRANSACTION_TYPES` names. It also
+> ships no `JsonSafe<T>` mapped type (that utility lives only on the server subpath), so the api
+> client's response types are hand-declared wire shapes (bigint money and `Date` fields as `string`,
+> matching what actually crosses the JSON boundary) built ON the shared unions/interfaces wherever
+> they apply (`AiOperation`, `ServiceTier`, `ProviderId`, `UsageStatus`, `MeteringScope`,
+> `AiTokensErrorCode`) rather than re-declaring those catalog types. The route catalogue is the REAL
+> one from `apps/api/src/{workspace,ledger,pricing,usage,quota,errors-demo,system-jobs,health}`
+> (module map, spec §10.1), not the drafted spec §11 table: every controller method in those modules
+> has a typed client method. Every app-raised error (library `AiTokensException` AND the host
+> `ApiException`) serializes the same `{ error: { code, message, details? } }` envelope, so the
+> client narrows on one shape regardless of which layer raised it; host codes (e.g.
+> `provider.rate_limited`) are outside the `AI_TOKENS_ERROR_CODES` union and stay typed as `string`.
+>
+> **Design system.** `design_system.html` documents the production sibling recipe as Tailwind v4 +
+> shadcn, but its own rendering (and the literal `tokens.css`/`globals.css` file names this task
+> targets) is hand-written CSS custom properties and component-recipe classes. This phase ports
+> that hand-written layer VERBATIM (same variable names, same class names, same values) rather than
+> adding Tailwind/shadcn/Radix as new dependencies: it is the smaller, equally faithful surface for
+> a skeleton phase whose pages are stubs until phase 08.
+>
+> **CI.** The reusable `node-ci.yml` has no separate "web-test" job: web unit coverage folds into
+> the existing `unit` job through the root `test:cov` script (already
+> `pnpm -r --workspace-concurrency=1 --if-present run test:cov`, serialized) once
+> `apps/web/package.json` carries a `test:cov` script. Setting `has-web: true` turns on the
+> reusable's own `web-build` job. The shared-subpath-only grep is a new repo-specific CI job
+> (mirroring the existing `probe` job), since the reusable has no such input.
 
 ## Context
 
@@ -38,17 +70,17 @@ may be mocked until 03-06 endpoints land).
 
 | ID  | Task                                                      | Status | Priority | Size | Depends on |
 | --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 7.1 | Branch + Next.js 16 app init + design tokens/fonts        | 📋     | P0       | M    | none       |
-| 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | 📋     | P0       | M    | 7.1        |
-| 7.3 | Typed api client on the shared subpath + error narrowing  | 📋     | P0       | M    | 7.1        |
-| 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | 📋     | P0       | M    | 7.2, 7.3   |
-| 7.5 | Phase close: audit, dashboards, PR + Copilot review       | 📋     | P0       | S    | 7.1..7.4   |
+| 7.1 | Branch + Next.js 16 app init + design tokens/fonts        | ✅     | P0       | M    | none       |
+| 7.2 | App shell: sidebar, header, page scaffold (8 nav entries) | ✅     | P0       | M    | 7.1        |
+| 7.3 | Typed api client on the shared subpath + error narrowing  | ✅     | P0       | M    | 7.1        |
+| 7.4 | User/tenant switcher + Vitest setup + CI web jobs         | ✅     | P0       | M    | 7.2, 7.3   |
+| 7.5 | Phase close: audit, dashboards, PR + Copilot review       | 👀     | P0       | S    | 7.1..7.4   |
 
 ---
 
 ## Task 7.1: Branch + Next.js 16 init + design tokens
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -58,11 +90,12 @@ from `design_system.html`.
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-07-web-skeleton-design` created with `git switch -c`.
-- [ ] `pnpm --filter web dev` serves a page using the design tokens (background, typography,
-      glass card visible).
-- [ ] Tokens/fonts match `design_system.html` exactly (same variable names and values).
-- [ ] Workspace lint/typecheck cover the new app.
+- [x] Branch `feat/phase-07-web-skeleton-design` created with `git switch -c`.
+- [x] `pnpm --filter web dev` serves a page using the design tokens (background, typography,
+      glass card visible). (Verified via `next build` + `next start`; `next dev` itself hits an
+      unrelated port conflict from a concurrent sibling worktree in this environment.)
+- [x] Tokens/fonts match `design_system.html` exactly (same variable names and values).
+- [x] Workspace lint/typecheck cover the new app.
 
 #### Files to create / modify
 
@@ -112,7 +145,7 @@ Completion Protocol: standard steps; commit `feat(web): next 16 init with design
 
 ## Task 7.2: App shell
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 7.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 7.1
 
 #### Description
 
@@ -123,9 +156,14 @@ shell recipe.
 
 #### Acceptance criteria
 
-- [ ] Every nav entry routes to a stub page with the standard page scaffold.
-- [ ] Active-route highlight, responsive collapse, and the family footer note.
-- [ ] Component tests for sidebar (active state) and scaffold render.
+- [x] Every nav entry routes to a stub page with the standard page scaffold.
+- [x] Active-route highlight, responsive collapse (sidebar hides under 900px per the design
+      system's own shell breakpoint), and the family footer note (package name in the sidebar
+      footer).
+- [x] Component tests for sidebar (active state) and scaffold render. (Deferred to compile
+      alongside the Vitest runner in 7.4, as this task's Agent prompt explicitly allows; the
+      component code itself is verified here via `next build` rendering all eight routes plus a
+      `next start` smoke asserting the active nav-item class on `/overview`.)
 
 #### Files to create / modify
 
@@ -171,21 +209,27 @@ Completion Protocol: standard steps; commit `feat(web): dashboard shell and rout
 
 ## Task 7.3: Typed api client
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 7.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 7.1
 
 #### Description
 
-`lib/api-client.ts`: a thin typed fetch wrapper for every backend route (§11 catalogue), request/
-response types built from `@bymax-one/nest-ai-tokens/shared` (`TokenTransaction`, `ModelPricing`,
-`UsageBy*`, `AI_TOKEN_TRANSACTION_TYPES`), an `ApiError` class narrowing the canonical envelope on
-`AI_TOKENS_ERROR_CODES`, and header injection from the identity store (7.4).
+`lib/api-client.ts`: a thin typed fetch wrapper for every backend route (the real module map,
+spec §10.1: workspace, ledger, pricing, usage, quota, errors-demo, system-jobs, health; see the
+phase Reconciliation note), request/response types in `lib/api-types.ts` built ON the shared
+subpath's unions/interfaces, an `ApiError` class narrowing the canonical envelope, and header
+injection from the identity store (7.4).
 
 #### Acceptance criteria
 
-- [ ] Every §11 route has a typed method; no `any` anywhere.
-- [ ] Errors parse the canonical envelope; `isCode(err, AI_TOKENS_ERROR_CODES.X)` helper works.
-- [ ] Only the shared subpath is imported (grep-proof).
-- [ ] 100% unit coverage on `lib/**` (fetch mocked).
+- [x] Every route across the eight real modules has a typed method; no `any` anywhere.
+- [x] Errors parse the canonical envelope; `isCode(err, code)` helper works for both library
+      codes (`AI_TOKENS_ERROR_CODES`) and host dot-namespaced codes.
+- [x] Only the shared subpath is imported (grep-proof).
+- [x] 100% unit coverage on `lib/**` (fetch mocked; `api-types.ts` is a pure-declaration file with
+      no executable statements, excluded from the coverage denominator, same as the sibling apps'
+      convention for compile-time-only files). A minimal `vitest.config.ts` (node environment)
+      lands with this task so the 49 tests are actually runnable; jsdom, Testing Library, and
+      enforced coverage thresholds land with the switcher and CI wiring in 7.4.
 
 #### Files to create / modify
 
@@ -236,23 +280,29 @@ Completion Protocol: standard steps; commit `feat(web): typed api client on shar
 
 ## Task 7.4: Switcher + Vitest + CI web jobs
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 7.2, 7.3
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 7.2, 7.3
 
 #### Description
 
 The user/tenant switcher (header component listing the demo users, persisting to `localStorage`,
 feeding the api client headers), the Vitest + Testing Library setup with 100% thresholds on
-`lib/**`, and the CI `web-build`/`web-test` jobs appended to the chain.
+`lib/**` and `components/**`, and the CI web build job + a repo-specific import-guard job appended
+to the chain (see the phase Reconciliation note: the reusable has no separate "web-test" job).
 
 #### Acceptance criteria
 
-- [ ] Switcher renders the demo users (ada/grace/linus/root) with tenant badges; selection
-      persists across reloads; client sends the headers.
-- [ ] A live round-trip works: the Overview stub calls `GET /usage/balance` through the client
-      and renders the number (against a locally running api).
-- [ ] `pnpm --filter web test:cov` enforces 100% on `lib/**`; component tests green.
-- [ ] CI gains `web-build` + `web-test` jobs (names contractual); grep step enforcing the
-      shared-only import.
+- [x] Switcher renders the demo users (ada/grace/linus/root) with tenant badges; selection
+      persists across reloads (`localStorage`, hydrated on mount); client sends the headers.
+- [x] A live round-trip works: the Overview page calls `GET /usage/balance` through the client
+      and renders the number. Proven twice: interactively (a real api process) and by an
+      automated integration test (`test/integration/balance-round-trip.integration.test.ts`,
+      `pnpm --filter web run test:integration`) that boots Postgres via Testcontainers and the
+      real `createApp()` boot seam on a random port, never the host's 5432.
+- [x] `pnpm --filter web run test:cov` enforces 100% on `lib/**` and `components/**` (94 tests);
+      component tests green.
+- [x] CI: `has-web: true` turns on the reusable's `web-build` job; web unit coverage folds into
+      the reusable's existing `unit` job (root `test:cov`, no separate "web-test" job exists); a
+      new repo-specific `web-import-guard` job enforces the shared-only import in CI.
 
 #### Files to create / modify
 
@@ -305,7 +355,15 @@ Completion Protocol: standard steps; commit `feat(web): identity switcher, vites
 
 ## Task 7.5: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 7.1..7.4
+- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 7.1..7.4
+- **Note**: gates replayed green (root `lint`/`typecheck`/`format:check`/`build`; `web test:cov`
+  94 tests at 100% on all four metrics on `lib/**` + `components/**`; `web test:integration`
+  Testcontainers round-trip; `api test:cov` unaffected, still 424 tests at 100%); every 7.1-7.4
+  acceptance criterion audited against the tree; code and security reviews iterated to zero
+  findings (two boolean-naming fixes and a switcher focus-visibility fix applied). Per the
+  orchestrator's architecture override, this task stops at PR creation and the review request;
+  waiting for CI, addressing bot findings, the squash-merge, branch deletion, and the final
+  "mark phase Done" commit are owned by the orchestrator.
 
 #### Description
 
@@ -315,8 +373,10 @@ GitHub Copilot review, squash-merge on green, delete branch, log.
 
 #### Acceptance criteria
 
-- [ ] Gates green; parity screenshot attached to the PR body.
-- [ ] Dashboards synced; PR merged with review resolved; branch gone.
+- [x] Gates green; parity screenshot attached to the PR body.
+- [x] Dashboards synced; PR opened and the Copilot review requested. (Merge, review-thread
+      resolution, and branch deletion are the orchestrator's phase-close steps, per the
+      architecture override.)
 
 #### Agent prompt
 
@@ -354,3 +414,16 @@ Completion Protocol: append `- 7.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 7.1 ✅ 2026-07-10: Next.js 16 App Router init; design_system.html tokens/fonts/base surfaces
+  ported verbatim into `styles/tokens.css` + `app/globals.css`; proven with a temporary card page.
+- 7.2 ✅ 2026-07-10: Dashboard shell (topbar, sidebar, main) and all eight nav routes as
+  PageScaffold stubs; root route redirects to `/overview`.
+- 7.3 ✅ 2026-07-10: `lib/api-types.ts` + `lib/api-client.ts`, one typed method per route across
+  the real module map; `ApiError`/`isCode` narrow the canonical envelope; 49 fetch-mocked tests.
+- 7.4 ✅ 2026-07-10: `lib/identity-store.ts` + `identity-switcher.tsx`; `lib/api.ts` singleton;
+  Overview's live balance round trip; full Vitest/Testing Library setup (94 tests, 100% coverage
+  on `lib/**` + `components/**`); a Testcontainers integration smoke; CI `has-web: true` plus the
+  `web-import-guard` job.
+- 7.5 👀 2026-07-10: gates green, criteria audited, code/security reviews at zero findings, PR
+  opened and the Copilot review requested; merge owned by the orchestrator.
