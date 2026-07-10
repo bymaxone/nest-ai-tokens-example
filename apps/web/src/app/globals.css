@@ -330,6 +330,12 @@ button {
 /* ════════════════════════════════════════════════════════════════
    APP SHELL — 64px topbar over a 250px sidebar + fluid main.
    ════════════════════════════════════════════════════════════════ */
+.shell {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg);
+}
 .topbar {
   position: fixed;
   top: 0;

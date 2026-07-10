@@ -54,9 +54,10 @@ describe('Sidebar', () => {
     expect(screen.getByRole('link', { name: /ledger/i })).toHaveAttribute('aria-current', 'page')
   })
 
-  // scenario: a route must not activate merely because another route's path prefixes it.
+  // scenario: a route must not activate merely because another route's path prefixes it
+  // (/ledgering shares the /ledger prefix WITHOUT a slash boundary).
   it('does not activate on a route name that merely shares a prefix', () => {
-    vi.mocked(usePathname).mockReturnValue('/errors')
+    vi.mocked(usePathname).mockReturnValue('/ledgering')
     render(<Sidebar />)
     expect(screen.getByRole('link', { name: /^ledger$/i })).not.toHaveAttribute('aria-current')
   })
