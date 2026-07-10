@@ -92,7 +92,7 @@ describe('chatCompletion', () => {
   })
 
   /**
-   * Determinism and id stability (rule-of-phase 1).
+   * Determinism and id stability (the determinism invariant).
    *
    * Equal requests produce byte-identical responses, including the
    * SHA-256-derived id; a different request gets a different id.

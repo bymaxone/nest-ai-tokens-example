@@ -227,7 +227,7 @@ describe('synthesizeChatContent', () => {
   })
 
   /**
-   * Determinism (rule-of-phase 1).
+   * Determinism invariant.
    *
    * The same input must synthesize byte-identical content across calls —
    * the property every ledger and cost assertion builds on.

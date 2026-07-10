@@ -246,7 +246,7 @@ describe('determinism (repeated calls)', () => {
    * Same input, same content, same cost, DIFFERENT transactions.
    *
    * Two identical translate calls must return byte-identical content and
-   * cost (rule-of-phase 1: pure function of the input) while appending
+   * cost (the determinism invariant: pure function of the input) while appending
    * distinct ledger rows (contract 1: one transaction per call).
    */
   it('returns identical content and cost with distinct transaction ids', async () => {
