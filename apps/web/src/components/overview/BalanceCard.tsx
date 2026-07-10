@@ -25,15 +25,15 @@ export function BalanceCard(): React.JSX.Element {
   const [state, setState] = useState<BalanceState>({ status: 'loading' })
 
   useEffect(() => {
-    let cancelled = false
+    let isCancelled = false
     setState({ status: 'loading' })
     api
       .getBalance()
       .then((balance) => {
-        if (!cancelled) setState({ status: 'ready', balance })
+        if (!isCancelled) setState({ status: 'ready', balance })
       })
       .catch((error: unknown) => {
-        if (cancelled) return
+        if (isCancelled) return
         const apiError =
           error instanceof ApiError
             ? error
@@ -41,7 +41,7 @@ export function BalanceCard(): React.JSX.Element {
         setState({ status: 'error', error: apiError })
       })
     return () => {
-      cancelled = true
+      isCancelled = true
     }
   }, [])
 

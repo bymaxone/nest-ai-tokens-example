@@ -44,10 +44,9 @@ export function IdentitySwitcher(): React.JSX.Element {
     <div className="chip" role="group" aria-label="Demo identity">
       <select
         aria-label="Select demo identity"
-        className="mono"
+        className="chip-select"
         value={identity?.userId ?? ''}
         onChange={handleChange}
-        style={{ background: 'transparent', border: 'none', color: 'inherit', outline: 'none' }}
       >
         <option value="">Select identity</option>
         {DEMO_USERS.map((user) => (

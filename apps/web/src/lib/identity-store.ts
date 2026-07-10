@@ -40,7 +40,7 @@ type IdentityListener = (identity: Identity | null) => void
 const STORAGE_KEY = 'nest-ai-tokens-example:identity'
 
 let current: Identity | null = null
-let hydrated = false
+let isHydrated = false
 const listeners = new Set<IdentityListener>()
 
 /**
@@ -60,8 +60,8 @@ function isIdentity(value: unknown): value is Identity {
  * (`window` is undefined during SSR) and on a corrupted or absent value.
  */
 function hydrate(): void {
-  if (hydrated) return
-  hydrated = true
+  if (isHydrated) return
+  isHydrated = true
   if (typeof window === 'undefined') return
   const raw = window.localStorage.getItem(STORAGE_KEY)
   if (raw === null) return

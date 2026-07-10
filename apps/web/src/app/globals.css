@@ -200,6 +200,20 @@ button {
 .chip--button:hover {
   background: var(--glass-bg-hover);
 }
+
+/* ── Select embedded in a chip (identity switcher) ── */
+.chip-select {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.chip-select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-20);
+  border-radius: var(--radius-sm);
+}
 .role-pill {
   display: inline-flex;
   align-items: center;

@@ -32,14 +32,14 @@ export function Sidebar(): React.JSX.Element {
   return (
     <aside className="sidebar" aria-label="Main navigation">
       {NAV_ITEMS.map((item) => {
-        const active = isActiveRoute(item.href, pathname)
+        const isActive = isActiveRoute(item.href, pathname)
         const Icon = item.icon
         return (
           <Link
             key={item.href}
             href={item.href}
-            aria-current={active ? 'page' : undefined}
-            className={active ? 'nav-item nav-item--active' : 'nav-item'}
+            aria-current={isActive ? 'page' : undefined}
+            className={isActive ? 'nav-item nav-item--active' : 'nav-item'}
           >
             <Icon className="nav-item__icon" />
             {item.label}
