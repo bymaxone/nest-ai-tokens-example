@@ -201,10 +201,12 @@ export class LedgerCreditService {
    * @returns The reversal summary plus the compensating record.
    * @throws {NotFoundException} when no record has this id.
    * @throws {ForbiddenException} when the record belongs to someone else.
+   * @throws {ApiException} the documented 503 when the wallets block is off.
    * @throws {AiTokensException} the canonical 409 when the record is not
    *   `posted` (already reversed, pending, or released).
    */
   async refund(identity: DemoIdentity, body: RefundBody): Promise<RefundResult> {
+    this.requireWallets()
     const original = await this.ledger.findById(body.transactionId)
     if (original === null) throw new NotFoundException('Transaction not found')
     const ownTenant = original.tenantId === tenantIdOf(identity)
@@ -230,7 +232,7 @@ export class LedgerCreditService {
       throw new ApiException(
         'quota.disabled',
         503,
-        'Credit endpoints require the wallets feature block (set QUOTA_ENABLED=true).',
+        'Credit and refund endpoints require the wallets feature block (set QUOTA_ENABLED=true).',
       )
     }
     return this.wallets

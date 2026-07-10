@@ -30,6 +30,8 @@ import {
   parseAnalysis,
   parseTranslations,
 } from './workspace-command.service.js'
+import { chatHoldEstimate, estimateTextTokens } from './workspace-estimators.js'
+import { DEFAULT_CHAT_MODEL } from '../ai/mock-models.js'
 import { ApiException } from '../common/api-exception.js'
 import { MockAiProvider } from '../ai/mock-ai.provider.js'
 import { MOCK_CHAT_PRESET } from '../ai/mock-usage.presets.js'
@@ -373,6 +375,25 @@ describe('custom', () => {
       expect.anything(),
       expect.objectContaining({ model: 'mock-chat-lite' }),
       MOCK_CHAT_PRESET,
+    )
+  })
+
+  /**
+   * Omitted system prompt reserves nothing for it.
+   *
+   * Without a systemPrompt no system message is sent, so the hold estimate
+   * counts ONLY the user prompt: no phantom token from estimating an empty
+   * string, which would over-reserve and could reject a near-empty wallet.
+   */
+  it('excludes an omitted systemPrompt from the hold estimate', async () => {
+    const { service, holdFn } = serviceWith()
+    const body = customBodySchema.parse({ userPrompt: 'Say hi' })
+
+    await service.custom(ada, body)
+
+    expect(holdFn).toHaveBeenCalledWith(
+      expect.anything(),
+      chatHoldEstimate(DEFAULT_CHAT_MODEL, estimateTextTokens('Say hi'), 1.2),
     )
   })
 

@@ -58,7 +58,14 @@ export async function runWithHold<T>(
   try {
     response = await run()
   } catch (error) {
-    await metering.release(hold, PROVIDER_FAILURE_REASON)
+    // The provider error is the diagnosis; a failing release must not
+    // replace it, so the release error is dropped and the original is
+    // rethrown as this helper documents.
+    try {
+      await metering.release(hold, PROVIDER_FAILURE_REASON)
+    } catch {
+      // Intentionally swallowed: the original provider error wins.
+    }
     throw error
   }
   return {

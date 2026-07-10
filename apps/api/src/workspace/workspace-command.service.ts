@@ -294,7 +294,9 @@ export class WorkspaceCommandService {
       model: body.model,
       messages,
       format: body.responseFormat,
-      rawTokens: estimateTextTokens(body.userPrompt) + estimateTextTokens(body.systemPrompt ?? ''),
+      rawTokens:
+        estimateTextTokens(body.userPrompt) +
+        (body.systemPrompt === undefined ? 0 : estimateTextTokens(body.systemPrompt)),
     })
     await settleIfTruncated(call)
     const content = contentOf(call.response)

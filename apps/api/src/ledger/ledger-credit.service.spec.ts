@@ -174,6 +174,20 @@ describe('credit', () => {
     await expect(service.credit(ada, body)).rejects.toBeInstanceOf(ApiException)
     await expect(service.credit(ada, body)).rejects.toMatchObject({ code: 'quota.disabled' })
   })
+
+  /**
+   * Disabled wallet block on the refund side.
+   *
+   * The refund shares the wallet guard: with the block off it answers the
+   * same quota.disabled 503 before touching the ledger or the reversal.
+   */
+  it('rejects refunds with quota.disabled 503 when wallets are off', async () => {
+    const { service } = serviceWith(false)
+    const body = refundBodySchema.parse({ transactionId: 'txn-anything' })
+
+    await expect(service.refund(ada, body)).rejects.toBeInstanceOf(ApiException)
+    await expect(service.refund(ada, body)).rejects.toMatchObject({ code: 'quota.disabled' })
+  })
 })
 
 describe('credit replay pre-check', () => {

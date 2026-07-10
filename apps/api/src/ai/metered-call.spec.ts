@@ -87,6 +87,24 @@ describe('runWithHold', () => {
   })
 
   /**
+   * Release failure precedence.
+   *
+   * When the compensating release itself rejects, the ORIGINAL provider
+   * error still wins: the release failure is dropped, exactly as the
+   * helper documents, so the diagnosis is never replaced.
+   */
+  it('rethrows the original error even when the release itself fails', async () => {
+    const { metering, releaseFn } = meteringWith()
+    const failure = new Error('provider exploded')
+    releaseFn.mockRejectedValueOnce(new Error('release also exploded'))
+
+    await expect(
+      runWithHold(metering, context, estimate, MOCK_CHAT_PRESET, () => Promise.reject(failure)),
+    ).rejects.toBe(failure)
+    expect(releaseFn).toHaveBeenCalledTimes(1)
+  })
+
+  /**
    * Settle delegates to capture.
    *
    * `settle()` captures the hold with the response and preset, returning
