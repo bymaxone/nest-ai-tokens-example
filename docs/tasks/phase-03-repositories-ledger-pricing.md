@@ -1,6 +1,6 @@
 # Phase 03: Repositories, Ledger & Pricing API
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-06
+> **Status**: 👀 Review · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 03
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16, §11 (ledger/pricing routes), §7.2-7.3 (matrix rows 13-36)
 
@@ -10,6 +10,33 @@ The placeholders from phase 02 become real: both repository ports implemented on
 database-level aggregation, the boot pricing seed (defaults + mock models, idempotent), and the
 ledger + pricing REST surface the dashboard will consume. After this phase the library's core
 (ledger + pricing) is fully operational end to end.
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the shapes drafted here
+> and in spec §16/§11 (same rule as the phase 01/02 notes). The real persistence surface is ONE
+> `IAiTokensStore` (ledger + pricing ports, wallet/budget halves optional), and the library SHIPS
+> the official PostgreSQL adapter `PrismaAiTokensStore` (`@bymax-one/nest-ai-tokens/prisma`,
+> parameterized raw SQL over the host schema), so the app binds that adapter to its
+> `PrismaService` instead of reimplementing persistence; there is no
+> `PrismaTokenTransactionRepository`/`PrismaModelPricingRepository` to write. Mappings applied:
+> `sumAmount`/`groupByType`/`groupByUser` -> `sumCost(filter)` (SQL `SUM`/`COUNT`, and its
+> `records` count doubles as the list total; group-by reporting is `UsageReportService` territory,
+> a later phase); `findActive`/`closeCurrentWindow`/`upsertIfMissing` -> `resolveRate` (window
+> predicate in SQL) and `upsertPrice` (atomic close-and-insert under a per-tuple advisory xact
+> lock plus a partial unique index on the single open row); `findAllCurrent` has no port
+> equivalent, so the "all current pricing" read is a host-owned Prisma query on the open rows;
+> `AiTokenTransactionService.getUserTransactions` -> `LedgerService.query` + `sumCost`
+> (the shipped filter has no `type`/`onlyDebits`/`onlyCredits`/`order`: costs are unsigned,
+> corrections are compensating records, and the adapter orders `createdAt` ascending);
+> `UpdatePricingDto` -> `NewPriceVersion` (Zod mirror); `invalidateCache()` has NO public
+> equivalent in v0.1.0 (`upsertPrice` clears the cache internally), so `POST /pricing/cache/flush`
+> is not implementable and is documented as omitted; `pricing.seedDefaults` + `customSeed` +
+> `DEFAULT_OPENAI_PRICING_2026` -> `pricing.seedFromSnapshot` + `MODEL_PRICES_SEED` (18 rows,
+> which include `gpt-5-mini` but NOT `gpt-4o-mini`; assertions target shipped models). The
+> shipped snapshot seed serializes CONCURRENT boots (session advisory lock) but re-runs on a
+> later fresh boot, closing and reinserting every open row, so restart row counts would grow;
+> to honor this phase's idempotency requirement the app keeps `seedFromSnapshot: false` and owns
+> an existence-checked, advisory-locked boot seed that writes the snapshot rows plus the three
+> mock models (`mock-chat-pro`, `mock-chat-lite`, `mock-embed`) exactly once.
 
 > **Completion Protocol ("standard steps"):** task Status ✅ (block + index) -> checkboxes ->
 > header Progress -> plan dashboard row + overall counter -> tasks README -> Completion log entry
@@ -34,40 +61,46 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 
 | ID  | Task                                                                           | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------------ | ------ | -------- | ---- | ---------- |
-| 3.1 | Branch + `PrismaTokenTransactionRepository` (8 methods, SQL aggregation)       | 📋     | P0       | L    | none       |
-| 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | 📋     | P0       | M    | 3.1        |
-| 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | 📋     | P0       | S    | 3.2        |
-| 3.4 | `ledger/` REST: list, detail, filters, pagination                              | 📋     | P0       | M    | 3.1        |
-| 3.5 | `pricing/` REST: current, history, update, flush-cache                         | 📋     | P0       | M    | 3.2        |
-| 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | 📋     | P0       | S    | 3.1..3.5   |
+| 3.1 | Branch + `PrismaTokenTransactionRepository` (8 methods, SQL aggregation)       | ✅     | P0       | L    | none       |
+| 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | ✅     | P0       | M    | 3.1        |
+| 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | ✅     | P0       | S    | 3.2        |
+| 3.4 | `ledger/` REST: list, detail, filters, pagination                              | ✅     | P0       | M    | 3.1        |
+| 3.5 | `pricing/` REST: current, history, update, flush-cache                         | ✅     | P0       | M    | 3.2        |
+| 3.6 | Phase close: audit, dashboards, PR + Copilot review                            | 👀     | P0       | S    | 3.1..3.5   |
 
 ---
 
 ## Task 3.1: Branch + `PrismaTokenTransactionRepository`
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: none
 
 #### Description
 
 Implement all eight methods of `ITokenTransactionRepository` on Prisma (`create`, `findById`,
 `findMany`, `count`, `sumAmount`, `groupByType`, `groupByUser` with `topN`), honoring the filter
 contract (type arrays, date bounds, onlyDebits/onlyCredits, ordering) and replacing the phase 02
-placeholder binding.
+placeholder binding. _Reconciled (see the phase note): the ledger half ships inside the library's
+`PrismaAiTokensStore`; this task binds that adapter and proves the ledger-half behavior against
+real data instead of reimplementing it._
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-03-repositories-ledger-pricing` created with `git switch -c`.
-- [ ] Every filter field of `TokenTransactionFilter` is honored, including `onlyDebits`
-      (`amount < 0`) and `onlyCredits`, combined type arrays, and inclusive date bounds.
-- [ ] `sumAmount`/`groupByType`/`groupByUser` use Prisma `aggregate`/`groupBy` (asserted by unit
-      tests spying the Prisma client call shape).
-- [ ] Rows map exactly to the library's `TokenTransaction` interface (Date types, null handling).
-- [ ] 100% coverage; integration specs run against the e2e container.
+- [x] Branch `feat/phase-03-repositories-ledger-pricing` created with `git switch -c`.
+- [x] The shipped `PrismaAiTokensStore` is bound under the `AI_TOKENS_STORE` symbol (factory over
+      the app `PrismaService`); the phase 02 placeholder store is deleted.
+- [x] Aggregation happens in the database: the integration spec proves `sumCost` totals equal
+      sums computed independently from the deterministic seed plan, and an empty match coalesces
+      to exact zeros.
+- [x] The shipped filter contract is honored and proven: scope, operation, inclusive `from`/`to`
+      bounds, system-cost partition, and `limit`/`offset` paging.
+- [x] Rows map exactly to the library's `UsageRecord` interface (bigint nano-USD, `Decimal(10,4)`
+      markup to `number`, `Date` fields) at the store boundary.
+- [x] 100% unit coverage held; integration specs run against the e2e container.
 
 #### Files to create / modify
 
-- `apps/api/src/ai/repositories/prisma-token-transaction.repository.ts`, `ai/ai.module.ts`
-  (binding swap), unit + integration specs
+- `apps/api/src/ai/ai-store.module.ts` (shipped-adapter binding), `ai/ai-tokens.config.ts`,
+  `ai/ai.module.ts`, placeholder deletion, unit specs, `test/e2e/store-integration.e2e-spec.ts`
 
 #### Agent prompt
 
@@ -120,27 +153,32 @@ Completion Protocol: standard steps; commit `feat(api): prisma token transaction
 
 ## Task 3.2: `PrismaModelPricingRepository`
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 3.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 3.1
 
 #### Description
 
 Implement the six methods of `IModelPricingRepository`: `create`, `findActive` (documented window
 predicate, highest `effectiveFrom` on overlap), `findHistory`, `findAllCurrent`,
 `closeCurrentWindow` (returns updated count), `upsertIfMissing` (race-safe on the
-`(model, effectiveFrom)` pair). Decimal mapped to number at the boundary.
+`(model, effectiveFrom)` pair). Decimal mapped to number at the boundary. _Reconciled (see the
+phase note): the pricing half also ships inside `PrismaAiTokensStore` (`resolveRate`,
+`upsertPrice`, `getPriceHistory`, `listModels`); this task proves that half's behavior against
+real data._
 
 #### Acceptance criteria
 
-- [ ] Window predicate exactly:
+- [x] Window predicate proven exactly:
       `effectiveFrom <= date AND (effectiveTo IS NULL OR effectiveTo >= date)`;
-      overlap resolution picks max `effectiveFrom`.
-- [ ] `upsertIfMissing` tolerates a concurrent insert (unique violation -> fetch existing).
-- [ ] Binding swapped in `ai.module.ts`; placeholders deleted.
-- [ ] 100% coverage incl. integration specs on windows and history ordering.
+      overlap resolution picks max `effectiveFrom` (inclusive-boundary spec).
+- [x] Concurrent upserts are race-safe: the per-tuple advisory transaction lock plus the partial
+      unique index leave exactly one open window (proven with a concurrent `upsertPrice` pair).
+- [x] Binding swapped in `ai.module.ts`; placeholders deleted (landed in 3.1).
+- [x] Integration specs cover stacked windows, gapless newest-first history ordering, tier
+      isolation, `listModels` tuples, and exact bigint rate/`unitRates` round-trips.
 
 #### Files to create / modify
 
-- `apps/api/src/ai/repositories/prisma-model-pricing.repository.ts`, `ai/ai.module.ts`, specs
+- `apps/api/test/e2e/store-integration.e2e-spec.ts` (pricing-half describe block)
 
 #### Agent prompt
 
@@ -186,26 +224,33 @@ Completion Protocol: standard steps; commit `feat(api): prisma model pricing rep
 
 ## Task 3.3: Boot pricing seed + idempotency e2e
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 3.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 3.2
 
 #### Description
 
 With real repositories, the library's `pricing.seedDefaults: true` + `customSeed:
 MOCK_MODEL_PRICING` boot seeding becomes live. Prove it: an e2e boots the app twice against one
 database and asserts pricing rows are created once (idempotent), covering
-`DEFAULT_OPENAI_PRICING_2026` presence and the three mock models.
+`DEFAULT_OPENAI_PRICING_2026` presence and the three mock models. _Reconciled (see the phase
+note): the app owns the boot seed (`PricingSeedService`, advisory-locked and existence-checked)
+because the shipped `seedFromSnapshot` re-runs on sequential fresh boots; the seed writes
+`MODEL_PRICES_SEED` plus `MOCK_MODEL_PRICES` (three mock models)._
 
 #### Acceptance criteria
 
-- [ ] First boot creates default snapshot rows + mock models; second boot changes nothing
-      (counts stable, `updatedAt` untouched).
-- [ ] The e2e asserts a known default row (`gpt-4o-mini`) and `mock-chat-pro` resolve via
-      `findActive` at now.
-- [ ] Matrix rows 35-36 marked demonstrated in the spec (edit the Status cells if placeholders).
+- [x] First boot creates the snapshot rows + the three mock models; a second sequential boot
+      changes nothing (row count and the full row snapshot are byte-identical; the append-only
+      schema carries no `updatedAt`, so identical ids and values prove no rewrite).
+- [x] The e2e asserts a known snapshot row (`gpt-5-mini`; the shipped snapshot carries no
+      `gpt-4o-mini`) and `mock-chat-pro` resolve via `PricingService.resolveRate` at now.
+- [x] A concurrent double boot is tolerated (advisory lock + re-check; count still exact).
+- [x] Matrix rows 35-36 remain ✅ in the spec (no status edit needed).
 
 #### Files to create / modify
 
-- `apps/api/test/e2e/pricing-seed.e2e-spec.ts`, spec §7 status touch-up if needed
+- `apps/api/src/pricing/pricing-seed.service.ts`, `pricing/mock-model-prices.ts`,
+  `pricing/pricing.module.ts`, `src/app.module.ts`, unit specs,
+  `apps/api/test/e2e/pricing-seed.e2e-spec.ts`
 
 #### Agent prompt
 
@@ -247,25 +292,35 @@ Completion Protocol: standard steps; commit `test(api): prove pricing seed idemp
 
 ## Task 3.4: `ledger/` REST
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 3.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 3.1
 
 #### Description
 
 `GET /ledger/transactions` (Zod query: type single/array, from/to, onlyDebits/onlyCredits,
 limit/offset, order; scoped to `req.user` + tenant) and `GET /ledger/transactions/:id` (owner
 check, full metadata payload) built on `AiTokenTransactionService.getUserTransactions` and the
-repository. Credits/refund arrive in phase 05.
+repository. Credits/refund arrive in phase 05. _Reconciled (see the phase note): the list rides
+`LedgerService.query` + `sumCost` and the query DTO mirrors the shipped `LedgerFilter` (feature,
+features, provider, model, operation, serviceTier, status list, isSystemCost,
+systemCostCategory, from/to, bounded limit/offset; no signed-amount or order options exist)._
 
 #### Acceptance criteria
 
-- [ ] List honors every filter and returns `{ items, total, limit, offset }`.
-- [ ] Detail 404s cleanly on unknown id; 403 on another user's row (owner check in the app,
-      documented as app-level policy).
-- [ ] E2E covers filters against the seed; unit covers controller/service branches; 100%.
+- [x] List honors every shipped filter and returns `{ items, total, limit, offset }`; the total
+      is the SQL `COUNT` from `sumCost`, never the fetched page length; pagination is bounded
+      (limit 1..100) and money renders JSON-safe (bigint as decimal strings via `toJsonSafe`).
+- [x] Detail 404s cleanly on unknown id; 403 on another user's (or tenant's, or a tenant-scoped
+      system) row: the owner check lives in the app and is documented as app-level policy.
+- [x] E2E covers filter permutations, tenant isolation, pagination, validation rejections, and
+      404/403 against the deterministic seed; unit covers every controller/service/DTO branch;
+      unit coverage stays 100%.
 
 #### Files to create / modify
 
-- `apps/api/src/ledger/**` (module, controller, service, DTOs), e2e spec
+- `apps/api/src/ledger/**` (module, controller, read service, query DTO),
+  `src/identity/require-identity.ts`, `src/app.module.ts`, unit specs,
+  `test/e2e/ledger-pricing-api.e2e-spec.ts`, `jest.e2e.config.cjs` (production-parity decorator
+  metadata so the global Zod pipe sees DTO metatypes)
 
 #### Agent prompt
 
@@ -309,28 +364,37 @@ Completion Protocol: standard steps; commit `feat(api): ledger read endpoints (3
 
 ## Task 3.5: `pricing/` REST
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 3.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 3.2
 
 #### Description
 
 `GET /pricing` (`getAllCurrentPricing`), `GET /pricing/:model/history` (`getPricingHistory`),
 `PUT /pricing/:model` (library `UpdatePricingDto` + `updatePricing`: closes window, inserts
 successor, invalidates cache), `POST /pricing/cache/flush` (`invalidateCache`). E2E proves the
-window sequence and that a backdated `calculateCost` still uses the old window.
+window sequence and that a backdated `calculateCost` still uses the old window. _Reconciled (see
+the phase note): the current listing is a host-owned open-window read, history/update ride
+`PricingService.getPriceHistory`/`upsertPrice`, the body DTO is a Zod mirror of
+`NewPriceVersion` (digit-string money, no shipped `UpdatePricingDto` exists), the backdated
+proof uses `resolveRate` + `computeCostNanoUsd`, and the cache-flush route is omitted because
+v0.1.0 exposes no public cache-invalidation API (`upsertPrice` clears it internally)._
 
 #### Acceptance criteria
 
-- [ ] Update flow: old open window gains `effectiveTo`; successor row open; cache invalidated
-      (next `getCurrentPricing` reflects the new price immediately).
-- [ ] Backdated cost proof: `calculateCost(model, tokens, 0, oldDate)` uses the closed window
-      (matrix row 32).
-- [ ] Library DTO reused (`UpdatePricingDto`), demonstrating matrix row 88 partially (workspace
-      DTOs complete it in phase 04).
-- [ ] 100% coverage on new files; e2e green.
+- [x] Update flow proven end to end: the old open window gains `effectiveTo` equal to the
+      successor's `effectiveFrom`, the successor is open, and a resolution in the same cache
+      bucket reflects the new price immediately (cache invalidated by `upsertPrice`).
+- [x] Backdated cost proof: a pre-update `resolveRate` lands in the CLOSED window and
+      `computeCostNanoUsd` prices identical usage at exactly 840,000 vs 980,000 nano-USD
+      across the two windows (matrix row 32).
+- [x] The update body mirrors the library's `NewPriceVersion` (documented in JSDoc), accepts
+      money only as digit strings (bigint-exact), requires at least one rate field, and the
+      admin plane is closed: 401 anonymous, 403 non-admin, provenance server-forced `manual`.
+- [x] 100% coverage on new files; e2e green.
 
 #### Files to create / modify
 
-- `apps/api/src/pricing/**`, e2e spec
+- `apps/api/src/pricing/**` (controller, catalog service, DTOs), `src/common/zod-dto.ts`,
+  unit specs, `test/e2e/ledger-pricing-api.e2e-spec.ts` (pricing blocks)
 
 #### Agent prompt
 
@@ -374,7 +438,7 @@ Completion Protocol: standard steps; commit `feat(api): pricing admin endpoints 
 
 ## Task 3.6: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 3.1..3.5
+- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 3.1..3.5
 
 #### Description
 
@@ -425,3 +489,9 @@ Completion Protocol: append `- 3.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 3.1 ✅ 2026-07-10: bound the shipped `PrismaAiTokensStore` (ledger half proven vs the seed plan), deleted the placeholder store
+- 3.2 ✅ 2026-07-10: proved the pricing half (window predicate, overlap resolution, gapless history, concurrent-upsert race safety, bigint round-trips)
+- 3.3 ✅ 2026-07-10: app-owned idempotent boot pricing seed (snapshot + 3 mock models) with double-boot and concurrent-boot e2e proofs
+- 3.4 ✅ 2026-07-10: ledger read endpoints (filtered, paginated list + owner-checked detail) with plan-exact e2e and 100% unit coverage
+- 3.5 ✅ 2026-07-10: pricing catalog, history, and admin update endpoints with window-sequence, cache-invalidation, and backdated-cost e2e proofs

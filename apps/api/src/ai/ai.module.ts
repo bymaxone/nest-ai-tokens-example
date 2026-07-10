@@ -11,10 +11,9 @@ import { Module } from '@nestjs/common'
 import { BymaxAiTokensModule } from '@bymax-one/nest-ai-tokens'
 
 import { aiTokensOptionsFactory } from './ai-tokens.config.js'
-import { AiStoreModule } from './ai-store.module.js'
+import { AI_TOKENS_STORE, AiStoreModule } from './ai-store.module.js'
 import { applyLibraryParamtypesShim } from './library-metadata.shim.js'
 import { ENV_CONFIG } from '../config/env.js'
-import { PlaceholderAiTokensStore } from './placeholder-ai-tokens.store.js'
 import { WiringController } from './wiring.controller.js'
 import { WiringService } from './wiring.service.js'
 
@@ -25,7 +24,7 @@ applyLibraryParamtypesShim()
   imports: [
     BymaxAiTokensModule.forRootAsync({
       imports: [AiStoreModule],
-      inject: [ENV_CONFIG, PlaceholderAiTokensStore],
+      inject: [ENV_CONFIG, AI_TOKENS_STORE],
       useFactory: aiTokensOptionsFactory,
     }),
   ],

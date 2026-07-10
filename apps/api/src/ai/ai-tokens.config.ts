@@ -13,12 +13,16 @@
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common'
 import type { ExecutionContext } from '@nestjs/common'
 import { floatUsdToNanoUsd } from '@bymax-one/nest-ai-tokens'
-import type { BymaxAiTokensModuleOptions, MeteringContext } from '@bymax-one/nest-ai-tokens'
+import type {
+  BymaxAiTokensModuleOptions,
+  IAiTokensStore,
+  MeteringContext,
+} from '@bymax-one/nest-ai-tokens'
+import { PrismaAiTokensStore } from '@bymax-one/nest-ai-tokens/prisma'
 import { z } from 'zod'
 
 import type { EnvConfig } from '../config/env.js'
 import type { AuthenticatedRequest } from '../identity/identity.middleware.js'
-import { PlaceholderAiTokensStore } from './placeholder-ai-tokens.store.js'
 
 /** Tenant id used for global (null-tenant) identities when tenancy is optional. */
 export const GLOBAL_TENANT_ID = 'global'
@@ -85,8 +89,9 @@ export function overdraftFromMinimumBalance(minimumBalanceUsd: number): bigint {
  * Build the canonical module options from the typed environment.
  *
  * Option-by-option rationale:
- * - `store`: the injected persistence adapter. Today the boot placeholder;
- *   the Prisma-backed store replaces it when the repository layer lands.
+ * - `store`: the injected persistence adapter, the library's own
+ *   `PrismaAiTokensStore` constructed over the application Prisma client
+ *   (see `ai-store.module.ts`).
  * - `scopeResolver`: header-simulated identity -> `MeteringContext`
  *   (see {@link createDemoScopeResolver}).
  * - `ratingMode: 'rate-table'`: costs come from the effective-dated price
@@ -94,10 +99,16 @@ export function overdraftFromMinimumBalance(minimumBalanceUsd: number): bigint {
  * - `currency: 'USD'`: presentation currency; persisted money is always
  *   nano-USD regardless.
  * - `markup`: flat demo margin matching the seeded ledger history.
- * - `pricing.seedFromSnapshot: false`: the snapshot seed needs a persistent
- *   store; it turns on together with the Prisma store. `strict: true` keeps
- *   missing prices loud (`AI_TOKENS_PRICE_NOT_FOUND`) instead of silently
- *   rating zero. `cacheTtlMs` comes straight from `PRICING_CACHE_TTL_MS`.
+ * - `pricing.seedFromSnapshot: false`: the library's snapshot seed guards
+ *   CONCURRENT boots with a session advisory lock but re-runs on a later
+ *   fresh boot, closing and reinserting every open snapshot row, so a
+ *   restart would grow the price table. This app wants byte-stable pricing
+ *   across restarts, so it owns an existence-checked, advisory-locked boot
+ *   seed instead (see `pricing/pricing-seed.service.ts`), which writes the
+ *   same snapshot rows plus the mock model prices exactly once.
+ *   `strict: true` keeps missing prices loud (`AI_TOKENS_PRICE_NOT_FOUND`)
+ *   instead of silently rating zero. `cacheTtlMs` comes straight from
+ *   `PRICING_CACHE_TTL_MS`.
  * - `wallets`/`budgets` (only when `QUOTA_ENABLED`): enabling the blocks
  *   registers `WalletService`, `BudgetService`, and `BudgetGuard`; the
  *   wallet overdraft derives from `QUOTA_MINIMUM_BALANCE`
@@ -109,7 +120,7 @@ export function overdraftFromMinimumBalance(minimumBalanceUsd: number): bigint {
  */
 export function buildAiTokensOptions(
   env: EnvConfig,
-  store: PlaceholderAiTokensStore,
+  store: IAiTokensStore,
 ): BymaxAiTokensModuleOptions {
   return {
     store,
@@ -164,15 +175,15 @@ export function assertEnvConfig(value: unknown): EnvConfig {
 }
 
 /**
- * Narrow the value injected for the placeholder store.
+ * Narrow the value injected for the store token.
  *
  * @param value The injected value.
- * @returns The placeholder store instance.
+ * @returns The Prisma-backed store instance.
  * @throws {Error} when the container resolved an unexpected value.
  */
-export function assertPlaceholderStore(value: unknown): PlaceholderAiTokensStore {
-  if (value instanceof PlaceholderAiTokensStore) return value
-  throw new Error('PlaceholderAiTokensStore resolved to an unexpected value')
+export function assertAiTokensStore(value: unknown): IAiTokensStore {
+  if (value instanceof PrismaAiTokensStore) return value
+  throw new Error('AI_TOKENS_STORE resolved to an unexpected value')
 }
 
 /**
@@ -180,9 +191,9 @@ export function assertPlaceholderStore(value: unknown): PlaceholderAiTokensStore
  * the injected dependencies before delegating to {@link buildAiTokensOptions}.
  *
  * @param env The injected `ENV_CONFIG` value.
- * @param store The injected placeholder store.
+ * @param store The injected `AI_TOKENS_STORE` value.
  * @returns The module options.
  */
 export function aiTokensOptionsFactory(env: unknown, store: unknown): BymaxAiTokensModuleOptions {
-  return buildAiTokensOptions(assertEnvConfig(env), assertPlaceholderStore(store))
+  return buildAiTokensOptions(assertEnvConfig(env), assertAiTokensStore(store))
 }

@@ -17,14 +17,15 @@ import {
   GLOBAL_TENANT_ID,
   aiTokensOptionsFactory,
   assertEnvConfig,
-  assertPlaceholderStore,
+  assertAiTokensStore,
   buildAiTokensOptions,
   createDemoScopeResolver,
   overdraftFromMinimumBalance,
 } from './ai-tokens.config.js'
-import { PlaceholderAiTokensStore } from './placeholder-ai-tokens.store.js'
+import { createPrismaAiTokensStore } from './ai-store.module.js'
 import type { EnvConfig } from '../config/env.js'
 import type { DemoIdentity } from '../identity/identity.middleware.js'
+import { PrismaService } from '../prisma/prisma.service.js'
 
 /** A complete typed env fixture with overridable fields. */
 function envWith(overrides: Partial<EnvConfig> = {}): EnvConfig {
@@ -47,7 +48,10 @@ function contextFor(user: DemoIdentity | undefined): ExecutionContext {
   return { switchToHttp: () => ({ getRequest: () => request }) } as unknown as ExecutionContext
 }
 
-const store = new PlaceholderAiTokensStore()
+// The real adapter over a lazily-connecting client: constructing PrismaService
+// (and the pg driver adapter inside it) opens no connection, so unit tests can
+// hold the exact store instance production wires without a database.
+const store = createPrismaAiTokensStore(new PrismaService(envWith()))
 
 describe('buildAiTokensOptions', () => {
   /**
@@ -197,7 +201,7 @@ describe('DI narrowing helpers', () => {
     const env = envWith()
 
     expect(assertEnvConfig(env)).toBe(env)
-    expect(assertPlaceholderStore(store)).toBe(store)
+    expect(assertAiTokensStore(store)).toBe(store)
   })
 
   /**
@@ -227,12 +231,11 @@ describe('DI narrowing helpers', () => {
   /**
    * Store narrowing rejection.
    *
-   * Only the real placeholder store instance passes.
+   * Only a real `PrismaAiTokensStore` instance passes; a structural
+   * imitation (or a mis-wired token) fails loudly at boot.
    */
-  it('assertPlaceholderStore rejects a structural imitation', () => {
-    expect(() => assertPlaceholderStore({})).toThrow(
-      'PlaceholderAiTokensStore resolved to an unexpected value',
-    )
+  it('assertAiTokensStore rejects a structural imitation', () => {
+    expect(() => assertAiTokensStore({})).toThrow('AI_TOKENS_STORE resolved to an unexpected value')
   })
 
   /**
