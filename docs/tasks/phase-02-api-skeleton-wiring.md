@@ -1,6 +1,6 @@
 # Phase 02: API Skeleton & Module Wiring
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 5 tasks · **Last updated**: 2026-07-06
+> **Status**: 👀 Review · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 02
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §9.2 (canonical wiring), §10 (Backend Design), §3 (Architecture)
 
@@ -11,6 +11,19 @@ into a booting NestJS 11 application with the library registered through the can
 `registerAsync` factory: repository bindings, a placeholder provider (the real `MockAiProvider`
 lands in phase 04), the logger bridge, demo identity, health endpoints, and the Testcontainers e2e
 harness. CI gains `build`, `test`, and `e2e` jobs.
+
+> **Reconciliation (2026-07-10):** the shipped library v0.1.0 supersedes the API drafted here and
+> in spec §4/§9.2 (same rule as the phase 01 note). The real surface is: registration via
+> `BymaxAiTokensModule.forRootAsync({ imports, inject, useFactory })` (no `registerAsync`, no
+> `isGlobal` flag — the module is `@Global()` by construction); ONE required `store` object
+> implementing `IAiTokensStore` (ledger + pricing ports, wallet/budget ports when those feature
+> blocks are enabled) instead of two repository DI tokens; no provider port (`IAiProvider`),
+> no `defaultModels`, no `quota`/`multiTenant` blocks — enforcement is the opt-in `wallets`/
+> `budgets` blocks plus the host `scopeResolver`, and there is no estimation-tolerance option;
+> no `AuthenticatedRequest` type (the host owns its request identity shape); the
+> `BYMAX_AI_TOKENS_LOGGER` token is reserved (bound `null`, no consumer in v0.1.0), so no logger
+> bridge is wireable yet. Tasks below were executed against the shipped dist/types; acceptance
+> criteria were aligned in the same commits and every mapping is documented in the PR body.
 
 > **Completion Protocol ("standard steps"):** task Status ✅ (block + index) -> checkboxes ->
 > header Progress -> plan dashboard row + overall counter -> tasks README -> Completion log entry
@@ -37,17 +50,17 @@ harness. CI gains `build`, `test`, and `e2e` jobs.
 
 | ID  | Task                                                                      | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 2.1 | Branch + NestJS skeleton (`createApp` seam, Zod pipe, config module)      | 📋     | P0       | M    | none       |
-| 2.2 | Demo identity middleware + user registry                                  | 📋     | P0       | S    | 2.1        |
-| 2.3 | Library wiring: options factory + repository/logger placeholders bindings | 📋     | P0       | M    | 2.2        |
-| 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs       | 📋     | P0       | M    | 2.3        |
-| 2.5 | Phase close: audit, dashboards, PR + Copilot review                       | 📋     | P0       | S    | 2.1..2.4   |
+| 2.1 | Branch + NestJS skeleton (`createApp` seam, Zod pipe, config module)      | ✅     | P0       | M    | none       |
+| 2.2 | Demo identity middleware + user registry                                  | ✅     | P0       | S    | 2.1        |
+| 2.3 | Library wiring: options factory + repository/logger placeholders bindings | ✅     | P0       | M    | 2.2        |
+| 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs       | ✅     | P0       | M    | 2.3        |
+| 2.5 | Phase close: audit, dashboards, PR + Copilot review                       | 👀     | P0       | S    | 2.1..2.4   |
 
 ---
 
 ## Task 2.1: Branch + NestJS skeleton
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -58,13 +71,14 @@ modules.
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-02-api-skeleton-wiring` created with `git switch -c`.
-- [ ] NestJS 11 deps added (`@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`,
-      `reflect-metadata`, `rxjs`); versions verified against current docs.
-- [ ] Env config: Zod schema covering the spec §9.1 rows implemented so far; boot fails fast with
+- [x] Branch `feat/phase-02-api-skeleton-wiring` created with `git switch -c`.
+- [x] NestJS 11 deps added (`@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`,
+      `reflect-metadata`, `rxjs` at 11.1.x); versions verified against current docs.
+- [x] Env config: Zod schema covering the spec §9.1 rows implemented so far; boot fails fast with
       an aggregated, value-free error report on invalid env.
-- [ ] `pnpm --filter api dev` boots; `GET /` returns a JSON hello naming the example.
-- [ ] Unit tests for the env schema and pipe; coverage 100% on files added.
+- [x] `pnpm --filter api dev` boots (Nest CLI watch); `GET /` returns a JSON hello naming the
+      example (verified against the compiled `dist/main.js` boot path).
+- [x] Unit tests for the env schema and pipe; coverage 100% on files added.
 
 #### Files to create / modify
 
@@ -125,7 +139,7 @@ Completion Protocol: standard steps; commit `feat(api): nest skeleton with creat
 
 ## Task 2.2: Demo identity middleware + user registry
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 2.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 2.1
 
 #### Description
 
@@ -136,12 +150,14 @@ users get 401 with a helpful body. Clearly labeled simulation.
 
 #### Acceptance criteria
 
-- [ ] Middleware applied globally except `/health/*`.
-- [ ] `req.user` matches the library's `AuthenticatedRequest` expectations (typed, no `any`).
-- [ ] Unknown `x-demo-user` -> 401 JSON listing valid demo users.
-- [ ] Missing header -> request proceeds unauthenticated (`req.user` undefined) so the quota
-      guard's `quota.no_user` path stays reachable in phase 05.
-- [ ] Unit tests cover all branches (100%).
+- [x] Middleware applied globally except `/health/*`.
+- [x] `req.user` is typed (no `any`) via the app-level `AuthenticatedRequest`/`DemoIdentity`
+      shape the library's `scopeResolver` reads (v0.1.0 exports no `AuthenticatedRequest` type;
+      see the phase Reconciliation note).
+- [x] Unknown `x-demo-user` -> 401 JSON listing valid demo users (received value never echoed).
+- [x] Missing header -> request proceeds unauthenticated (`req.user` undefined) so the
+      enforcement no-user path stays demonstrable later.
+- [x] Unit tests cover all branches (100%).
 
 #### Files to create / modify
 
@@ -191,7 +207,7 @@ Completion Protocol: standard steps; commit `feat(api): demo identity middleware
 
 ## Task 2.3: Library wiring: options factory + bindings
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 2.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 2.2
 
 #### Description
 
@@ -206,14 +222,21 @@ the Nest `Logger`.
 
 #### Acceptance criteria
 
-- [ ] `registerAsync` with `isGlobal: true`; boot succeeds with the placeholders.
-- [ ] Every library injection token is bound explicitly; imports come from the package (no deep
-      paths).
-- [ ] The factory reads ONLY the typed env accessor; JSDoc explains every option block.
-- [ ] An injectable smoke service resolves `AiTokenTransactionService` and `PricingService` from
-      the container (proving registration) behind a `GET /health/wiring` debug route.
-- [ ] Unit tests: factory output per env permutation (quota on/off, tenant required), logger
-      bridge log-shape. 100% on new files.
+- [x] `forRootAsync` (the shipped registration API; the module is `@Global()` by construction,
+      superseding the drafted `registerAsync`/`isGlobal`); boot succeeds with the placeholder
+      store (`pricing.seedFromSnapshot: false` until persistence lands).
+- [x] The required `store` option is bound to a full-surface placeholder typed to
+      `IAiTokensStore` (v0.1.0 takes ONE store object instead of per-repository DI tokens);
+      every consumed token/service is injected with explicit `@Inject`; imports come from the
+      package root (no deep paths).
+- [x] The factory reads ONLY the typed env accessor; JSDoc explains every option block.
+- [x] An injectable smoke service resolves `LedgerService` and `PricingService` (the shipped
+      service names) plus `BYMAX_AI_TOKENS_OPTIONS`/`BYMAX_AI_TOKENS_LOGGER` from the container
+      behind `GET /health/wiring`; the logger token is surfaced as the reserved (null) v0.1.0
+      extension point since no logger bridge is wireable yet.
+- [x] Unit tests: factory output per env permutation (quota on/off, tenant required, overdraft
+      mapping), scope-resolver branches, placeholder store contract, metadata shim. 100% on new
+      files.
 
 #### Files to create / modify
 
@@ -275,7 +298,7 @@ Completion Protocol: standard steps; commit `feat(api): canonical registerAsync 
 
 ## Task 2.4: Health module + e2e harness + CI jobs
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 2.3
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 2.3
 
 #### Description
 
@@ -286,12 +309,16 @@ programmatically), first e2e specs (boot, health, hello, identity 401); CI gains
 
 #### Acceptance criteria
 
-- [ ] `GET /health/ready` returns 503 when the database is unreachable, 200 otherwise.
-- [ ] `pnpm --filter api test:e2e` spins the container, migrates, boots, passes; no shared state
-      between specs; workers bounded.
-- [ ] CI: `build` -> `test` -> `e2e` appended to the needs-chain (job names contractual);
-      e2e uses a Postgres service container in CI (documented difference vs local Testcontainers).
-- [ ] Coverage remains 100% on implemented files.
+- [x] `GET /health/ready` returns 503 when the database is unreachable, 200 otherwise.
+- [x] `pnpm --filter api test:e2e` spins the container, migrates, boots via `createApp()`,
+      passes; no shared state between specs; workers bounded (single worker: one container
+      stack per run).
+- [x] CI: the reusable's `unit` job already gates coverage; its `e2e-api` job is switched on
+      (`run-e2e-api: true` + `e2e-api-command`) and a repo-level `Build API` job compiles the
+      app. The reusable's e2e job runs Testcontainers on the runner's Docker daemon, so no
+      `services:` Postgres block exists in CI either (same mechanism locally and in CI; the
+      drafted service-container difference does not apply to this pipeline).
+- [x] Coverage remains 100% on implemented files.
 
 #### Files to create / modify
 
@@ -346,7 +373,7 @@ Completion Protocol: standard steps; commit `feat(api): health endpoints and e2e
 
 ## Task 2.5: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 2.1..2.4
+- **Status**: 👀 Review · **Priority**: P0 · **Size**: S · **Depends on**: 2.1..2.4
 
 #### Description
 
@@ -356,10 +383,12 @@ on green, delete the branch.
 
 #### Acceptance criteria
 
-- [ ] Gate replay green: lint, typecheck, build, test:cov (100%), test:e2e.
-- [ ] Dashboards synced (this file, plan, tasks README).
-- [ ] PR `feat(api): phase 02, api skeleton and module wiring` merged; Copilot findings all
-      addressed; branch deleted.
+- [x] Gate replay green: lint, typecheck, format:check, build, test:cov (100% on all four
+      metrics), test:e2e (Testcontainers).
+- [x] Dashboards synced (this file, plan, tasks README).
+- [ ] PR `feat(api): phase 2, api skeleton and module wiring` merged; Copilot findings all
+      addressed; branch deleted. (PR opened and the Copilot review requested by the implementer;
+      waiting, findings, merge, and branch deletion are owned by the orchestrator.)
 
 #### Files to create / modify
 
@@ -407,3 +436,9 @@ Completion Protocol: append `- 2.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 2.1 ✅ 2026-07-10: NestJS 11 skeleton with createApp seam, typed Zod env config (value-free failure report), global Zod validation pipe, JSON hello; 100% coverage on new files.
+- 2.2 ✅ 2026-07-10: demo identity middleware (x-demo-user/x-tenant-id, simulation-labeled) + static registry incl. null-tenant admin; excluded from /health/*; README note; 100% coverage.
+- 2.3 ✅ 2026-07-10: canonical forRootAsync wiring (options factory from typed env, placeholder IAiTokensStore, demo scopeResolver, wallets/budgets from QUOTA_*), host-side paramtypes shim for the esbuild-built dist, GET /health/wiring smoke; 100% coverage.
+- 2.4 ✅ 2026-07-10: health live/ready (Prisma SELECT 1, value-free 503), Testcontainers e2e harness (postgres:17-alpine, prisma migrate deploy, createApp boot, 9 specs incl. bad-URL readiness variant), CI e2e-api on + Build API job; 100% coverage.
+- 2.5 👀 2026-07-10: acceptance audit green (lint, typecheck, format, build, test:cov 100%, test:e2e), zero code-review and security-review findings; PR opened with the Copilot review requested; merge owned by the orchestrator.

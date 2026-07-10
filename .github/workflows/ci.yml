@@ -30,11 +30,41 @@ jobs:
     with:
       library-repo: bymaxone/nest-ai-tokens
       has-web: false
-      run-e2e-api: false
+      # The reusable's e2e-api job runs on the runner's Docker daemon via
+      # Testcontainers (random mapped ports), so no `services:` block and no
+      # fixed host port are involved; the suite provisions its own Postgres.
+      run-e2e-api: true
+      e2e-api-command: pnpm --filter api run test:e2e
       # Credential-free placeholder: the Prisma config resolves DATABASE_URL at
-      # load time, but no job in this pipeline opens a database connection.
+      # load time (generate/lint/typecheck); the e2e suite overrides it with
+      # the Testcontainers connection URI at runtime.
       database-url: postgresql://localhost:5432/ai_tokens_example
       post-install: pnpm --filter api run prisma:generate
+
+  # Repo-specific gate: the API production build (the reusable only builds
+  # web apps; this repo ships an API whose compile must stay green).
+  build:
+    name: Build API
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Same credential-free placeholder as above: prisma generate reads the
+      # config at load time; nothing connects.
+      DATABASE_URL: postgresql://localhost:5432/ai_tokens_example
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Node + pnpm and the linked library
+        uses: bymaxone/.github/.github/actions/setup-node-pnpm@v1
+        with:
+          library-repo: bymaxone/nest-ai-tokens
+          post-install: pnpm --filter api run prisma:generate
+
+      - name: Build the API
+        run: pnpm --filter api run build
 
   # Repo-specific gate: prove both published subpaths of the linked library
   # (`.` and `./shared`) resolve through its real exports map under Node ESM.

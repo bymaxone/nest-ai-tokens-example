@@ -4,21 +4,21 @@
  * Bootstrap only: connects a `PrismaClient` through the pg driver adapter,
  * delegates to the tested `runSeed` writer, prints the row counts, and
  * disconnects. Run it via `pnpm --filter api run prisma:seed` (the compose
- * Postgres must be up and migrated).
+ * Postgres must be up and migrated). The connection URL comes from the typed
+ * env accessor, the app's single read point for the environment (it loads
+ * `.env` files and fails fast with a value-free report when invalid).
  *
  * @layer bootstrap
  */
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '@prisma/client'
 
+import { loadEnvFromProcess } from '../src/config/env.js'
 import { runSeed } from './seed-runner.js'
 
-const connectionString = process.env.DATABASE_URL
-if (connectionString === undefined || connectionString === '') {
-  throw new Error('DATABASE_URL is not set; copy .env.example to .env at the repo root')
-}
+const { DATABASE_URL } = loadEnvFromProcess()
 
-const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) })
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) })
 
 try {
   const summary = await runSeed(prisma)

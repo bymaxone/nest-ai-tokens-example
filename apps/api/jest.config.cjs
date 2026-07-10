@@ -16,17 +16,27 @@ module.exports = {
   rootDir: '.',
   testMatch: ['<rootDir>/prisma/**/*.spec.ts', '<rootDir>/src/**/*.spec.ts'],
   extensionsToTreatAsEsm: ['.ts'],
+  // emitDecoratorMetadata stays off under test: every injection in this app
+  // uses an explicit @Inject (so DI never needs emitted paramtypes) and the
+  // emitted metadata would otherwise add unreachable `typeof` guard branches
+  // to the coverage report. The production build (tsc) keeps it on.
   transform: {
-    '^.+\\.(t|j)s$': ['ts-jest', { useESM: true, tsconfig: '<rootDir>/tsconfig.json' }],
+    '^.+\\.(t|j)s$': ['ts-jest', { useESM: true, tsconfig: { emitDecoratorMetadata: false } }],
   },
   // Strip the .js extension from relative imports so ts-jest resolves the
   // TypeScript sources (NodeNext emits .js specifiers).
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  // Coverage scope: every executable source, minus the bootstrap entrypoint
-  // (`seed.ts` only wires the client and delegates to the covered runner).
-  collectCoverageFrom: ['prisma/**/*.ts', '!prisma/seed.ts', '!**/*.spec.ts'],
+  // Coverage scope: every executable source, minus the bootstrap entrypoints
+  // (`seed.ts` and `main.ts` only wire an entry and delegate to covered code).
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    'prisma/**/*.ts',
+    '!src/main.ts',
+    '!prisma/seed.ts',
+    '!**/*.spec.ts',
+  ],
   coverageThreshold: {
     global: { branches: 100, functions: 100, lines: 100, statements: 100 },
   },
