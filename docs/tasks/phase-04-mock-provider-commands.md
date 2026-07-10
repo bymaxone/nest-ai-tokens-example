@@ -485,3 +485,5 @@ Completion Protocol: append `- 4.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 4.5 ✅ 2026-07-10: transaction-guarantees e2e (delta 1 per command/embed, ONE batch aggregate,
   truncation debits then 502, bad JSON never debits, resource tag filterable; rows 43-45, 47, 52
   cited in describe blocks).
+- 4.6 👀 2026-07-10: gates replayed green, criteria audited, dashboards synced; PR #12 opened
+  with the Copilot review requested (merge and branch deletion follow the review).
