@@ -29,13 +29,13 @@
 > every phase file mirror this table; when they disagree, this table wins and must be fixed in the
 > same commit.
 >
-> **Overall progress: 8 / 55 tasks (15%) · 1 / 10 phases done**
+> **Overall progress: 9 / 55 tasks (16%) · 1 / 10 phases done**
 > **Active phase:** 01 · **Blockers:** none
 
 | #   | Phase                                | Tasks file                                | Size | Done / Total | %    | Status |
 | --- | ------------------------------------ | ----------------------------------------- | ---- | ------------ | ---- | ------ |
 | 00  | Repository Foundation & CI           | `phase-00-repo-foundation.md`             | M    | 5 / 5        | 100% | ✅     |
-| 01  | Postgres, Prisma & Library Link      | `phase-01-database-library-link.md`       | M    | 3 / 5        | 60%  | 🔄     |
+| 01  | Postgres, Prisma & Library Link      | `phase-01-database-library-link.md`       | M    | 4 / 5        | 80%  | 🔄     |
 | 02  | API Skeleton & Module Wiring         | `phase-02-api-skeleton-wiring.md`         | L    | 0 / 5        | 0%   | 📋     |
 | 03  | Repositories, Ledger & Pricing API   | `phase-03-repositories-ledger-pricing.md` | L    | 0 / 6        | 0%   | 📋     |
 | 04  | Mock Provider, Commands & Embeddings | `phase-04-mock-provider-commands.md`      | L    | 0 / 6        | 0%   | 📋     |

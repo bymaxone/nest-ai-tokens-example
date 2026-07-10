@@ -1,6 +1,6 @@
 # Phase 01: Postgres, Prisma & Library Link
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 4 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 01
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16 (Prisma Repositories), §21 (Local Stack), §8 (Library Consumption)
 
@@ -49,7 +49,7 @@ package is published, with a probe script proving both subpaths resolve. No Nest
 | 1.1 | Branch + docker compose Postgres + infra scripts                    | ✅     | P0       | S    | none       |
 | 1.2 | `apps/api` package init + Prisma schema + first migration           | ✅     | P0       | M    | 1.1        |
 | 1.3 | Deterministic seed (users, tenants, allocations, historical debits) | ✅     | P0       | M    | 1.2        |
-| 1.4 | Library `file:` link + dual-subpath probe script (CI job)           | 📋     | P0       | S    | 1.2        |
+| 1.4 | Library `file:` link + dual-subpath probe script (CI job)           | ✅     | P0       | S    | 1.2        |
 | 1.5 | Phase close: audit, dashboards, PR + Copilot review                 | 📋     | P0       | S    | 1.1..1.4   |
 
 ---
@@ -267,22 +267,23 @@ Completion Protocol: standard steps; commit `feat(api): add deterministic demo s
 
 ## Task 1.4: Library `file:` link + dual-subpath probe
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 1.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 1.2
 
 #### Description
 
 Add `@bymax-one/nest-ai-tokens` as `file:../../../nest-ai-tokens` in `apps/api`, plus
 `scripts/probe-subpaths.mjs` that imports the server subpath (Node ESM) and the shared subpath and
-asserts key exports exist (`BymaxAiTokensModule`, `AI_TOKENS_ERROR_CODES`,
-`DEFAULT_OPENAI_PRICING_2026`, `AI_TOKEN_TRANSACTION_TYPES`). CI gains a `probe` step. Document
-the three linking modes in the README (spec §8.1).
+asserts key shipped exports exist (`BymaxAiTokensModule`, `AiTokensException`,
+`AI_TOKENS_ERROR_CODES`, the core services on `.`; `AI_OPERATIONS`, `PROVIDER_IDS`,
+`TOKEN_CATEGORIES`, `WALLET_ENTRY_TYPES`, the cost helpers on `./shared`). CI gains a `probe`
+job. Document the three linking modes in the README (spec §8.1).
 
 #### Acceptance criteria
 
-- [ ] `pnpm install` resolves the local package; `openai` is NOT in any lockfile entry.
-- [ ] `node scripts/probe-subpaths.mjs` exits 0 and prints the probed export names.
-- [ ] CI runs the probe after install.
-- [ ] README gains the linking-modes section (file: now, ^0.1.0 after publish).
+- [x] `pnpm install` resolves the local package; `openai` is NOT in any lockfile entry.
+- [x] `node scripts/probe-subpaths.mjs` exits 0 and prints the probed export names.
+- [x] CI runs the probe on every PR (dedicated `probe` job in the thin-caller workflow).
+- [x] README gains the linking-modes section (file: now, ^0.1.0 after publish).
 
 #### Files to create / modify
 
@@ -398,3 +399,4 @@ Completion Protocol: append `- 1.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 1.1 ✅ 2026-07-10: postgres:17-alpine compose stack (digest-pinned, healthcheck, named volume), root `.env.example` (DATABASE_URL, PORT), real infra:up/down/nuke scripts
 - 1.2 ✅ 2026-07-10: apps/api package (Prisma 7 + adapter-pg + prisma.config.ts), multi-file schema with the library's shipped fragment verbatim, first migration applied incl. both partial indexes
 - 1.3 ✅ 2026-07-10: deterministic seed (pure plan + idempotent delete-first writer): 3 wallets, 4 grants, 76 usage records across acme/globex incl. 4 reindex system costs; 12 unit tests, 100% coverage; double-run verified against Postgres
+- 1.4 ✅ 2026-07-10: `file:` library link (peers auto-resolved, no openai anywhere), dual-subpath probe (15 exports over `.` + `./shared`), ci.yml replaced by the family thin caller (node-ci reusable + probe job + visibility-gated security), README linking-modes section

@@ -17,6 +17,7 @@
     "prisma:seed": "prisma db seed"
   },
   "dependencies": {
+    "@bymax-one/nest-ai-tokens": "file:../../../nest-ai-tokens",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0"
   },
