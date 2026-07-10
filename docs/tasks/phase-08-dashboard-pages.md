@@ -1,6 +1,6 @@
 # Phase 08: Dashboard Pages
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 08
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (page-by-page), §13 (Demonstration Scenarios)
 
@@ -58,7 +58,7 @@ every §13 scenario is walkable end to end in the browser.
 | ID  | Task                                                                  | Status | Priority | Size | Depends on |
 | --- | --------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 8.1 | Branch + Overview page (stat cards + sparkline)                       | ✅     | P0       | M    | none       |
-| 8.2 | Playground page (5 command cards + embeddings panel + failure helper) | 📋     | P0       | L    | 8.1        |
+| 8.2 | Playground page (5 command cards + embeddings panel + failure helper) | ✅     | P0       | L    | 8.1        |
 | 8.3 | Ledger page (table, filters, inspector, refund/top-up)                | 📋     | P0       | M    | 8.1        |
 | 8.4 | Pricing + Usage pages (tables, timeline, charts, leaderboard)         | 📋     | P0       | L    | 8.1        |
 | 8.5 | Quota Lab + Tenants + Errors pages                                    | 📋     | P0       | M    | 8.2        |
@@ -130,7 +130,7 @@ Completion Protocol: standard steps; commit `feat(web): overview page (8.1)`.
 
 ## Task 8.2: Playground page
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: 8.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: 8.1
 
 #### Description
 
@@ -142,11 +142,11 @@ each demonstrates). A streaming note marks the documented boundary.
 
 #### Acceptance criteria
 
-- [ ] Every command round-trips and renders content + `tokensUsed` + `estimatedCost` + a link to
+- [x] Every command round-trips and renders content + `tokensUsed` + `estimatedCost` + a link to
       `/ledger?focus=<transactionId>`.
-- [ ] Batch embeddings show ONE transaction id for N inputs (scenario 2 walkable).
-- [ ] Failure helper produces the canonical error envelope rendering (e.g. 429 rate_limited).
-- [ ] Component tests per card (mocked client); 100% on touched `lib/**`.
+- [x] Batch embeddings show ONE transaction id for N inputs (scenario 2 walkable).
+- [x] Failure helper produces the canonical error envelope rendering (e.g. 429 rate_limited).
+- [x] Component tests per card (mocked client); 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -440,3 +440,6 @@ Completion Protocol: append `- 8.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 - 8.1 ✅ 2026-07-10: Overview page (BalanceCard, TotalsStats, UsageSparkline, ModelsBadge) plus
   the shared `useApiQuery`/`useApiMutation` hooks, `StatCard`, `ErrorBanner`, and `money.ts` that
   every later task in this phase builds on.
+- 8.2 ✅ 2026-07-10: Playground page (Translate/Summarize/Rewrite/Analyze/Custom command cards,
+  the shared model picker, result panel, and failure-marker helper, plus the embeddings panel
+  proving the batch call settles as one ledger transaction).
