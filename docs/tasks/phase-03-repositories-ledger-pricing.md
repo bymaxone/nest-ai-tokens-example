@@ -1,6 +1,6 @@
 # Phase 03: Repositories, Ledger & Pricing API
 
-> **Status**: 🔄 In Progress · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 03
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §16, §11 (ledger/pricing routes), §7.2-7.3 (matrix rows 13-36)
 
@@ -61,7 +61,7 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 
 | ID  | Task                                                                           | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------------ | ------ | -------- | ---- | ---------- |
-| 3.1 | Branch + `PrismaTokenTransactionRepository` (8 methods, SQL aggregation)       | 📋     | P0       | L    | none       |
+| 3.1 | Branch + `PrismaTokenTransactionRepository` (8 methods, SQL aggregation)       | ✅     | P0       | L    | none       |
 | 3.2 | `PrismaModelPricingRepository` (6 methods, window predicate, race-safe upsert) | 📋     | P0       | M    | 3.1        |
 | 3.3 | Boot pricing seed (defaults + `MOCK_MODEL_PRICING`) + idempotency e2e          | 📋     | P0       | S    | 3.2        |
 | 3.4 | `ledger/` REST: list, detail, filters, pagination                              | 📋     | P0       | M    | 3.1        |
@@ -72,29 +72,35 @@ ledger + pricing REST surface the dashboard will consume. After this phase the l
 
 ## Task 3.1: Branch + `PrismaTokenTransactionRepository`
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: none
 
 #### Description
 
 Implement all eight methods of `ITokenTransactionRepository` on Prisma (`create`, `findById`,
 `findMany`, `count`, `sumAmount`, `groupByType`, `groupByUser` with `topN`), honoring the filter
 contract (type arrays, date bounds, onlyDebits/onlyCredits, ordering) and replacing the phase 02
-placeholder binding.
+placeholder binding. _Reconciled (see the phase note): the ledger half ships inside the library's
+`PrismaAiTokensStore`; this task binds that adapter and proves the ledger-half behavior against
+real data instead of reimplementing it._
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-03-repositories-ledger-pricing` created with `git switch -c`.
-- [ ] Every filter field of `TokenTransactionFilter` is honored, including `onlyDebits`
-      (`amount < 0`) and `onlyCredits`, combined type arrays, and inclusive date bounds.
-- [ ] `sumAmount`/`groupByType`/`groupByUser` use Prisma `aggregate`/`groupBy` (asserted by unit
-      tests spying the Prisma client call shape).
-- [ ] Rows map exactly to the library's `TokenTransaction` interface (Date types, null handling).
-- [ ] 100% coverage; integration specs run against the e2e container.
+- [x] Branch `feat/phase-03-repositories-ledger-pricing` created with `git switch -c`.
+- [x] The shipped `PrismaAiTokensStore` is bound under the `AI_TOKENS_STORE` symbol (factory over
+      the app `PrismaService`); the phase 02 placeholder store is deleted.
+- [x] Aggregation happens in the database: the integration spec proves `sumCost` totals equal
+      sums computed independently from the deterministic seed plan, and an empty match coalesces
+      to exact zeros.
+- [x] The shipped filter contract is honored and proven: scope, operation, inclusive `from`/`to`
+      bounds, system-cost partition, and `limit`/`offset` paging.
+- [x] Rows map exactly to the library's `UsageRecord` interface (bigint nano-USD, `Decimal(10,4)`
+      markup to `number`, `Date` fields) at the store boundary.
+- [x] 100% unit coverage held; integration specs run against the e2e container.
 
 #### Files to create / modify
 
-- `apps/api/src/ai/repositories/prisma-token-transaction.repository.ts`, `ai/ai.module.ts`
-  (binding swap), unit + integration specs
+- `apps/api/src/ai/ai-store.module.ts` (shipped-adapter binding), `ai/ai-tokens.config.ts`,
+  `ai/ai.module.ts`, placeholder deletion, unit specs, `test/e2e/store-integration.e2e-spec.ts`
 
 #### Agent prompt
 
@@ -452,3 +458,5 @@ Completion Protocol: append `- 3.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 3.1 ✅ 2026-07-10: bound the shipped `PrismaAiTokensStore` (ledger half proven vs the seed plan), deleted the placeholder store
