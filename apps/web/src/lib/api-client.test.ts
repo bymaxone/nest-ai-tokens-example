@@ -40,10 +40,45 @@ describe('ApiClient', () => {
     expect(fetchMock).toHaveBeenCalledWith('http://api.test/usage/balance', expect.any(Object))
   })
 
-  it('resolves undefined for a successful response with an empty body', async () => {
+  it('throws an invalid_response ApiError for a successful response with an empty body', async () => {
+    // Every modeled endpoint returns JSON on success, so an empty 2xx body
+    // is a broken response and must surface as the client's own error.
     fetchMock.mockResolvedValueOnce(jsonResponse(204, undefined))
     const client = new ApiClient({ baseUrl: 'http://api.test' })
-    await expect(client.getLiveness()).resolves.toBeUndefined()
+    const code = await client.getLiveness().then(
+      () => 'resolved',
+      (error: unknown) => (error as ApiError).code,
+    )
+    expect(code).toBe('invalid_response')
+  })
+
+  it('throws an invalid_response ApiError when a successful body is not JSON', async () => {
+    // A proxy HTML page or truncated payload must never escape as a raw
+    // SyntaxError from JSON.parse.
+    fetchMock.mockResolvedValueOnce(
+      new Response('<html>gateway</html>', {
+        status: 200,
+        headers: { 'content-type': 'text/html' },
+      }),
+    )
+    const client = new ApiClient({ baseUrl: 'http://api.test' })
+    await expect(
+      client.getLiveness().catch((error: unknown) => (error as ApiError).code),
+    ).resolves.toBe('invalid_response')
+  })
+
+  it('falls back to unknown_error when a non-2xx body is not JSON', async () => {
+    // Parse failures on error responses keep the ApiError wrapping too.
+    fetchMock.mockResolvedValueOnce(
+      new Response('<html>bad gateway</html>', {
+        status: 502,
+        headers: { 'content-type': 'text/html' },
+      }),
+    )
+    const client = new ApiClient({ baseUrl: 'http://api.test' })
+    await expect(
+      client.getLiveness().catch((error: unknown) => (error as ApiError).code),
+    ).resolves.toBe('unknown_error')
   })
 
   it('injects the identity headers from the header provider on every request', async () => {

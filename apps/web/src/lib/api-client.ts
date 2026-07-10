@@ -209,12 +209,25 @@ export class ApiClient {
       throw new ApiError('network_error', 0, 'Could not reach the api.')
     }
     const text = await response.text()
-    const body: unknown = text.length > 0 ? (JSON.parse(text) as unknown) : undefined
+    // A body that is not valid JSON (proxy HTML, plain text, truncation)
+    // must surface as an ApiError, never as a raw SyntaxError.
+    let body: unknown
+    let parseFailed = false
+    try {
+      body = text.length > 0 ? (JSON.parse(text) as unknown) : undefined
+    } catch {
+      parseFailed = true
+    }
     if (!response.ok) {
-      const envelope = parseErrorEnvelope(body)
+      const envelope = parseFailed ? undefined : parseErrorEnvelope(body)
       throw envelope !== undefined
         ? new ApiError(envelope.code, response.status, envelope.message, envelope.details)
         : new ApiError('unknown_error', response.status, 'The api returned an unexpected error.')
+    }
+    // Every endpoint this client models returns a JSON body on success, so
+    // an empty or unparseable 2xx body is a broken response, not a value.
+    if (parseFailed || body === undefined) {
+      throw new ApiError('invalid_response', response.status, 'The api returned a non-JSON body.')
     }
     return body as T
   }
