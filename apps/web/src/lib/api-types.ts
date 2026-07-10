@@ -111,8 +111,8 @@ export interface PriceRowView {
   readonly id: string
   readonly provider: string
   readonly model: string
-  readonly operation: string
-  readonly serviceTier: string
+  readonly operation: AiOperation
+  readonly serviceTier: ServiceTier
   readonly inputNanoUsdPerMillion: NanoUsdString
   readonly outputNanoUsdPerMillion: NanoUsdString
   readonly cacheReadNanoUsdPerMillion: NanoUsdString
