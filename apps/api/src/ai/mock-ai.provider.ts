@@ -232,8 +232,12 @@ export class MockAiProvider {
  * @returns The last user message content.
  */
 export function lastUserContent(request: MockChatRequest): string {
-  const lastUser = [...request.messages].reverse().find((message) => message.role === 'user')
-  return lastUser?.content ?? ''
+  const { messages } = request
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index]
+    if (message !== undefined && message.role === 'user') return message.content
+  }
+  return ''
 }
 
 /** The cleaned conversation plus the first marker found across it. */
