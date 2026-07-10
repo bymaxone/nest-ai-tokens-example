@@ -157,6 +157,7 @@ const parsedEnvShape: z.ZodType<EnvConfig> = z.object({
   QUOTA_MINIMUM_BALANCE: z.number(),
   TENANT_REQUIRED: z.boolean(),
   PRICING_CACHE_TTL_MS: z.number(),
+  MOCK_LATENCY_MS: z.number(),
 })
 
 /**

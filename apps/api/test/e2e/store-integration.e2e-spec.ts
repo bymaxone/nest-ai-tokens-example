@@ -45,6 +45,7 @@ function envFor(databaseUrl: string): EnvConfig {
     QUOTA_MINIMUM_BALANCE: 0,
     TENANT_REQUIRED: false,
     PRICING_CACHE_TTL_MS: 300_000,
+    MOCK_LATENCY_MS: 0,
   }
 }
 

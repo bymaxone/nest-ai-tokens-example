@@ -10,8 +10,12 @@
  */
 import type { SeedPriceRow } from '@bymax-one/nest-ai-tokens/prices'
 
-/** Provider id of the deterministic in-app mock provider. */
-export const MOCK_PROVIDER_ID = 'mock'
+import {
+  MOCK_CHAT_LITE,
+  MOCK_CHAT_PRO,
+  MOCK_EMBEDDING_MODEL,
+  MOCK_PROVIDER_ID,
+} from '../ai/mock-models.js'
 
 /** Provenance marker distinguishing mock rows from the library snapshot. */
 export const MOCK_PRICE_SOURCE = 'seed:mock'
@@ -38,7 +42,7 @@ export const MOCK_MODEL_PRICES: readonly SeedPriceRow[] = [
   {
     ...ZERO_RATES,
     provider: MOCK_PROVIDER_ID,
-    model: 'mock-chat-pro',
+    model: MOCK_CHAT_PRO,
     operation: 'chat',
     serviceTier: 'standard',
     inputNanoUsdPerMillion: 600_000_000n,
@@ -50,7 +54,7 @@ export const MOCK_MODEL_PRICES: readonly SeedPriceRow[] = [
   {
     ...ZERO_RATES,
     provider: MOCK_PROVIDER_ID,
-    model: 'mock-chat-lite',
+    model: MOCK_CHAT_LITE,
     operation: 'chat',
     serviceTier: 'standard',
     inputNanoUsdPerMillion: 150_000_000n,
@@ -62,7 +66,7 @@ export const MOCK_MODEL_PRICES: readonly SeedPriceRow[] = [
   {
     ...ZERO_RATES,
     provider: MOCK_PROVIDER_ID,
-    model: 'mock-embed',
+    model: MOCK_EMBEDDING_MODEL,
     operation: 'embeddings',
     serviceTier: 'standard',
     inputNanoUsdPerMillion: 100_000_000n,

@@ -1,6 +1,6 @@
 # Phase 04: Mock Provider, Commands & Embeddings
 
-> **Status**: 🔄 In Progress · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 04
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §12 (Mock Provider), §11 (workspace routes), §4.3 (behavioral contracts 1, 3, 5), §7.4 (matrix rows 37-52, 73-76)
 
@@ -65,7 +65,7 @@ batch), proving the library's transaction guarantees with e2e ledger assertions.
 
 | ID  | Task                                                                            | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 4.1 | Branch + `MockAiProvider` core (token math, canned content, latency knob)       | 📋     | P0       | M    | none       |
+| 4.1 | Branch + `MockAiProvider` core (token math, canned content, latency knob)       | ✅     | P0       | M    | none       |
 | 4.2 | Failure injection (`@@fail:*@@` markers -> every provider/command error)        | 📋     | P0       | M    | 4.1        |
 | 4.3 | Workspace commands REST (translate/summarize/rewrite/analyze/custom)            | 📋     | P0       | L    | 4.1        |
 | 4.4 | Embeddings REST (single + batch) + `/workspace/models`                          | 📋     | P0       | M    | 4.1        |
@@ -76,7 +76,7 @@ batch), proving the library's transaction guarantees with e2e ledger assertions.
 
 ## Task 4.1: Branch + `MockAiProvider` core
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -87,12 +87,14 @@ constructor latency knob (0 in tests). Replaces the echo provider binding.
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-04-mock-provider-commands` created with `git switch -c`.
-- [ ] Token math matches spec §12 exactly and is unit-tested with fixed fixtures.
-- [ ] Content is deterministic and parseable (translations tagged per language, JSON for
+- [x] Branch `feat/phase-04-mock-provider-commands` created with `git switch -c`.
+- [x] Token math matches spec §12 exactly and is unit-tested with fixed fixtures.
+- [x] Content is deterministic and parseable (translations tagged per language, JSON for
       `json_object` format built from the request).
-- [ ] Echo provider deleted; binding swapped; JSDoc documents how to adapt to a real SDK.
-- [ ] 100% coverage on the provider.
+- [x] Echo provider deleted; binding swapped; JSDoc documents how to adapt to a real SDK.
+      (Reconciled: phases 02/03 never bound a provider, so there was nothing to delete; the
+      mock ships in its own `MockAiModule` and its JSDoc carries the real-SDK adaptation guide.)
+- [x] 100% coverage on the provider.
 
 #### Files to create / modify
 
@@ -461,3 +463,6 @@ Completion Protocol: append `- 4.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 4.1 ✅ 2026-07-10: deterministic mock inference core (MockAiProvider + content protocol +
+  app-owned presets + latency knob wired from MOCK_LATENCY_MS), 100% coverage.
