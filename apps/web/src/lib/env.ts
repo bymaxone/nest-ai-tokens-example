@@ -17,5 +17,7 @@ const DEFAULT_API_URL = 'http://localhost:3001'
  * @returns The configured API origin, or the local dev default.
  */
 export function getApiUrl(): string {
-  return process.env['NEXT_PUBLIC_API_URL'] ?? DEFAULT_API_URL
+  // Dot access is required: Next.js inlines NEXT_PUBLIC_* values into the
+  // client bundle only for the literal process.env.NAME form.
+  return process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_URL
 }

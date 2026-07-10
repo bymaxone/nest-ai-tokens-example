@@ -10,8 +10,14 @@
  */
 import type { NextConfig } from 'next'
 
-/** API origin the browser is allowed to call; falls back to the dev endpoint. */
-const API_ORIGIN = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'
+/**
+ * API origin the browser is allowed to call; falls back to the dev endpoint.
+ * Only the URL ORIGIN reaches the CSP: a configured value carrying a path,
+ * query, or stray whitespace cannot produce an invalid or overly permissive
+ * connect-src directive (build-time config, so a malformed URL fails loudly).
+ */
+const API_ORIGIN = new URL((process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001').trim())
+  .origin
 
 /** Content-Security-Policy directives, one per line, joined at build time. */
 const CONTENT_SECURITY_POLICY = [

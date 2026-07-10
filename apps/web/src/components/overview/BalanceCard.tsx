@@ -56,7 +56,7 @@ export function BalanceCard(): React.JSX.Element {
 
   if (state.status === 'error') {
     return (
-      <div className="stat">
+      <div className="stat" role="alert">
         <div className="stat__label">Balance</div>
         <div className="stat__value" style={{ fontSize: 16, color: 'var(--red)' }}>
           {state.error.message}
