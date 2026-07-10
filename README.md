@@ -26,6 +26,17 @@ Under construction. This project is being built phase by phase; see
 See [`docs/TECHNICAL_SPECIFICATION.md`](docs/TECHNICAL_SPECIFICATION.md) for the full technical
 blueprint.
 
+## Demo identity (simulation only)
+
+The API resolves its caller from two plain request headers: `x-demo-user` (one of `ada`, `grace`,
+`linus`, `root`) and an optional `x-tenant-id` override. **This is a simulation, not
+authentication**: headers are not a trust boundary and nothing is verified. It exists so the
+dashboard can switch identities without dragging an auth stack into a ledger example. A real
+service must materialize `req.user` from verified credentials (for example JWT claims via
+`@bymax-one/nest-auth`); that verified identity is exactly what the library's `scopeResolver`
+should read. Unknown demo users receive a 401 listing the valid ids; requests without the header
+proceed unauthenticated.
+
 ## The Bymax One reference family
 
 This project is one of a family of reference applications, each dogfooding a `@bymax-one/*`

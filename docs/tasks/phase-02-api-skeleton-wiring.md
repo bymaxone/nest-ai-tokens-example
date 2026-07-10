@@ -1,6 +1,6 @@
 # Phase 02: API Skeleton & Module Wiring
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 5 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 5 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 02
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §9.2 (canonical wiring), §10 (Backend Design), §3 (Architecture)
 
@@ -51,7 +51,7 @@ harness. CI gains `build`, `test`, and `e2e` jobs.
 | ID  | Task                                                                      | Status | Priority | Size | Depends on |
 | --- | ------------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 2.1 | Branch + NestJS skeleton (`createApp` seam, Zod pipe, config module)      | ✅     | P0       | M    | none       |
-| 2.2 | Demo identity middleware + user registry                                  | 📋     | P0       | S    | 2.1        |
+| 2.2 | Demo identity middleware + user registry                                  | ✅     | P0       | S    | 2.1        |
 | 2.3 | Library wiring: options factory + repository/logger placeholders bindings | 📋     | P0       | M    | 2.2        |
 | 2.4 | Health module + Testcontainers e2e harness + CI build/test/e2e jobs       | 📋     | P0       | M    | 2.3        |
 | 2.5 | Phase close: audit, dashboards, PR + Copilot review                       | 📋     | P0       | S    | 2.1..2.4   |
@@ -139,7 +139,7 @@ Completion Protocol: standard steps; commit `feat(api): nest skeleton with creat
 
 ## Task 2.2: Demo identity middleware + user registry
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 2.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 2.1
 
 #### Description
 
@@ -150,12 +150,14 @@ users get 401 with a helpful body. Clearly labeled simulation.
 
 #### Acceptance criteria
 
-- [ ] Middleware applied globally except `/health/*`.
-- [ ] `req.user` matches the library's `AuthenticatedRequest` expectations (typed, no `any`).
-- [ ] Unknown `x-demo-user` -> 401 JSON listing valid demo users.
-- [ ] Missing header -> request proceeds unauthenticated (`req.user` undefined) so the quota
-      guard's `quota.no_user` path stays reachable in phase 05.
-- [ ] Unit tests cover all branches (100%).
+- [x] Middleware applied globally except `/health/*`.
+- [x] `req.user` is typed (no `any`) via the app-level `AuthenticatedRequest`/`DemoIdentity`
+      shape the library's `scopeResolver` reads (v0.1.0 exports no `AuthenticatedRequest` type;
+      see the phase Reconciliation note).
+- [x] Unknown `x-demo-user` -> 401 JSON listing valid demo users (received value never echoed).
+- [x] Missing header -> request proceeds unauthenticated (`req.user` undefined) so the
+      enforcement no-user path stays demonstrable later.
+- [x] Unit tests cover all branches (100%).
 
 #### Files to create / modify
 
@@ -423,3 +425,4 @@ Completion Protocol: append `- 2.5 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
 
 - 2.1 ✅ 2026-07-10: NestJS 11 skeleton with createApp seam, typed Zod env config (value-free failure report), global Zod validation pipe, JSON hello; 100% coverage on new files.
+- 2.2 ✅ 2026-07-10: demo identity middleware (x-demo-user/x-tenant-id, simulation-labeled) + static registry incl. null-tenant admin; excluded from /health/*; README note; 100% coverage.

@@ -9,10 +9,11 @@ import { Module } from '@nestjs/common'
 
 import { AppController } from './app.controller.js'
 import { AppConfigModule } from './config/app-config.module.js'
+import { IdentityModule } from './identity/identity.module.js'
 
 /** The composition root of the API. */
 @Module({
-  imports: [AppConfigModule],
+  imports: [AppConfigModule, IdentityModule],
   controllers: [AppController],
 })
 export class AppModule {}
