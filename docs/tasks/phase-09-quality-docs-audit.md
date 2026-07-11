@@ -490,6 +490,14 @@ Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #
   workaround removed and the prompt-less call shapes asserted.
 - 9.3 ✅ 2026-07-10: inventory e2e added (35-route walk diffed against the live router both ways;
   26/26 error codes cross-referenced to e2e sources); full api e2e now 15 suites / 198 tests.
+- 9.3 ✅ 2026-07-10 (follow-up): fixed an intermittent full-suite flake (phantom 404s, wrong-shape
+  200s, one raw non-HTTP parse error): supertest was starting servers on the WILDCARD address
+  while connecting to 127.0.0.1, and on macOS another process (Docker port proxies for
+  Testcontainers mappings, other local services) can bind 127.0.0.1 on the same port and shadow
+  the wildcard listener. Every suite now pre-binds its server to 127.0.0.1 via
+  `test/e2e/listen-local.ts`, and a jest setup file disables global-agent keep-alive so no socket
+  outlives its request across suite files. Verified: 8/8 consecutive full-suite runs green
+  (previously roughly one in four failed).
 - 9.4 ✅ 2026-07-10: export audit shipped (236 real exports across five subpaths: 91 demonstrated
   by imports, 145 ⛔-justified in the rewritten spec §7); mutation-proof node:test suite;
   `pnpm audit:exports` + CI `run-export-audit: true`.

@@ -43,6 +43,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
 import type { App } from 'supertest/types.js'
 
+import { listenLocal } from './listen-local.js'
 import { createApp } from '../../src/bootstrap.js'
 import { createPrismaAiTokensStore } from '../../src/ai/ai-store.module.js'
 import { ERROR_CATALOG } from '../../src/errors-demo/error-catalog.js'
@@ -253,7 +254,7 @@ describe('ledger-only application boot: QUOTA_ENABLED=false (matrix row 12)', ()
     process.env.PORT = '0'
     process.env.QUOTA_ENABLED = 'false'
     app = await createApp()
-    server = app.getHttpServer() as App
+    server = await listenLocal(app)
   })
 
   afterAll(async () => {

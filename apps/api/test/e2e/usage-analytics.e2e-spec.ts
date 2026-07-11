@@ -30,6 +30,7 @@ import {
   TRIAL_ALLOCATION_NANO_USD,
   buildSeedPlan,
 } from '../../prisma/seed-plan.js'
+import { listenLocal } from './listen-local.js'
 import { runSeed } from '../../prisma/seed-runner.js'
 import { createApp } from '../../src/bootstrap.js'
 import { PrismaService } from '../../src/prisma/prisma.service.js'
@@ -122,7 +123,7 @@ beforeAll(async () => {
   process.env.PORT = '0'
   app = await createApp()
   await runSeed(app.get(PrismaService))
-  server = app.getHttpServer() as App
+  server = await listenLocal(app)
   ledger = app.get(LedgerService)
 })
 
