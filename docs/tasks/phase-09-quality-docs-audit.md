@@ -1,6 +1,6 @@
 # Phase 09: Quality, Docs & Export Audit
 
-> **Status**: 👀 Review · **Progress**: 6 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: ✅ Done · **Progress**: 6 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 09
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §22 (Testing Strategy), §7 (matrix enforcement), §23 (CI), Appendix rows
 
@@ -539,5 +539,7 @@ Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #
 - 9.5 ✅ 2026-07-10: publishable README (family structure, honest link mode, §13 walkthrough,
   curl tour, boundaries) + CHANGELOG 0.1.0 entry + docs consistency pass.
 - 9.6 ✅ 2026-07-10: Appendix A replayed green (table above); §7 sweep enforced by the audit;
-  CI security posture verified; PR opened with the Copilot review requested (merge and the final
-  plan flip owned by the orchestrating session).
+  CI security posture verified; PR #23 carried the Copilot review through one CI fix (the
+  repo-wide dist ignore had swallowed the audit fixture) and three review rounds (listener
+  cleanup, explicit self-test path, type-correct fixture with one claim declined on runtime
+  proof), squash-merged as `7437fec`, branch deleted, CI green including the export-audit stage.
