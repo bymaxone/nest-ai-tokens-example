@@ -540,6 +540,7 @@ Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #
   curl tour, boundaries) + CHANGELOG 0.1.0 entry + docs consistency pass.
 - 9.6 ✅ 2026-07-10: Appendix A replayed green (table above); §7 sweep enforced by the audit;
   CI security posture verified; PR #23 carried the Copilot review through one CI fix (the
-  repo-wide dist ignore had swallowed the audit fixture) and three review rounds (listener
+  `.gitignore` rule `dist/` had swallowed the audit fixture dist, now re-included via
+  `!scripts/fixtures/**/dist/`) and three review rounds (listener
   cleanup, explicit self-test path, type-correct fixture with one claim declined on runtime
   proof), squash-merged as `7437fec`, branch deleted, CI green including the export-audit stage.
