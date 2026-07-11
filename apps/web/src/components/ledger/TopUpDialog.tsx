@@ -13,6 +13,7 @@ import { floatUsdToNanoUsd } from '@bymax-one/nest-ai-tokens/shared'
 import { useId, useState } from 'react'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import type { CreditBody } from '@/lib/api-types'
 import { useApiMutation } from '@/lib/use-api-mutation'
@@ -49,7 +50,7 @@ export function TopUpDialog({ onClose, onCredited }: TopUpDialogProps): React.JS
         aria-label="Top up balance"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="card__title">Top up balance</div>
+        <div className="mb-1 font-mono text-base font-bold">Top up balance</div>
         <form
           onSubmit={(event) => {
             event.preventDefault()
@@ -92,17 +93,13 @@ export function TopUpDialog({ onClose, onCredited }: TopUpDialogProps): React.JS
               ))}
             </select>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              type="submit"
-              className="btn btn--primary btn--sm"
-              disabled={mutation.state.status === 'pending'}
-            >
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={mutation.state.status === 'pending'}>
               {mutation.state.status === 'pending' ? 'Crediting…' : 'Top up'}
-            </button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
               Cancel
-            </button>
+            </Button>
           </div>
         </form>
         {mutation.state.status === 'error' && <ErrorBanner error={mutation.state.error} />}

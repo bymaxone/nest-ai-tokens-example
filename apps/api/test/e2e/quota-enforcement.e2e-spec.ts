@@ -232,3 +232,61 @@ describe('zero-balance identity (no seeded wallet)', () => {
     expect(response.body.error.code).toBe('AI_TOKENS_INSUFFICIENT_CREDITS')
   })
 })
+
+describe('quota lab drain endpoint (scenario 5 via the lab)', () => {
+  /** grace (acme) is seeded funded; the lab drain zeroes her wallet. */
+  const graceRef: WalletRef = { tenantId: 'acme', ownerType: 'user', ownerId: 'grace' }
+
+  /**
+   * The drain endpoint zeroes a funded wallet and hits the wall in one call.
+   *
+   * grace starts funded (seed); POST /quota/lab/drain debits the whole balance
+   * (a real, auditable wallet entry) and then the post-drain constant-estimate
+   * hold is rejected with the canonical 402. The wallet is left at exactly
+   * zero, so the drain genuinely exhausted it rather than requesting too much.
+   */
+  it('drains a funded wallet and answers the canonical 402, leaving it at zero', async () => {
+    const before = await wallets.getBalance(graceRef)
+    expect(before.nanoUsd).toBeGreaterThan(0n)
+
+    const response = await request(server)
+      .post('/quota/lab/drain')
+      .set('x-demo-user', 'grace')
+      .expect(402)
+
+    expect(response.body.error.code).toBe('AI_TOKENS_INSUFFICIENT_CREDITS')
+    const after = await wallets.getBalance(graceRef)
+    expect(after.nanoUsd).toBe(0n)
+  })
+
+  /**
+   * After the drain, a top-up unblocks the estimate (scenario 5 retry half).
+   *
+   * Crediting grace lifts the balance back over the constant hold, so the next
+   * lab estimate is allowed again: the drain/top-up/retry loop is real, not a
+   * mocked verdict.
+   */
+  it('lets a topped-up wallet run the constant estimate again', async () => {
+    await request(server)
+      .post('/ledger/credits')
+      .set('x-demo-user', 'grace')
+      .send({ amountNanoUsd: '10000000000', type: 'purchase' })
+      .expect(201)
+
+    await request(server)
+      .post('/quota/lab/constant')
+      .set('x-demo-user', 'grace')
+      .send({})
+      .expect(200)
+  })
+
+  /**
+   * Identity gate.
+   *
+   * The drain is identity-scoped: without x-demo-user it rejects 401 before
+   * touching any wallet.
+   */
+  it('rejects an identity-less drain 401', async () => {
+    await request(server).post('/quota/lab/drain').expect(401)
+  })
+})

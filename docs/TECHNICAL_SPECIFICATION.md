@@ -436,6 +436,7 @@ pnpm link ../nest-ai-tokens
 | `QUOTA_MINIMUM_BALANCE` | `0`                                                               | `quota.minimumBalance`                                    |
 | `TENANT_REQUIRED`       | `false`                                                           | `multiTenant.required`                                    |
 | `PRICING_CACHE_TTL_MS`  | `300000`                                                          | `pricing.cacheTtlMs`                                      |
+| `WEB_ORIGIN`            | `http://localhost:3000`                                           | Comma-separated CORS allow-list of dashboard origins      |
 | `DEMO_SEED_USERS`       | `ada,grace,linus`                                                 | Users created by the seed with allocations                |
 
 `.env.example` documents every row; no secret has a real value anywhere in the repo.

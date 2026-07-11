@@ -178,6 +178,56 @@ describe('demo identity', () => {
   })
 })
 
+describe('CORS', () => {
+  /**
+   * Allowed-origin reflection.
+   *
+   * The dashboard calls this API cross-origin; a request whose `Origin` is on
+   * the configured allow-list (the `http://localhost:3000` default here) must
+   * come back with a matching `Access-Control-Allow-Origin`, without which the
+   * browser discards the response as a `TypeError: Failed to fetch`.
+   */
+  it('reflects an allowed Origin on a simple request', async () => {
+    const response = await request(server)
+      .get('/')
+      .set('Origin', 'http://localhost:3000')
+      .expect(200)
+
+    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000')
+  })
+
+  /**
+   * Preflight grant for the demo identity headers.
+   *
+   * A browser preflights the custom `x-demo-user` / `x-tenant-id` identity
+   * headers; the preflight must succeed and echo them as allowed, or the real
+   * request never fires.
+   */
+  it('answers a preflight and allows the demo identity headers', async () => {
+    const response = await request(server)
+      .options('/')
+      .set('Origin', 'http://localhost:3000')
+      .set('Access-Control-Request-Method', 'GET')
+      .set('Access-Control-Request-Headers', 'x-demo-user')
+      .expect(204)
+
+    expect(response.headers['access-control-allow-origin']).toBe('http://localhost:3000')
+    expect(response.headers['access-control-allow-headers']?.toLowerCase()).toContain('x-demo-user')
+  })
+
+  /**
+   * Disallowed-origin denial.
+   *
+   * An origin absent from the allow-list receives no CORS grant, so a page
+   * served from an untrusted origin cannot read this API's responses.
+   */
+  it('sends no CORS grant to an origin outside the allow-list', async () => {
+    const response = await request(server).get('/').set('Origin', 'http://evil.example').expect(200)
+
+    expect(response.headers['access-control-allow-origin']).toBeUndefined()
+  })
+})
+
 describe('library wiring', () => {
   /**
    * Registration smoke.

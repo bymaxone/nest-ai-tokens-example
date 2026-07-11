@@ -8,6 +8,7 @@
 
 import { useId, useState } from 'react'
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { useApiMutation } from '@/lib/use-api-mutation'
 
@@ -78,42 +79,51 @@ export function RewriteCard({ models }: RewriteCardProps): React.JSX.Element {
   }
 
   return (
-    <div className="card">
-      <div className="card__title">Rewrite</div>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div>
-          <label className="label" htmlFor="rewrite-text">
-            Text
-          </label>
-          <textarea
-            id="rewrite-text"
-            className="input"
-            style={{ height: 80 }}
-            value={form.text}
-            onChange={(event) => form.setText(event.target.value)}
-            required
+    <Card className="flex h-full flex-col">
+      <CardHeader accent>
+        <CardTitle>Rewrite</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-3.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div>
+            <label className="label" htmlFor="rewrite-text">
+              Text
+            </label>
+            <textarea
+              id="rewrite-text"
+              className="input"
+              style={{ height: 80 }}
+              value={form.text}
+              onChange={(event) => form.setText(event.target.value)}
+              required
+            />
+          </div>
+          <RewriteOptionalFields
+            style={style}
+            onStyleChange={setStyle}
+            language={language}
+            onLanguageChange={setLanguage}
           />
+          <CommandCardFooter
+            models={models}
+            model={form.model}
+            onModelChange={form.setModel}
+            modelId={modelId}
+            pending={mutation.state.status === 'pending'}
+            idleLabel="Rewrite"
+            pendingLabel="Rewriting…"
+          />
+        </form>
+
+        <CommandCardOutcome
+          mutationState={mutation.state}
+          renderContent={(data) => data.rewritten}
+        />
+
+        <div className="mt-auto">
+          <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
         </div>
-        <RewriteOptionalFields
-          style={style}
-          onStyleChange={setStyle}
-          language={language}
-          onLanguageChange={setLanguage}
-        />
-        <CommandCardFooter
-          models={models}
-          model={form.model}
-          onModelChange={form.setModel}
-          modelId={modelId}
-          pending={mutation.state.status === 'pending'}
-          idleLabel="Rewrite"
-          pendingLabel="Rewriting…"
-        />
-      </form>
-
-      <CommandCardOutcome mutationState={mutation.state} renderContent={(data) => data.rewritten} />
-
-      <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
-    </div>
+      </CardContent>
+    </Card>
   )
 }

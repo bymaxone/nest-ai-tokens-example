@@ -56,7 +56,7 @@ describe('HistoryTimeline', () => {
 
     await waitFor(() => expect(screen.getByText(/now \(open\)/)).toBeInTheDocument())
     const openRow = screen.getByText(/now \(open\)/).closest('li')
-    expect(openRow).toHaveClass('role-pill')
+    expect(openRow).toHaveAttribute('data-open', 'true')
     expect(screen.getByText('$3.000000 in / $2.000000 out')).toBeInTheDocument()
   })
 

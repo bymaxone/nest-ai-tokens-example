@@ -9,6 +9,7 @@
 
 import { useId, useState } from 'react'
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { useApiMutation } from '@/lib/use-api-mutation'
 
@@ -113,39 +114,45 @@ export function TranslateCard({ models }: TranslateCardProps): React.JSX.Element
   }
 
   return (
-    <div className="card">
-      <div className="card__title">Translate</div>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <TranslateFields
-          text={form.text}
-          onTextChange={form.setText}
-          sourceLanguage={sourceLanguage}
-          onSourceLanguageChange={setSourceLanguage}
-          targetLanguagesRaw={targetLanguagesRaw}
-          onTargetLanguagesRawChange={setTargetLanguagesRaw}
-          targetLanguages={targetLanguages}
-        />
-        <CommandCardFooter
-          models={models}
-          model={form.model}
-          onModelChange={form.setModel}
-          modelId={modelId}
-          pending={mutation.state.status === 'pending'}
-          idleLabel="Translate"
-          pendingLabel="Translating…"
-        />
-      </form>
+    <Card className="flex h-full flex-col">
+      <CardHeader accent>
+        <CardTitle>Translate</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-3.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <TranslateFields
+            text={form.text}
+            onTextChange={form.setText}
+            sourceLanguage={sourceLanguage}
+            onSourceLanguageChange={setSourceLanguage}
+            targetLanguagesRaw={targetLanguagesRaw}
+            onTargetLanguagesRawChange={setTargetLanguagesRaw}
+            targetLanguages={targetLanguages}
+          />
+          <CommandCardFooter
+            models={models}
+            model={form.model}
+            onModelChange={form.setModel}
+            modelId={modelId}
+            pending={mutation.state.status === 'pending'}
+            idleLabel="Translate"
+            pendingLabel="Translating…"
+          />
+        </form>
 
-      <CommandCardOutcome
-        mutationState={mutation.state}
-        renderContent={(data) =>
-          Object.entries(data.translations)
-            .map(([language, text]) => `${language}: ${text}`)
-            .join('\n')
-        }
-      />
+        <CommandCardOutcome
+          mutationState={mutation.state}
+          renderContent={(data) =>
+            Object.entries(data.translations)
+              .map(([language, text]) => `${language}: ${text}`)
+              .join('\n')
+          }
+        />
 
-      <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
-    </div>
+        <div className="mt-auto">
+          <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
+        </div>
+      </CardContent>
+    </Card>
   )
 }

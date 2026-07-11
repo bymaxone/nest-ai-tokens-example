@@ -41,7 +41,7 @@ import {
   QuotaLabService,
   extractLabUsage,
 } from './quota-lab.service.js'
-import type { LabRunResult } from './quota-lab.service.js'
+import type { DrainResult, LabRunResult } from './quota-lab.service.js'
 import { QuotaStatusService } from './quota-status.service.js'
 import { EnforcementGuard } from '../ai/enforcement.guard.js'
 import { MOCK_CHAT_PRESET } from '../ai/mock-usage.presets.js'
@@ -104,6 +104,24 @@ export class QuotaController {
     @Body() body: LabRunBodyDto,
   ): Promise<LabRunResult> {
     return this.lab.runModelBased(requireIdentity(request), body)
+  }
+
+  /**
+   * `POST /quota/lab/drain`: exhaust the caller's wallet and hit the
+   * enforcement wall. The service zeroes the wallet with a real debit, then
+   * reserves the constant estimate: with no overdraft (the default) that hold
+   * is rejected and this route answers the canonical
+   * `AI_TOKENS_INSUFFICIENT_CREDITS` 402 in one call. With an overdraft floor
+   * the hold passes, is released unbilled, and the residual balance returns
+   * with `200`.
+   *
+   * @param request The request carrying the simulated identity.
+   * @returns The residual balance, ONLY when the wall was not reached.
+   */
+  @Post('lab/drain')
+  @HttpCode(HttpStatus.OK)
+  drain(@Req() request: AuthenticatedRequest): Promise<DrainResult> {
+    return this.lab.drain(requireIdentity(request))
   }
 
   /**

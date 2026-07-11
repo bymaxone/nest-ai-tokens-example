@@ -2,11 +2,13 @@
  * @fileoverview The reusable KPI stat tile (design system §06): a label,
  * a mono value, and an optional colored delta line, with the same
  * loading-skeleton and error-message states BalanceCard established.
- * Every stat card on Overview and Usage renders through this component so
- * the three states never drift between widgets.
+ * Built on the shadcn/ui {@link Card} surface so every tile shares the
+ * project's glass-card chrome; the three states never drift between widgets.
  *
  * @layer components
  */
+import { Card, CardContent } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 
 /** One stat tile's presentational state, decided by the caller's data fetch. */
 export type StatCardState =
@@ -27,35 +29,48 @@ export interface StatCardProps {
   readonly state: StatCardState
 }
 
+/** The uppercase caption above every stat value. */
+function StatLabel({ label }: { readonly label: string }): React.JSX.Element {
+  return (
+    <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">{label}</div>
+  )
+}
+
 /** A single KPI stat tile: label, value, loading/error/ready states. */
 export function StatCard({ label, state }: StatCardProps): React.JSX.Element {
-  if (state.status === 'loading') {
-    return (
-      <div className="stat" role="status" aria-label={`Loading ${label}`}>
-        <div className="stat__label">{label}</div>
-        <div className="skeleton" style={{ width: '60%', marginTop: 8 }} />
-      </div>
-    )
-  }
-
-  if (state.status === 'error') {
-    return (
-      <div className="stat" role="alert">
-        <div className="stat__label">{label}</div>
-        <div className="stat__value" style={{ fontSize: 16, color: 'var(--red)' }}>
-          {state.message}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="stat">
-      <div className="stat__label">{label}</div>
-      <div className="stat__value">{state.value}</div>
-      {state.delta !== undefined && (
-        <div className={`stat__delta stat__delta--${state.delta.tone}`}>{state.delta.text}</div>
-      )}
-    </div>
+    <Card>
+      <CardContent className="p-[18px]">
+        {state.status === 'loading' ? (
+          <div role="status" aria-label={`Loading ${label}`}>
+            <StatLabel label={label} />
+            <div className="skeleton mt-2 w-3/5" />
+          </div>
+        ) : state.status === 'error' ? (
+          <div role="alert">
+            <StatLabel label={label} />
+            <div className="mt-1 text-base font-bold text-[color:var(--red)]">{state.message}</div>
+          </div>
+        ) : (
+          <div>
+            <StatLabel label={label} />
+            <div className="mt-1 font-mono text-[26px] font-bold leading-tight">{state.value}</div>
+            {state.delta !== undefined && (
+              <div
+                data-tone={state.delta.tone}
+                className={cn(
+                  'mt-1 text-xs',
+                  state.delta.tone === 'up'
+                    ? 'text-[color:var(--red)]'
+                    : 'text-[color:var(--green)]',
+                )}
+              >
+                {state.delta.text}
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

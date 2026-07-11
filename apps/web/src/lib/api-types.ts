@@ -497,6 +497,18 @@ export interface LabRunResponse {
   readonly totalTokens: number
 }
 
+/**
+ * `POST /quota/lab/drain` response — returned ONLY when the wall was not
+ * reached (an overdraft floor let the post-drain hold pass). Reaching the wall
+ * throws the canonical `AI_TOKENS_INSUFFICIENT_CREDITS` 402 instead.
+ */
+export interface DrainResponse {
+  readonly drainedNanoUsd: NanoUsdString
+  readonly balanceNanoUsd: NanoUsdString
+  readonly balanceFormatted: string
+  readonly wallReached: boolean
+}
+
 /** `POST /quota/budgets` request body. */
 export interface UpsertBudgetBody {
   readonly scopeType: 'user' | 'tenant'

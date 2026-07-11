@@ -15,13 +15,13 @@
 import { useState } from 'react'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { ApiError, isCode } from '@/lib/api-client'
+import type { DrainResponse } from '@/lib/api-types'
 import type { ApiMutationState } from '@/lib/use-api-mutation'
 import { useApiMutation } from '@/lib/use-api-mutation'
-
-/** Hard cap on drain iterations, in case the balance never runs out. */
-const MAX_DRAIN_CALLS = 50
 
 /** The fixed top-up amount the shortcut credits (10 USD, nano-USD). */
 const TOP_UP_AMOUNT_NANO_USD = '10000000000'
@@ -48,14 +48,15 @@ function LabActionButton<T>(props: {
   readonly onRun: () => void
 }): React.JSX.Element {
   return (
-    <button
+    <Button
       type="button"
-      className={`btn ${props.ghost === true ? 'btn--ghost' : 'btn--outline'} btn--sm`}
+      variant={props.ghost === true ? 'ghost' : 'outline'}
+      size="sm"
       disabled={props.mutationState.status === 'pending'}
       onClick={props.onRun}
     >
       {props.mutationState.status === 'pending' ? props.pendingLabel : props.idleLabel}
-    </button>
+    </Button>
   )
 }
 
@@ -77,22 +78,39 @@ function MutationOutcome<T>(props: {
   return null
 }
 
-/** The drain shortcut's outcome: how many calls it took and whether it hit the quota wall. */
+/**
+ * The drain shortcut's outcome. The common path is an error: the drained
+ * wallet rejected the post-drain hold with the canonical 402, rendered as the
+ * envelope below a one-line verdict. A `residual` instead means the wall was
+ * NOT reached — an overdraft floor covered the hold — reported as a warning.
+ */
 function DrainOutcome(props: {
-  readonly outcome: ApiError
-  readonly calls: number
-}): React.JSX.Element {
-  return (
-    <div style={{ marginTop: 10 }}>
-      <div className="card__desc">
-        Drained after {props.calls} call(s):{' '}
-        {isCode(props.outcome, 'AI_TOKENS_INSUFFICIENT_CREDITS')
-          ? 'hit the quota wall as expected.'
-          : 'stopped on an unexpected error.'}
+  readonly error: ApiError | undefined
+  readonly residual: DrainResponse | undefined
+}): React.JSX.Element | null {
+  if (props.error !== undefined) {
+    return (
+      <div style={{ marginTop: 10 }}>
+        <div className="text-[13px] text-muted-foreground">
+          {isCode(props.error, 'AI_TOKENS_INSUFFICIENT_CREDITS')
+            ? 'Wallet drained — the next hold was rejected at the quota wall, as expected.'
+            : 'Drain stopped on an unexpected error.'}
+        </div>
+        <ErrorBanner error={props.error} />
       </div>
-      <ErrorBanner error={props.outcome} />
-    </div>
-  )
+    )
+  }
+  if (props.residual !== undefined) {
+    return (
+      <div className="toast toast--warning" style={{ maxWidth: 'none', marginTop: 10 }}>
+        <div style={{ width: '100%' }}>
+          Wallet drained to {props.residual.balanceFormatted}, but the hold was still allowed: an
+          overdraft floor leaves headroom, so the wall was not reached.
+        </div>
+      </div>
+    )
+  }
+  return null
 }
 
 /** The Quota Lab's estimator buttons and drain/top-up shortcuts. */
@@ -105,23 +123,24 @@ export function LabRunner({ onBalanceChanged }: LabRunnerProps): React.JSX.Eleme
     api.credit({ amountNanoUsd: TOP_UP_AMOUNT_NANO_USD, type: 'purchase' }),
   )
   const [isDraining, setIsDraining] = useState(false)
-  const [drainOutcome, setDrainOutcome] = useState<ApiError | undefined>(undefined)
-  const [drainCalls, setDrainCalls] = useState(0)
+  const [drainError, setDrainError] = useState<ApiError | undefined>(undefined)
+  const [drainResidual, setDrainResidual] = useState<DrainResponse | undefined>(undefined)
 
-  /** Repeats the constant lab call until it hits `AI_TOKENS_INSUFFICIENT_CREDITS` or the cap. */
+  /**
+   * Exhaust the wallet in one call: `POST /quota/lab/drain` zeroes the balance
+   * server-side, then the post-drain hold is rejected with the canonical 402
+   * (the common path, surfaced as an error). A resolved value instead means
+   * an overdraft floor let the hold pass, so the wall was not reached.
+   */
   async function drain(): Promise<void> {
     setIsDraining(true)
-    setDrainOutcome(undefined)
-    let calls = 0
-    for (; calls < MAX_DRAIN_CALLS; calls += 1) {
-      try {
-        await api.runLabConstant()
-      } catch (error) {
-        setDrainOutcome(toApiError(error))
-        break
-      }
+    setDrainError(undefined)
+    setDrainResidual(undefined)
+    try {
+      setDrainResidual(await api.drainWallet())
+    } catch (error) {
+      setDrainError(toApiError(error))
     }
-    setDrainCalls(calls + 1)
     setIsDraining(false)
     onBalanceChanged()
   }
@@ -134,53 +153,57 @@ export function LabRunner({ onBalanceChanged }: LabRunnerProps): React.JSX.Eleme
   }
 
   return (
-    <div className="card">
-      <div className="card__title">Estimator lab</div>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-        <LabActionButton
+    <Card>
+      <CardHeader accent>
+        <CardTitle>Estimator lab</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <LabActionButton
+            mutationState={constant.state}
+            idleLabel="Run constant estimate"
+            pendingLabel="Running…"
+            onRun={() => runAndReport(constant.run)}
+          />
+          <LabActionButton
+            mutationState={modelBased.state}
+            idleLabel="Run model-based estimate"
+            pendingLabel="Running…"
+            onRun={() => runAndReport(modelBased.run)}
+          />
+          <LabActionButton
+            ghost
+            mutationState={{ status: isDraining ? 'pending' : 'idle' }}
+            idleLabel="Drain balance"
+            pendingLabel="Draining…"
+            onRun={() => void drain()}
+          />
+          <LabActionButton
+            ghost
+            mutationState={topUp.state}
+            idleLabel="Top up $10"
+            pendingLabel="Crediting…"
+            onRun={() => runAndReport(topUp.run)}
+          />
+        </div>
+
+        <MutationOutcome
           mutationState={constant.state}
-          idleLabel="Run constant estimate"
-          pendingLabel="Running…"
-          onRun={() => runAndReport(constant.run)}
+          renderSuccess={(data) => `Constant estimate settled: ${data.usage.total_tokens} tokens.`}
         />
-        <LabActionButton
+        <MutationOutcome
           mutationState={modelBased.state}
-          idleLabel="Run model-based estimate"
-          pendingLabel="Running…"
-          onRun={() => runAndReport(modelBased.run)}
+          renderSuccess={(data) =>
+            `Model-based estimate settled: ${data.totalTokens} tokens, billed ${data.billedNanoUsd} nano-USD.`
+          }
         />
-        <LabActionButton
-          ghost
-          mutationState={{ status: isDraining ? 'pending' : 'idle' }}
-          idleLabel="Drain balance"
-          pendingLabel="Draining…"
-          onRun={() => void drain()}
-        />
-        <LabActionButton
-          ghost
+        <MutationOutcome
           mutationState={topUp.state}
-          idleLabel="Top up $10"
-          pendingLabel="Crediting…"
-          onRun={() => runAndReport(topUp.run)}
+          renderSuccess={(data) => `Credited $10. New balance: ${data.balance.formatted}.`}
         />
-      </div>
 
-      <MutationOutcome
-        mutationState={constant.state}
-        renderSuccess={(data) => `Constant estimate settled: ${data.usage.total_tokens} tokens.`}
-      />
-      <MutationOutcome
-        mutationState={modelBased.state}
-        renderSuccess={(data) =>
-          `Model-based estimate settled: ${data.totalTokens} tokens, billed ${data.billedNanoUsd} nano-USD.`
-        }
-      />
-      <MutationOutcome
-        mutationState={topUp.state}
-        renderSuccess={(data) => `Credited $10. New balance: ${data.balance.formatted}.`}
-      />
-
-      {drainOutcome !== undefined && <DrainOutcome outcome={drainOutcome} calls={drainCalls} />}
-    </div>
+        <DrainOutcome error={drainError} residual={drainResidual} />
+      </CardContent>
+    </Card>
   )
 }

@@ -8,6 +8,7 @@
 
 import { useId, useState } from 'react'
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import type { CustomBody } from '@/lib/api-types'
 import { useApiMutation } from '@/lib/use-api-mutation'
@@ -101,31 +102,37 @@ export function CustomCard({ models }: CustomCardProps): React.JSX.Element {
   }
 
   return (
-    <div className="card">
-      <div className="card__title">Custom</div>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <CustomFields
-          systemPrompt={systemPrompt}
-          onSystemPromptChange={setSystemPrompt}
-          userPrompt={form.text}
-          onUserPromptChange={form.setText}
-          responseFormat={responseFormat}
-          onResponseFormatChange={setResponseFormat}
-        />
-        <CommandCardFooter
-          models={models}
-          model={form.model}
-          onModelChange={form.setModel}
-          modelId={modelId}
-          pending={mutation.state.status === 'pending'}
-          idleLabel="Run"
-          pendingLabel="Running…"
-        />
-      </form>
+    <Card className="flex h-full flex-col">
+      <CardHeader accent>
+        <CardTitle>Custom</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-3.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <CustomFields
+            systemPrompt={systemPrompt}
+            onSystemPromptChange={setSystemPrompt}
+            userPrompt={form.text}
+            onUserPromptChange={form.setText}
+            responseFormat={responseFormat}
+            onResponseFormatChange={setResponseFormat}
+          />
+          <CommandCardFooter
+            models={models}
+            model={form.model}
+            onModelChange={form.setModel}
+            modelId={modelId}
+            pending={mutation.state.status === 'pending'}
+            idleLabel="Run"
+            pendingLabel="Running…"
+          />
+        </form>
 
-      <CommandCardOutcome mutationState={mutation.state} renderContent={(data) => data.content} />
+        <CommandCardOutcome mutationState={mutation.state} renderContent={(data) => data.content} />
 
-      <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
-    </div>
+        <div className="mt-auto">
+          <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
+        </div>
+      </CardContent>
+    </Card>
   )
 }

@@ -509,6 +509,21 @@ const ROUTE_INVENTORY: readonly RouteProbe[] = [
     },
   },
   {
+    method: 'POST',
+    path: '/quota/lab/drain',
+    // root carries no seeded wallet (DEMO_SEED_USERS = ada,grace,linus), so the
+    // drain finds a zero balance and the post-drain hold is rejected at the
+    // wall; identity-less 401. Draining root touches no other probe's wallet.
+    probe: async () => {
+      const response = await request(server)
+        .post('/quota/lab/drain')
+        .set('x-demo-user', 'root')
+        .expect(402)
+      expect(response.body.error.code).toBe('AI_TOKENS_INSUFFICIENT_CREDITS')
+      await request(server).post('/quota/lab/drain').expect(401)
+    },
+  },
+  {
     method: 'GET',
     path: '/quota/status',
     // Happy combined status; identity-less 401.

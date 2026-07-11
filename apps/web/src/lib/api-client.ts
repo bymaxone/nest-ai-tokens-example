@@ -30,6 +30,7 @@ import type {
   CurrentPricingView,
   CustomBody,
   CustomResponse,
+  DrainResponse,
   EmbedBatchBody,
   EmbedBatchResponse,
   EmbedBody,
@@ -393,6 +394,16 @@ export class ApiClient {
   /** `POST /quota/lab/model-based`. */
   runLabModelBased(body: LabRunBody = {}): Promise<LabRunResponse> {
     return this.post('/quota/lab/model-based', body)
+  }
+
+  /**
+   * `POST /quota/lab/drain`: exhaust the wallet and hit the enforcement wall.
+   * Rejects with the canonical `AI_TOKENS_INSUFFICIENT_CREDITS` 402 on the
+   * default (no-overdraft) path; resolves with the residual balance only when
+   * an overdraft floor let the post-drain hold pass.
+   */
+  drainWallet(): Promise<DrainResponse> {
+    return this.post('/quota/lab/drain', {})
   }
 
   /** `GET /quota/status`. */

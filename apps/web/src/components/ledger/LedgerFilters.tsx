@@ -7,6 +7,9 @@
  */
 import type { AiOperation, UsageStatus } from '@bymax-one/nest-ai-tokens/shared'
 
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+
 import { OPERATIONS } from './ledger-constants'
 import { StatusChips } from './StatusChips'
 
@@ -29,61 +32,63 @@ export interface LedgerFiltersProps {
 /** The Ledger page's filter card. */
 export function LedgerFilters(props: LedgerFiltersProps): React.JSX.Element {
   return (
-    <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <StatusChips value={props.statuses} onChange={props.onStatusesChange} />
-        <button type="button" className="btn btn--primary btn--sm" onClick={props.onTopUp}>
-          Top up
-        </button>
-      </div>
-      <div className="grid-2" style={{ marginTop: 12 }}>
-        <div>
-          <label className="label" htmlFor="ledger-operation">
-            Operation
-          </label>
-          <select
-            id="ledger-operation"
-            className="input"
-            value={props.operation}
-            onChange={(event) =>
-              props.onOperationChange(event.target.value as AiOperation | typeof ALL_OPERATIONS)
-            }
-          >
-            <option value={ALL_OPERATIONS}>All operations</option>
-            {OPERATIONS.map((op) => (
-              <option key={op} value={op}>
-                {op}
-              </option>
-            ))}
-          </select>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex items-center justify-between">
+          <StatusChips value={props.statuses} onChange={props.onStatusesChange} />
+          <Button type="button" size="sm" onClick={props.onTopUp}>
+            Top up
+          </Button>
         </div>
-        <div className="grid-2">
+        <div className="grid-2 mt-3">
           <div>
-            <label className="label" htmlFor="ledger-from">
-              From
+            <label className="label" htmlFor="ledger-operation">
+              Operation
             </label>
-            <input
-              id="ledger-from"
+            <select
+              id="ledger-operation"
               className="input"
-              type="date"
-              value={props.from}
-              onChange={(event) => props.onFromChange(event.target.value)}
-            />
+              value={props.operation}
+              onChange={(event) =>
+                props.onOperationChange(event.target.value as AiOperation | typeof ALL_OPERATIONS)
+              }
+            >
+              <option value={ALL_OPERATIONS}>All operations</option>
+              {OPERATIONS.map((op) => (
+                <option key={op} value={op}>
+                  {op}
+                </option>
+              ))}
+            </select>
           </div>
-          <div>
-            <label className="label" htmlFor="ledger-to">
-              To
-            </label>
-            <input
-              id="ledger-to"
-              className="input"
-              type="date"
-              value={props.to}
-              onChange={(event) => props.onToChange(event.target.value)}
-            />
+          <div className="grid-2">
+            <div>
+              <label className="label" htmlFor="ledger-from">
+                From
+              </label>
+              <input
+                id="ledger-from"
+                className="input"
+                type="date"
+                value={props.from}
+                onChange={(event) => props.onFromChange(event.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="ledger-to">
+                To
+              </label>
+              <input
+                id="ledger-to"
+                className="input"
+                type="date"
+                value={props.to}
+                onChange={(event) => props.onToChange(event.target.value)}
+              />
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }

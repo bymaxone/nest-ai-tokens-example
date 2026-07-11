@@ -35,7 +35,7 @@ describe('StatCard', () => {
         state={{ status: 'ready', value: '$1.00', delta: { text: '▲ 3%', tone: 'up' } }}
       />,
     )
-    expect(screen.getByText('▲ 3%')).toHaveClass('stat__delta--up')
+    expect(screen.getByText('▲ 3%')).toHaveAttribute('data-tone', 'up')
   })
 
   // scenario: the ready state renders an "ok" delta with its tone class.
@@ -46,6 +46,6 @@ describe('StatCard', () => {
         state={{ status: 'ready', value: '$1.00', delta: { text: 'stable', tone: 'ok' } }}
       />,
     )
-    expect(screen.getByText('stable')).toHaveClass('stat__delta--ok')
+    expect(screen.getByText('stable')).toHaveAttribute('data-tone', 'ok')
   })
 })

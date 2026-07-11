@@ -8,6 +8,7 @@
 
 import { useId } from 'react'
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { useApiMutation } from '@/lib/use-api-mutation'
 
@@ -37,42 +38,48 @@ export function AnalyzeCard({ models }: AnalyzeCardProps): React.JSX.Element {
   }
 
   return (
-    <div className="card">
-      <div className="card__title">Analyze</div>
-      <p className="card__desc">Fixed output schema: sentiment plus a list of entities.</p>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div>
-          <label className="label" htmlFor="analyze-text">
-            Text
-          </label>
-          <textarea
-            id="analyze-text"
-            className="input"
-            style={{ height: 80 }}
-            value={form.text}
-            onChange={(event) => form.setText(event.target.value)}
-            required
+    <Card className="flex h-full flex-col">
+      <CardHeader accent>
+        <CardTitle>Analyze</CardTitle>
+        <CardDescription>Fixed output schema: sentiment plus a list of entities.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-3.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div>
+            <label className="label" htmlFor="analyze-text">
+              Text
+            </label>
+            <textarea
+              id="analyze-text"
+              className="input"
+              style={{ height: 80 }}
+              value={form.text}
+              onChange={(event) => form.setText(event.target.value)}
+              required
+            />
+          </div>
+          <CommandCardFooter
+            models={models}
+            model={form.model}
+            onModelChange={form.setModel}
+            modelId={modelId}
+            pending={mutation.state.status === 'pending'}
+            idleLabel="Analyze"
+            pendingLabel="Analyzing…"
           />
-        </div>
-        <CommandCardFooter
-          models={models}
-          model={form.model}
-          onModelChange={form.setModel}
-          modelId={modelId}
-          pending={mutation.state.status === 'pending'}
-          idleLabel="Analyze"
-          pendingLabel="Analyzing…"
+        </form>
+
+        <CommandCardOutcome
+          mutationState={mutation.state}
+          renderContent={(data) =>
+            `sentiment: ${data.analysis.sentiment}\nentities: ${data.analysis.entities.join(', ')}`
+          }
         />
-      </form>
 
-      <CommandCardOutcome
-        mutationState={mutation.state}
-        renderContent={(data) =>
-          `sentiment: ${data.analysis.sentiment}\nentities: ${data.analysis.entities.join(', ')}`
-        }
-      />
-
-      <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
-    </div>
+        <div className="mt-auto">
+          <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
+        </div>
+      </CardContent>
+    </Card>
   )
 }

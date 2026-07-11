@@ -13,6 +13,16 @@
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { StatCard } from '@/components/stat-card'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { api } from '@/lib/api'
 import { formatMoney } from '@/lib/money'
 import { useApiQuery } from '@/lib/use-api-query'
@@ -58,42 +68,46 @@ function TransactionsSnapshot(): React.JSX.Element {
     )
   }
   return (
-    <table className="table">
-      <thead>
-        <tr>
-          <th>date</th>
-          <th>status</th>
-          <th>cost</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>date</TableHead>
+          <TableHead>status</TableHead>
+          <TableHead>cost</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {state.data.items.map((item) => (
-          <tr key={item.id}>
-            <td>{new Date(item.occurredAt).toLocaleDateString()}</td>
-            <td>
-              <span className="chip">{item.status}</span>
-            </td>
-            <td>{formatMoney(item.billedCostNanoUsd)}</td>
-          </tr>
+          <TableRow key={item.id}>
+            <TableCell>{new Date(item.occurredAt).toLocaleDateString()}</TableCell>
+            <TableCell>
+              <Badge variant="outline">{item.status}</Badge>
+            </TableCell>
+            <TableCell>{formatMoney(item.billedCostNanoUsd)}</TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   )
 }
 
 /** The Tenants page's current-identity balance and recent-transactions snapshot. */
 export function TenantSnapshot(): React.JSX.Element {
   return (
-    <div className="card">
-      <div className="card__title">Isolation snapshot</div>
-      <p className="card__desc">
-        Switch the identity in the header above: the balance and the recent transactions below
-        refetch for the new user/tenant, never showing a stale value from the previous one.
-      </p>
-      <div className="grid-2" style={{ marginTop: 10 }}>
-        <BalanceSnapshot />
-        <TransactionsSnapshot />
-      </div>
-    </div>
+    <Card>
+      <CardHeader accent>
+        <CardTitle>Isolation snapshot</CardTitle>
+        <CardDescription>
+          Switch the identity in the header above: the balance and the recent transactions below
+          refetch for the new user/tenant, never showing a stale value from the previous one.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid-2">
+          <BalanceSnapshot />
+          <TransactionsSnapshot />
+        </div>
+      </CardContent>
+    </Card>
   )
 }

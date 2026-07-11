@@ -10,6 +10,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
+import { StatCard } from '@/components/stat-card'
 import { api } from '@/lib/api'
 import { ApiError } from '@/lib/api-client'
 import type { BalanceView } from '@/lib/api-types'
@@ -50,29 +51,12 @@ export function BalanceCard(): React.JSX.Element {
   }, [identity])
 
   if (state.status === 'loading') {
-    return (
-      <div className="stat" role="status" aria-label="Loading balance">
-        <div className="stat__label">Balance</div>
-        <div className="skeleton" style={{ width: '60%', marginTop: 8 }} />
-      </div>
-    )
+    return <StatCard label="Balance" state={{ status: 'loading' }} />
   }
 
   if (state.status === 'error') {
-    return (
-      <div className="stat" role="alert">
-        <div className="stat__label">Balance</div>
-        <div className="stat__value" style={{ fontSize: 16, color: 'var(--red)' }}>
-          {state.error.message}
-        </div>
-      </div>
-    )
+    return <StatCard label="Balance" state={{ status: 'error', message: state.error.message }} />
   }
 
-  return (
-    <div className="stat">
-      <div className="stat__label">Balance</div>
-      <div className="stat__value">{state.balance.formatted}</div>
-    </div>
-  )
+  return <StatCard label="Balance" state={{ status: 'ready', value: state.balance.formatted }} />
 }

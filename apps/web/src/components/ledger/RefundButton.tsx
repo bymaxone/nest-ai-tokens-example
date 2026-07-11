@@ -8,6 +8,7 @@
 import { useState } from 'react'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Button } from '@/components/ui/button'
 import type { ApiMutationState } from '@/lib/use-api-mutation'
 import type { RefundResponse, UsageRecordView } from '@/lib/api-types'
 
@@ -41,23 +42,19 @@ export function RefundButton({
 
   if (isConfirming) {
     return (
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <span className="card__desc">Refund this transaction?</span>
-        <button
+      <div className="flex items-center gap-2">
+        <span className="text-[13px] text-muted-foreground">Refund this transaction?</span>
+        <Button
           type="button"
-          className="btn btn--primary btn--sm"
+          size="sm"
           disabled={mutationState.status === 'pending'}
           onClick={onConfirm}
         >
           {mutationState.status === 'pending' ? 'Refunding…' : 'Confirm refund'}
-        </button>
-        <button
-          type="button"
-          className="btn btn--ghost btn--sm"
-          onClick={() => setIsConfirming(false)}
-        >
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => setIsConfirming(false)}>
           Cancel
-        </button>
+        </Button>
       </div>
     )
   }
@@ -65,13 +62,9 @@ export function RefundButton({
   return (
     <div>
       {mutationState.status === 'error' && <ErrorBanner error={mutationState.error} />}
-      <button
-        type="button"
-        className="btn btn--outline btn--sm"
-        onClick={() => setIsConfirming(true)}
-      >
+      <Button type="button" variant="outline" size="sm" onClick={() => setIsConfirming(true)}>
         Refund
-      </button>
+      </Button>
     </div>
   )
 }

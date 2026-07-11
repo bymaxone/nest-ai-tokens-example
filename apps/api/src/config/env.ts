@@ -64,6 +64,42 @@ export const envSchema = z.object({
    * default, and the only value tests use) skips the delay entirely.
    */
   MOCK_LATENCY_MS: z.coerce.number().int().min(0).default(0),
+  /**
+   * Comma-separated allow-list of browser origins permitted to call this API
+   * cross-origin (the dashboard is served from a different port than the API,
+   * so every client-side fetch is cross-origin and needs a matching CORS
+   * grant). Each entry is normalized to its URL origin; a request whose
+   * `Origin` is not on the list receives no CORS headers. Default: the local
+   * dashboard dev origin.
+   */
+  WEB_ORIGIN: z
+    .string()
+    .default('http://localhost:3000')
+    .transform((raw, ctx) => {
+      const parts = raw
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter((entry) => entry.length > 0)
+      if (parts.length === 0) {
+        ctx.addIssue({ code: 'custom', message: 'must list at least one origin' })
+        return z.NEVER
+      }
+      const origins: string[] = []
+      for (const part of parts) {
+        let origin: string
+        try {
+          origin = new URL(part).origin
+        } catch {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'must be a comma-separated list of valid origins',
+          })
+          return z.NEVER
+        }
+        origins.push(origin)
+      }
+      return origins
+    }),
 })
 
 /** The parsed, typed environment configuration. */

@@ -5,6 +5,15 @@
  *
  * @layer components/pricing
  */
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import type { PriceRowView } from '@/lib/api-types'
 import { formatMoney } from '@/lib/money'
 
@@ -31,39 +40,35 @@ export function CurrentPricingTable({
   }
 
   return (
-    <table className="table">
-      <thead>
-        <tr>
-          <th>model</th>
-          <th>operation</th>
-          <th>tier</th>
-          <th>input / 1M</th>
-          <th>output / 1M</th>
-          <th>effective from</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>model</TableHead>
+          <TableHead>operation</TableHead>
+          <TableHead>tier</TableHead>
+          <TableHead>input / 1M</TableHead>
+          <TableHead>output / 1M</TableHead>
+          <TableHead>effective from</TableHead>
+          <TableHead></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {items.map((row) => (
-          <tr key={row.id}>
-            <td>{row.model}</td>
-            <td>{row.operation}</td>
-            <td>{row.serviceTier}</td>
-            <td>{formatMoney(row.inputNanoUsdPerMillion)}</td>
-            <td>{formatMoney(row.outputNanoUsdPerMillion)}</td>
-            <td>{new Date(row.effectiveFrom).toLocaleDateString()}</td>
-            <td>
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                onClick={() => onSelect(row)}
-              >
+          <TableRow key={row.id}>
+            <TableCell>{row.model}</TableCell>
+            <TableCell>{row.operation}</TableCell>
+            <TableCell>{row.serviceTier}</TableCell>
+            <TableCell>{formatMoney(row.inputNanoUsdPerMillion)}</TableCell>
+            <TableCell>{formatMoney(row.outputNanoUsdPerMillion)}</TableCell>
+            <TableCell>{new Date(row.effectiveFrom).toLocaleDateString()}</TableCell>
+            <TableCell>
+              <Button type="button" variant="ghost" size="sm" onClick={() => onSelect(row)}>
                 History
-              </button>
-            </td>
-          </tr>
+              </Button>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   )
 }

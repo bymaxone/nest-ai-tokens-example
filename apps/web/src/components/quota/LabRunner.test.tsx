@@ -9,10 +9,14 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { ApiError } from '@/lib/api-client'
-import type { MockChatCompletionView } from '@/lib/api-types'
 
 vi.mock('@/lib/api', () => ({
-  api: { runLabConstant: vi.fn(), runLabModelBased: vi.fn(), credit: vi.fn() },
+  api: {
+    runLabConstant: vi.fn(),
+    runLabModelBased: vi.fn(),
+    drainWallet: vi.fn(),
+    credit: vi.fn(),
+  },
 }))
 
 import { api } from '@/lib/api'
@@ -115,50 +119,65 @@ describe('LabRunner', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('bad amount'))
   })
 
-  // scenario: draining calls the constant lab repeatedly until it hits the quota wall.
-  it('drains until it hits AI_TOKENS_INSUFFICIENT_CREDITS', async () => {
+  // scenario: draining zeroes the wallet and the post-drain hold rejects at the wall.
+  it('drains and renders the canonical AI_TOKENS_INSUFFICIENT_CREDITS wall', async () => {
     const user = userEvent.setup()
     const onBalanceChanged = vi.fn()
-    const okResponse: MockChatCompletionView = {
-      id: 'mock-1',
-      model: 'mock-chat-lite',
-      choices: [{ index: 0, message: { role: 'assistant', content: 'ok' }, finish_reason: 'stop' }],
-      usage: { prompt_tokens: 1000, completion_tokens: 0, total_tokens: 1000 },
-    }
-    vi.mocked(api.runLabConstant)
-      .mockResolvedValueOnce(okResponse)
-      .mockResolvedValueOnce(okResponse)
-      .mockRejectedValueOnce(new ApiError('AI_TOKENS_INSUFFICIENT_CREDITS', 402, 'drained'))
+    vi.mocked(api.drainWallet).mockRejectedValueOnce(
+      new ApiError('AI_TOKENS_INSUFFICIENT_CREDITS', 402, 'drained'),
+    )
     render(<LabRunner onBalanceChanged={onBalanceChanged} />)
 
     await user.click(screen.getByRole('button', { name: 'Drain balance' }))
-    await waitFor(() => expect(screen.getByText(/Drained after 3 call\(s\)/)).toBeInTheDocument())
-    expect(screen.getByText(/hit the quota wall as expected\./)).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.getByText(/rejected at the quota wall, as expected\./)).toBeInTheDocument(),
+    )
+    expect(screen.getByRole('alert')).toHaveTextContent('drained')
     expect(onBalanceChanged).toHaveBeenCalled()
+    // A single round-trip now hits the wall (no client-side loop).
+    expect(api.drainWallet).toHaveBeenCalledOnce()
   })
 
-  // scenario: draining that stops on a non-ApiError rejection normalizes it before reporting.
-  it('normalizes a non-ApiError drain rejection', async () => {
+  // scenario: an overdraft floor lets the post-drain hold pass, so the wall is not reached.
+  it('reports the residual balance when the wall is not reached (overdraft)', async () => {
     const user = userEvent.setup()
-    vi.mocked(api.runLabConstant).mockRejectedValueOnce(new Error('boom'))
+    vi.mocked(api.drainWallet).mockResolvedValueOnce({
+      drainedNanoUsd: '60000000000',
+      balanceNanoUsd: '0',
+      balanceFormatted: '$0.000000',
+      wallReached: false,
+    })
     render(<LabRunner onBalanceChanged={vi.fn()} />)
 
     await user.click(screen.getByRole('button', { name: 'Drain balance' }))
     await waitFor(() =>
-      expect(screen.getByText(/stopped on an unexpected error\./)).toBeInTheDocument(),
+      expect(screen.getByText(/Wallet drained to \$0\.000000/)).toBeInTheDocument(),
+    )
+    expect(screen.getByText(/the wall was not reached\./)).toBeInTheDocument()
+  })
+
+  // scenario: a non-ApiError drain rejection is normalized before reporting.
+  it('normalizes a non-ApiError drain rejection', async () => {
+    const user = userEvent.setup()
+    vi.mocked(api.drainWallet).mockRejectedValueOnce(new Error('boom'))
+    render(<LabRunner onBalanceChanged={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: 'Drain balance' }))
+    await waitFor(() =>
+      expect(screen.getByText(/Drain stopped on an unexpected error\./)).toBeInTheDocument(),
     )
     expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong running the lab.')
   })
 
-  // scenario: draining that stops on an unexpected error still reports the outcome honestly.
+  // scenario: an unexpected (non-402) drain error is still reported honestly.
   it('reports an unexpected drain error honestly', async () => {
     const user = userEvent.setup()
-    vi.mocked(api.runLabConstant).mockRejectedValueOnce(new ApiError('unknown_error', 500, 'boom'))
+    vi.mocked(api.drainWallet).mockRejectedValueOnce(new ApiError('unknown_error', 500, 'boom'))
     render(<LabRunner onBalanceChanged={vi.fn()} />)
 
     await user.click(screen.getByRole('button', { name: 'Drain balance' }))
     await waitFor(() =>
-      expect(screen.getByText(/stopped on an unexpected error\./)).toBeInTheDocument(),
+      expect(screen.getByText(/Drain stopped on an unexpected error\./)).toBeInTheDocument(),
     )
   })
 })

@@ -35,6 +35,7 @@ function controllerWith() {
   const lab = {
     completeConstant: jest.fn().mockReturnValue(Promise.resolve({ kind: 'constant' })),
     runModelBased: jest.fn().mockReturnValue(Promise.resolve({ kind: 'model-based' })),
+    drain: jest.fn().mockReturnValue(Promise.resolve({ kind: 'drain' })),
   }
   const status = {
     status: jest.fn().mockReturnValue(Promise.resolve({ kind: 'status' })),
@@ -88,6 +89,20 @@ describe('QuotaController delegation', () => {
     })
     expect(lab.runModelBased).toHaveBeenCalledWith(ada, body)
     expect(() => controller.labModelBased(requestWith(), body)).toThrow(UnauthorizedException)
+  })
+
+  /**
+   * Drain route.
+   *
+   * The handler forwards the identity to the lab drain; without an
+   * identity it rejects 401 before any wallet is touched.
+   */
+  it('drain delegates the identity, 401 without identity', async () => {
+    const { controller, lab } = controllerWith()
+
+    await expect(controller.drain(requestWith(ada))).resolves.toEqual({ kind: 'drain' })
+    expect(lab.drain).toHaveBeenCalledWith(ada)
+    expect(() => controller.drain(requestWith())).toThrow(UnauthorizedException)
   })
 
   /**
