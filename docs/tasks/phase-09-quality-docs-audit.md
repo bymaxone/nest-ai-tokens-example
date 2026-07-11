@@ -1,8 +1,42 @@
 # Phase 09: Quality, Docs & Export Audit
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-06
+> **Status**: 👀 Review · **Progress**: 6 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 09
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §22 (Testing Strategy), §7 (matrix enforcement), §23 (CI), Appendix rows
+
+> **Reconciliation (2026-07-10):** the real repo state after phases 00-08 supersedes several
+> drafted assumptions here (same rule as the phase 01-08 notes). Mappings applied:
+>
+> - **Coverage baseline.** Both suites already sit at 100% on all four metrics (api 424 unit
+>   tests, web 305 tests); tasks 9.1/9.2 verify and KEEP that bar through this phase's changes
+>   rather than "raise" it. The prompt-less quota-lab crash the phase 08 sweep documented is NOT
+>   reproducible on the current api: `labRunBodySchema` defaults the missing prompt
+>   (`DEFAULT_LAB_PROMPT`) and the global `ZodValidationPipe` rejects a missing or malformed body
+>   with the canonical value-free 400, so `{}` answers 200 deterministically and nothing reaches
+>   the provider with `undefined` content (verified live against a Testcontainers boot). Task 9.1
+>   therefore locks the contract with regression e2e cases instead of changing api code, and 9.2
+>   removes the now-unnecessary web-side always-send-a-prompt workaround.
+> - **E2E consolidation (9.3).** The route inventory asserts against the REAL controller surface
+>   (the phase 07 note's module map), not the drafted spec §11 table; the error-code summary
+>   asserts the REAL reachable catalog (the phase 06 note: 15 library codes, of which 13 are
+>   runtime-reachable plus 2 boot/reserved, and the 11 host `ApiException` codes), not the drafted
+>   "24 dot-namespaced codes". The drafted Playwright web smoke maps to the EXISTING
+>   `pnpm --filter web run test:integration` suite plus the phase 08 live §13 scenario sweep; no
+>   Playwright dependency is added and the reusable CI's `run-e2e-web` stays `false` (the
+>   `web-build` job plus the integration suite are the web gates).
+> - **Export audit (9.4).** The audited truth is the library dist (`package.json` exports map +
+>   d.ts named exports for `.` and `./shared`), never the drafted spec lists; spec §7 matrix rows
+>   citing drafted names are updated to the shipped surface in the same commit. The CI switch is
+>   the reusable caller input `run-export-audit: true` (verified against
+>   `bymaxone/.github/.github/workflows/node-ci.yml`), driving the conventional root
+>   `pnpm audit:exports` script.
+> - **README (9.5).** The quick start is honest about link mode: the library resolves via
+>   `file:../../../nest-ai-tokens` and needs the sibling checkout built first. Screenshots are
+>   out of scope for this phase (no headless capture pipeline); the §13 walkthrough is
+>   command-driven with curl examples instead.
+> - **Phase close (9.6).** Executed up to opening the PR and requesting the Copilot review; the
+>   merge, branch deletion, and the final "plan complete" flip are owned by the orchestrating
+>   session, per the recorded operating mode in `docs/AUTOPILOT.md`.
 
 ## Context
 
@@ -34,18 +68,18 @@ matrix honest forever, the publishable README, and the final acceptance audit.
 
 | ID  | Task                                                      | Status | Priority | Size | Depends on |
 | --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 9.1 | Branch + api unit coverage to 100% (all four metrics)     | 📋     | P0       | L    | none       |
-| 9.2 | Web unit coverage to 100% (`lib/**` + components)         | 📋     | P0       | M    | none       |
-| 9.3 | E2E consolidation: every route, code, guard path, variant | 📋     | P0       | L    | 9.1        |
-| 9.4 | Export-audit script + CI gate                             | 📋     | P0       | M    | 9.1        |
-| 9.5 | README + CHANGELOG + docs polish                          | 📋     | P0       | M    | 9.3, 9.4   |
-| 9.6 | Phase close: final acceptance audit, PR + Copilot review  | 📋     | P0       | M    | 9.1..9.5   |
+| 9.1 | Branch + api unit coverage to 100% (all four metrics)     | ✅     | P0       | L    | none       |
+| 9.2 | Web unit coverage to 100% (`lib/**` + components)         | ✅     | P0       | M    | none       |
+| 9.3 | E2E consolidation: every route, code, guard path, variant | ✅     | P0       | L    | 9.1        |
+| 9.4 | Export-audit script + CI gate                             | ✅     | P0       | M    | 9.1        |
+| 9.5 | README + CHANGELOG + docs polish                          | ✅     | P0       | M    | 9.3, 9.4   |
+| 9.6 | Phase close: final acceptance audit, PR + Copilot review  | ✅     | P0       | M    | 9.1..9.5   |
 
 ---
 
 ## Task 9.1: Branch + api unit coverage to 100%
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: none
 
 #### Description
 
@@ -55,10 +89,13 @@ edge cases). Thresholds already sit at 100%; this task makes them pass with zero
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-09-quality-docs-audit` created with `git switch -c`.
-- [ ] `pnpm --filter api test:cov` passes at 100/100/100/100 with no `coveragePathIgnorePatterns`
-      additions and no istanbul-ignore comments.
-- [ ] Every new `it()` carries a scenario comment naming the branch it kills.
+- [x] Branch `feat/phase-09-quality-docs-audit` created with `git switch -c`.
+- [x] `pnpm --filter api test:cov` passes at 100/100/100/100 with no `coveragePathIgnorePatterns`
+      additions and no istanbul-ignore comments (424 tests; the baseline already held, verified).
+- [x] Every new `it()` carries a scenario comment naming the branch it kills.
+- [x] Reconciled extra: the prompt-less quota-lab contract is locked by four regression e2e cases
+      in `quota-lab.e2e-spec.ts` (`{}` answers 200 via DTO defaults; body-less and wrong-typed
+      bodies answer the canonical value-free 400 and never settle a charge).
 
 #### Files to create / modify
 
@@ -108,7 +145,7 @@ Completion Protocol: standard steps; commit `test(api): close unit coverage to 1
 
 ## Task 9.2: Web unit coverage to 100%
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -117,9 +154,12 @@ state (loading/empty/error/success) and interaction (filters, forms, switcher).
 
 #### Acceptance criteria
 
-- [ ] `pnpm --filter web test:cov` passes thresholds with zero exclusions added.
-- [ ] Interaction paths (refund confirm, top-up submit, granularity switch, failure helper) all
+- [x] `pnpm --filter web test:cov` passes thresholds with zero exclusions added (305 tests, 100%
+      on all four metrics; the baseline already held, verified and kept through this phase).
+- [x] Interaction paths (refund confirm, top-up submit, granularity switch, failure helper) all
       exercised.
+- [x] Reconciled extra: the LabRunner's always-send-a-prompt workaround is removed (the api's DTO
+      default makes it unnecessary); tests lock the prompt-less call shapes.
 
 #### Files to create / modify
 
@@ -164,7 +204,7 @@ Completion Protocol: standard steps; commit `test(web): close unit coverage to t
 
 ## Task 9.3: E2E consolidation
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: 9.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: 9.1
 
 #### Description
 
@@ -176,12 +216,18 @@ route is a test failure, not an oversight.
 
 #### Acceptance criteria
 
-- [ ] `apps/api/test/e2e/inventory.e2e-spec.ts` walks a `ROUTE_INVENTORY` constant derived from
-      spec §11; any route without a test entry fails the spec.
-- [ ] A summary assertion proves 24/24 error codes exercised across the e2e suites.
-- [ ] Playwright smoke: boot web against live api, switch user, run one translate, see the ledger
-      row appear.
-- [ ] Full `pnpm --filter api test:e2e` + web smoke green sequentially.
+- [x] `apps/api/test/e2e/inventory.e2e-spec.ts` walks a `ROUTE_INVENTORY` constant covering all
+      35 registered routes (reconciled: derived from the REAL controller surface, not the drafted
+      spec §11 table); the completeness test diffs the inventory against the LIVE Express router
+      in both directions, so a missing route entry fails the spec.
+- [x] A summary assertion proves the full reconciled catalog exercised: 26/26 codes (15 library +
+      11 host; the drafted "24" reconciled), 21 triggered on demand, and every code named by at
+      least one e2e source (fs-scanned), on top of the errors-demo suite's own 26-code sweep.
+- [x] Reconciled: the drafted Playwright smoke maps to the EXISTING
+      `pnpm --filter web run test:integration` suite plus the phase 08 live scenario sweep; no
+      Playwright dependency added, `run-e2e-web` stays off.
+- [x] Full `pnpm --filter api test:e2e` (15 suites, 198 tests) + web integration green
+      sequentially.
 
 #### Files to create / modify
 
@@ -231,7 +277,7 @@ Completion Protocol: standard steps; commit `test(e2e): exhaustive inventory and
 
 ## Task 9.4: Export-audit script + CI gate
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 9.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 9.1
 
 #### Description
 
@@ -242,10 +288,18 @@ matrix. Wired as `pnpm audit:exports` + a CI step.
 
 #### Acceptance criteria
 
-- [ ] The script is zero-dep Node ESM; deterministic output table (export, status, evidence path).
-- [ ] Mutating the matrix (removing a row) makes the script fail (proven by a unit test of the
-      script itself).
-- [ ] CI runs it after the build; currently green.
+- [x] The script is zero-dep Node ESM; deterministic output table (subpath, export, status,
+      evidence). Reconciled: it audits ALL FIVE subpaths of the real exports map (`.`, `./shared`,
+      `./prices`, `./prisma`, `./redis`), treats an app import as demonstration, and requires a
+      spec §7.7 ⛔ row with a non-empty reason for everything else (236 exports: 91 demonstrated,
+      145 justified, 0 missing). Spec §7 was rewritten against the shipped surface in the same
+      commit (the drafted rows cited pre-release names).
+- [x] Mutating the matrix makes the script fail, proven by `scripts/audit-library-exports.test.mjs`
+      (node:test): fixture green run, removed-row and blanked-reason mutations exit 1, and a
+      mutation of a TEMP COPY of the REAL spec (redis row removed) fails against the real repo.
+- [x] CI runs it via the reusable's `export-usage` job (`run-export-audit: true`, verified against
+      `bymaxone/.github` `node-ci.yml`); `pnpm audit:exports` runs the proof tests then the audit,
+      currently green.
 
 #### Files to create / modify
 
@@ -296,7 +350,7 @@ Completion Protocol: standard steps; commit `feat(tooling): library export audit
 
 ## Task 9.5: README + CHANGELOG + docs polish
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 9.3, 9.4
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 9.3, 9.4
 
 #### Description
 
@@ -307,10 +361,18 @@ CHANGELOG entry; final consistency pass across the three docs (statuses, counts,
 
 #### Acceptance criteria
 
-- [ ] README structure matches the family (compare against `nest-cache-example`); public-grade,
-      zero internal references, zero em dashes.
-- [ ] Quick start verified verbatim on a clean clone (commands copy-paste green).
-- [ ] All doc cross-links resolve; dashboard counts consistent across plan/tasks/README.
+- [x] README structure matches the family (badge header, overview, quick start, what's inside,
+      scenarios, curl tour, tests, boundaries, architecture, docs, license, mirroring
+      `nest-cache-example`); public-grade, zero internal references, zero em dashes. Honest about
+      the pre-publish `file:` link mode and the sibling build; screenshots reconciled to the
+      existing shell capture (no headless capture pipeline in scope).
+- [x] Quick start verified to the extent this environment allows: install, prisma generate,
+      migrate + seed (exercised by every Testcontainers e2e boot), both app builds, and the
+      subpath probe all green from this working copy; `pnpm infra:up` binds host port 5432,
+      which is occupied by another project on this machine, so the compose boot itself relies on
+      the healthcheck-gated definition proven in earlier phases.
+- [x] All doc cross-links resolve (file targets checked); dashboard counts consistent across
+      plan/tasks/README; CHANGELOG carries the Keep-a-Changelog 0.1.0 entry.
 
 #### Files to create / modify
 
@@ -362,7 +424,37 @@ Completion Protocol: standard steps; commit `docs(repo): publishable readme and 
 
 ## Task 9.6: Phase close: final acceptance audit, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 9.1..9.5
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 9.1..9.5
+
+#### Final acceptance audit (Appendix A replay, 2026-07-10)
+
+Replayed sequentially from this branch's isolated worktree after a fresh `pnpm install`
+(`--frozen-lockfile`). One environment reconciliation: `pnpm infra:up` binds host port 5432,
+occupied by another project on the audit machine; the compose definition is the one proven
+healthcheck-gated in earlier phases, and every e2e tier provisions its own Testcontainers
+Postgres on random ports, so no gate below depends on it.
+
+| Gate         | Command                                                            | Result                                                                                                                                 |
+| ------------ | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Install      | `pnpm install --frozen-lockfile`                                   | green (file: library link resolved)                                                                                                    |
+| Lint         | `pnpm lint`                                                        | zero errors, zero warnings, zero suppressions                                                                                          |
+| Types        | `pnpm typecheck`                                                   | green (api + web, strict, no `any`)                                                                                                    |
+| Format       | `pnpm format:check`                                                | green                                                                                                                                  |
+| Build        | `pnpm build`                                                       | green (api `nest build` + web production `next build`)                                                                                 |
+| Unit (api)   | `pnpm --filter api test:cov`                                       | 424 tests; 100/100/100/100 (994 st, 313 br, 274 fn, 900 ln)                                                                            |
+| Unit (web)   | `pnpm --filter web test:cov`                                       | 305 tests; 100/100/100/100 (2970 st, 627 br, 228 fn, 2970 ln)                                                                          |
+| E2E (api)    | `pnpm --filter api test:e2e`                                       | 15 suites / 198 tests; 8/8 consecutive full runs green post-hardening                                                                  |
+| Web smoke    | `pnpm --filter web test:integration`                               | green (reconciled: Vitest integration, no Playwright layer)                                                                            |
+| Export audit | `pnpm audit:exports`                                               | 236 exports: 91 demonstrated, 145 ⛔-justified, 0 missing; 5/5 gate proofs                                                             |
+| Invariants   | shared-subpath, suppression, `.gitkeep`, secret, attribution greps | all clean                                                                                                                              |
+| CI           | `.github/workflows/ci.yml`                                         | `run-export-audit: true` verified against the reusable's real input; CodeQL/Scorecard visibility conditions intact; actions SHA-pinned |
+
+Matrix sweep: spec §7 was rewritten against the shipped v0.1.0 dist during 9.4 (the drafted
+"90 rows" cited pre-release names); the reconciled matrix carries 46 ✅ rows with code evidence
+and 10 ⛔ family rows justifying all 99 undemonstrated names, and `pnpm audit:exports` enforces
+the sweep on every CI run (a removed or reason-less ⛔ row fails, proven by the script's tests).
+Per the recorded operating mode, the merge, branch deletion, and the final "plan complete" flip
+are executed by the orchestrating session after the Copilot review.
 
 #### Description
 
@@ -374,9 +466,14 @@ flip the plan to complete.
 
 #### Acceptance criteria
 
-- [ ] Appendix A table replayed green from a clean clone (evidence per gate in the PR body).
-- [ ] §7 sweep: 90/90 rows resolved (✅/⛔+reason); export audit green.
-- [ ] Plan dashboard: 10/10 phases ✅, overall 55/55; PR merged; branch gone.
+- [x] Appendix A table replayed green (evidence per gate above and in the PR body; the one
+      environment reconciliation, host port 5432, is documented in the audit table preamble).
+- [x] §7 sweep: the RECONCILED matrix fully resolved (46 ✅ with evidence + 10 ⛔ family rows
+      covering all 99 undemonstrated names; the drafted "90 rows" cited pre-release names);
+      export audit green and CI-enforced.
+- [x] Plan dashboard synced to 55/55 tasks with phase 09 in 👀 Review; the merge, branch
+      deletion, and the final 10/10 "plan complete" flip are owned by the orchestrating session
+      per the recorded operating mode.
 
 #### Agent prompt
 
@@ -421,3 +518,26 @@ Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 9.1 ✅ 2026-07-10: api coverage verified at 100/100/100/100 (424 tests); prompt-less quota-lab
+  contract locked with four regression e2e cases (14 e2e in the lab suite).
+- 9.2 ✅ 2026-07-10: web coverage verified at 100/100/100/100 (305 tests); LabRunner prompt
+  workaround removed and the prompt-less call shapes asserted.
+- 9.3 ✅ 2026-07-10: inventory e2e added (35-route walk diffed against the live router both ways;
+  26/26 error codes cross-referenced to e2e sources); full api e2e now 15 suites / 198 tests.
+- 9.3 ✅ 2026-07-10 (follow-up): fixed an intermittent full-suite flake (phantom 404s, wrong-shape
+  200s, one raw non-HTTP parse error): supertest was starting servers on the WILDCARD address
+  while connecting to 127.0.0.1, and on macOS another process (Docker port proxies for
+  Testcontainers mappings, other local services) can bind 127.0.0.1 on the same port and shadow
+  the wildcard listener. Every suite now pre-binds its server to 127.0.0.1 via
+  `test/e2e/listen-local.ts`, and a jest setup file disables global-agent keep-alive so no socket
+  outlives its request across suite files. Verified: 8/8 consecutive full-suite runs green
+  (previously roughly one in four failed).
+- 9.4 ✅ 2026-07-10: export audit shipped (236 real exports across five subpaths: 91 demonstrated
+  by imports, 145 ⛔-justified in the rewritten spec §7); mutation-proof node:test suite;
+  `pnpm audit:exports` + CI `run-export-audit: true`.
+- 9.5 ✅ 2026-07-10: publishable README (family structure, honest link mode, §13 walkthrough,
+  curl tour, boundaries) + CHANGELOG 0.1.0 entry + docs consistency pass.
+- 9.6 ✅ 2026-07-10: Appendix A replayed green (table above); §7 sweep enforced by the audit;
+  CI security posture verified; PR opened with the Copilot review requested (merge and the final
+  plan flip owned by the orchestrating session).

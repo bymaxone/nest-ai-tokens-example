@@ -22,6 +22,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
 import type { App } from 'supertest/types.js'
 
+import { listenLocal } from './listen-local.js'
 import { runSeed } from '../../prisma/seed-runner.js'
 import { createApp } from '../../src/bootstrap.js'
 import { PrismaService } from '../../src/prisma/prisma.service.js'
@@ -53,7 +54,7 @@ beforeAll(async () => {
   // Seed the demo domain: enforcement is live, so the exercised demo users
   // need their seeded wallets (and grants) to fund the metered calls.
   await runSeed(app.get(PrismaService))
-  server = app.getHttpServer() as App
+  server = await listenLocal(app)
 })
 
 /** App first (pools, timers), then the container; both guarded. */

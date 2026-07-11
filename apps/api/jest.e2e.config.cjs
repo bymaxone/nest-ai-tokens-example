@@ -16,6 +16,10 @@ module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: '.',
   testMatch: ['<rootDir>/test/e2e/**/*.e2e-spec.ts'],
+  // Close every HTTP connection at response end: the shared global agent
+  // otherwise leaks keep-alive sockets across suite files (see the setup
+  // file header for the phantom-404 mechanism it prevents).
+  setupFiles: ['<rootDir>/test/e2e/disable-keepalive.setup.ts'],
   extensionsToTreatAsEsm: ['.ts'],
   // emitDecoratorMetadata stays ON here, matching the production build: the
   // global ZodValidationPipe discovers DTO schemas through the emitted

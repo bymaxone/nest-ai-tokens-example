@@ -282,135 +282,112 @@ nest-ai-tokens-example/
 
 ## 7 · Feature Coverage Matrix
 
-The spine of the project. **Every** public export and every documented behavior is demonstrated and
-tracked here; `DEVELOPMENT_PLAN.md` phases reference these rows, and an export-audit script
-(phase 09) diffs the library's actual exports against this matrix. Status legend: ✅ planned-covered
-· ⛔ intentionally not exercised (with reason).
+The spine of the project, reconciled against the SHIPPED library v0.1.0 (the drafted rows this
+section originally carried cited pre-release names; the per-phase Reconciliation notes in
+[`docs/tasks/`](tasks/README.md) record every mapping). The audited truth is the installed
+package's `exports` map and dist d.ts files across all five subpaths (`.`, `./shared`, `./prices`,
+`./prisma`, `./redis`). `scripts/audit-library-exports.mjs` (CI gate: `pnpm audit:exports`)
+enumerates those real exports, marks a name **demonstrated** when an app source imports it from
+the library, and requires every remaining name to be ⛔-justified in §7.7; any export that is
+neither fails CI. Names exported by both `.` and `./shared` are audited once per subpath and
+satisfied by an import from either.
+
+Status legend: ✅ demonstrated (imported by `apps/`; evidence beside) · ⛔ intentionally not
+exercised (reason beside; enforced by the audit).
 
 ### 7.1 Module, registration & DI
 
-| #   | Library surface                                                           | Demonstrated in                                                             | Status |
-| --- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------ |
-| 1   | `BymaxAiTokensModule.registerAsync`                                       | `app.module.ts` + `ai/ai-tokens.config.ts` (primary wiring)                 | ✅     |
-| 2   | Sync registration path                                                    | E2E test module (minimal options)                                           | ✅     |
-| 3   | `isGlobal: true`                                                          | primary wiring (services injected across feature modules without re-import) | ✅     |
-| 4   | `BYMAX_AI_TOKENS_TRANSACTION_REPOSITORY`                                  | `PrismaTokenTransactionRepository` provider binding                         | ✅     |
-| 5   | `BYMAX_AI_TOKENS_PRICING_REPOSITORY`                                      | `PrismaModelPricingRepository` provider binding                             | ✅     |
-| 6   | `BYMAX_AI_TOKENS_PROVIDER` (strategy `'custom'`)                          | `MockAiProvider` binding (default run mode)                                 | ✅     |
-| 7   | `BYMAX_AI_TOKENS_LOGGER`                                                  | Nest `Logger` bridge provider                                               | ✅     |
-| 8   | `BYMAX_AI_TOKENS_QUOTA_POLICY`                                            | Quota Lab: class-based policy variant beside the inline resolver            | ✅     |
-| 9   | `BYMAX_AI_TOKENS_OPTIONS`                                                 | `usage` module reads effective options (tolerance, models) for display      | ✅     |
-| 10  | `config.invalid_provider_strategy`                                        | errors-demo boot-variant e2e (invalid strategy rejected at init)            | ✅     |
-| 11  | `config.missing_repository`                                               | errors-demo boot-variant e2e (module without repository binding)            | ✅     |
-| 12  | Conditional registration (no `provider` -> no command/embedding services) | e2e: ledger-only module variant proves absence from the container           | ✅     |
+| #   | Library surface                                                            | Demonstrated in                                                                             | Status |
+| --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------ |
+| 1   | `BymaxAiTokensModule.forRootAsync` + `BymaxAiTokensModuleOptions`          | `apps/api/src/ai/ai.module.ts` + `ai/ai-tokens.config.ts` (primary wiring)                  | ✅     |
+| 2   | `BymaxAiTokensModule.forRoot` (sync registration)                          | `apps/api/test/e2e/module-variants.e2e-spec.ts`                                             | ✅     |
+| 3   | Global-by-construction module (no re-import per feature module)            | workspace/ledger/pricing/usage modules inject library services without importing the module | ✅     |
+| 4   | `IAiTokensStore` (the single composed `store` binding)                     | `ai/ai-tokens.config.ts` binds the store over `PrismaService`                               | ✅     |
+| 5   | `PrismaAiTokensStore` (`./prisma`, the shipped PostgreSQL adapter)         | `apps/api/src/ai/ai-store.module.ts`                                                        | ✅     |
+| 6   | `BYMAX_AI_TOKENS_OPTIONS` (effective-options injection)                    | `apps/api/src/ai/wiring.service.ts` (`GET /health/wiring` report)                           | ✅     |
+| 7   | `BYMAX_AI_TOKENS_LOGGER` (reserved in v0.1.0, bound `null`)                | `apps/api/src/ai/wiring.service.ts` reports the honest `loggerBound: false`                 | ✅     |
+| 8   | `scopeResolver` (host identity to `MeteringContext`)                       | `ai/ai-tokens.config.ts` + `identity/identity.middleware.ts`                                | ✅     |
+| 9   | Ledger-only variant (wallets/budgets off, `quota.disabled` 503)            | `module-variants.e2e-spec.ts` + `quota-status`/`quota-budgets` null-tolerant services       | ✅     |
+| 10  | Invalid-config boots (`AI_TOKENS_INVALID_CONFIG`, `AI_TOKENS_FX_REQUIRED`) | `module-variants.e2e-spec.ts` boot-variant walk                                             | ✅     |
 
-### 7.2 Ledger: `AiTokenTransactionService`
+### 7.2 Metering lifecycle & decorators
 
-| #   | Surface                                          | Demonstrated in                                                                                        | Status |
-| --- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ------ |
-| 13  | `record()` (generic)                             | `system-jobs` (custom typed transaction)                                                               | ✅     |
-| 14  | `recordGeneration()`                             | every Playground command (via `AiCommandService`) + direct in `ledger` tests                           | ✅     |
-| 15  | `recordEmbeddingGeneration()`                    | embeddings panel (via `EmbeddingService`)                                                              | ✅     |
-| 16  | `recordCredit()` (all four credit types)         | Quota Lab top-up (`purchase`), seed (`monthly_allocation`, `trial_allocation`), refund flow (`refund`) | ✅     |
-| 17  | `getUserTransactions()` (filters, pagination)    | `GET /ledger/transactions` (type/date filters, limit/offset)                                           | ✅     |
-| 18  | `getTotalTokensConsumed()`                       | Overview page stat card                                                                                | ✅     |
-| 19  | `getTotalCostUSD()`                              | Overview page stat card                                                                                | ✅     |
-| 20  | `amount: 0` rejection (`ledger.zero_amount`)     | errors-demo                                                                                            | ✅     |
-| 21  | Rounding of fractional amounts                   | unit test on ledger endpoint + metadata `tokensUsed` preserved                                         | ✅     |
-| 22  | `ledger.invalid_input`, `ledger.tenant_required` | errors-demo + tenants-required e2e variant                                                             | ✅     |
-| 23  | Immutability convention (refund, never edit)     | Ledger page "refund" action creates a compensating transaction                                         | ✅     |
+| #   | Library surface                                                         | Demonstrated in                                                                   | Status |
+| --- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------ |
+| 11  | `MeteringService.record` (post-hoc metering)                            | every workspace command via `apps/api/src/ai/metered-call.ts`                     | ✅     |
+| 12  | `MeteringService.hold` / `capture` / `release` (enforced lifecycle)     | `ai/metered-call.ts` (`runWithHold`) + `quota/quota-lab.service.ts`               | ✅     |
+| 13  | `MeteringService.reverse` (compensating refund)                         | `ledger` refund flow (`POST /ledger/refund`)                                      | ✅     |
+| 14  | `MeteringService.estimateCost` + `CostEstimate`                         | `errors-demo/errors-demo.service.ts` (backdated-cost helper, §13.4)               | ✅     |
+| 15  | `Meter` + `MeterConfig` + `METER_METADATA`                              | `quota/quota.controller.ts` (declarative constant-lab route)                      | ✅     |
+| 16  | `RequireBudget` + `RequireBudgetConfig` + `REQUIRE_BUDGET_METADATA`     | `quota/quota.controller.ts` (static pre-handler hold)                             | ✅     |
+| 17  | `MeteringInterceptor` (settlement + `x-ai-tokens-*` headers)            | `quota/quota.controller.ts` + `quota-lab.e2e-spec.ts` header assertions           | ✅     |
+| 18  | `BudgetGuard` (wrapped by the app's null-tolerant `EnforcementGuard`)   | `apps/api/src/ai/enforcement.guard.ts`                                            | ✅     |
+| 19  | `Hold` + `HoldEstimate` (typed reservations)                            | `ai/metered-call.ts` + `errors-demo/trigger-registry.ts` (hold-code proofs)       | ✅     |
+| 20  | `MeteringContext` + `MeteringScope`                                     | `apps/api/src/ai/metering-context.ts` + `apps/web/src/lib/api-types.ts`           | ✅     |
+| 21  | `ProviderPreset` + `NormalizedUsage` + `normalizeOpenAiCompatibleUsage` | `apps/api/src/ai/mock-usage.presets.ts` (chat + embedding presets)                | ✅     |
+| 22  | `providerPresets` (shipped preset catalog)                              | `errors-demo/trigger-registry.ts` (`AI_TOKENS_UNKNOWN_PROVIDER` proof)            | ✅     |
+| 23  | `StreamUsageCollector`                                                  | `errors-demo/trigger-registry.ts` (`AI_TOKENS_STREAM_USAGE_MISSING` proof)        | ✅     |
+| 24  | `UsageRecord` + `UsageStatus` (ledger row shape + lifecycle union)      | `ai/metered-call.ts`, `ledger/dto/list-transactions.query.ts`, web `api-types.ts` | ✅     |
+| 25  | `JsonSafe` + `toJsonSafe` (wire-safe serialization of bigint money)     | `errors-demo/errors-demo.service.ts` + `quota/quota-status.service.ts`            | ✅     |
 
-### 7.3 Pricing: `PricingService`
+### 7.3 Ledger & usage reports
 
-| #   | Surface                                                           | Demonstrated in                                                              | Status |
-| --- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------ |
-| 24  | `getCurrentPricing()`                                             | Pricing page (per model)                                                     | ✅     |
-| 25  | `calculateCost()` (input+output split)                            | Playground result panel (cost breakdown)                                     | ✅     |
-| 26  | Embedding cost path (`outputPrice: null`)                         | embeddings panel cost display                                                | ✅     |
-| 27  | Null-outputPrice fallback warning path                            | unit test (completionTokens > 0 on embedding model)                          | ✅     |
-| 28  | `updatePricing()` (window close + successor + cache invalidation) | Pricing page update form + history timeline                                  | ✅     |
-| 29  | `getAllCurrentPricing()`                                          | Pricing page table                                                           | ✅     |
-| 30  | `getPricingHistory()`                                             | Pricing page per-model history                                               | ✅     |
-| 31  | `invalidateCache()`                                               | Pricing admin "flush cache" action                                           | ✅     |
-| 32  | Historical resolution (old date -> old price)                     | scenario §13.4 (backdated cost calculation)                                  | ✅     |
-| 33  | Pricing cache TTL (`pricing.cacheTtlMs`)                          | e2e: repository call count stable within TTL                                 | ✅     |
-| 34  | `pricing.not_found`, `pricing.invalid_date`, `pricing.overlap`    | errors-demo                                                                  | ✅     |
-| 35  | `pricing.seedDefaults` + `DEFAULT_OPENAI_PRICING_2026`            | boot seed (idempotency proven by double boot in e2e)                         | ✅     |
-| 36  | `pricing.customSeed`                                              | mock model prices (`mock-chat-pro`, `mock-embed`) seeded beside the defaults | ✅     |
+| #   | Library surface                                                  | Demonstrated in                                                             | Status |
+| --- | ---------------------------------------------------------------- | --------------------------------------------------------------------------- | ------ |
+| 26  | `LedgerService.query` + `LedgerFilter`                           | `apps/api/src/ledger/ledger-read.service.ts` (`GET /ledger/transactions`)   | ✅     |
+| 27  | `LedgerService.sumCost` + `LedgerCostSummary`                    | `ledger/ledger-read.service.ts` (list totals + overview stat cards)         | ✅     |
+| 28  | `LedgerService.findById`                                         | `ledger/ledger-read.service.ts` (`GET /ledger/transactions/:id`)            | ✅     |
+| 29  | `UsageReportService.summarize` + `UsageSummary` + `ReportFilter` | `apps/api/src/usage/usage-analytics.service.ts` (every `/usage/*` grouping) | ✅     |
+| 30  | `TOKEN_CATEGORIES` (per-category token breakdown)                | `usage/usage-analytics.service.spec.ts` (exact category reconciliation)     | ✅     |
 
-### 7.4 Inference wrappers: `AiCommandService` & `EmbeddingService`
+### 7.4 Pricing
 
-| #   | Surface                                                                     | Demonstrated in                                                              | Status |
-| --- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------ |
-| 37  | `translate()` (multi-target)                                                | Playground: Translate card                                                   | ✅     |
-| 38  | `command.missing_translations`                                              | errors-demo (mock returns partial languages)                                 | ✅     |
-| 39  | `summarize()` (`bullet`/`paragraph`/`tldr`)                                 | Playground: Summarize card (style picker)                                    | ✅     |
-| 40  | `rewrite()`                                                                 | Playground: Rewrite card                                                     | ✅     |
-| 41  | `analyze<T>()` (JSON schema output)                                         | Playground: Analyze card (sentiment + entities schema)                       | ✅     |
-| 42  | `custom()` (escape hatch)                                                   | Playground: Custom card (system+user prompt)                                 | ✅     |
-| 43  | One-transaction-per-call guarantee                                          | e2e asserts ledger delta == 1 per command                                    | ✅     |
-| 44  | Truncated response still debits                                             | errors-demo (`finishReason: 'length'`) + ledger assertion                    | ✅     |
-| 45  | Invalid JSON does not debit                                                 | errors-demo (`provider.invalid_json`) + ledger assertion                     | ✅     |
-| 46  | `EmbeddingService.generate()`                                               | embeddings panel (single text)                                               | ✅     |
-| 47  | `EmbeddingService.generateBatch()` (ONE aggregate transaction, `batchSize`) | embeddings panel (batch mode)                                                | ✅     |
-| 48  | `embedding.empty_text`                                                      | errors-demo                                                                  | ✅     |
-| 49  | `getDefaultModel()` / `getCurrentPricing()` (both services)                 | Playground header (model + live price badge)                                 | ✅     |
-| 50  | `command.missing_parameters`                                                | errors-demo (incomplete DTO)                                                 | ✅     |
-| 51  | Per-call `model` override                                                   | Playground model picker (mock models)                                        | ✅     |
-| 52  | `resourceId` correlation                                                    | every command sends `resourceId: 'doc-<n>'`; Ledger filters by it (metadata) | ✅     |
+| #   | Library surface                                   | Demonstrated in                                                                | Status |
+| --- | ------------------------------------------------- | ------------------------------------------------------------------------------ | ------ |
+| 31  | `PricingService.resolveRate`                      | `workspace/workspace-models.service.ts` + `errors-demo` backdated-cost helper  | ✅     |
+| 32  | `PricingService.upsertPrice` + `NewPriceVersion`  | `pricing/pricing-catalog.service.ts` (`PUT /pricing/:model`, window close)     | ✅     |
+| 33  | `PriceVersion` (effective-dated window shape)     | `pricing` views + web pricing timeline (`apps/web/src/lib/api-types.ts`)       | ✅     |
+| 34  | `MODEL_PRICES_SEED` + `SeedPriceRow` (`./prices`) | `pricing/pricing-seed.service.ts` + `pricing/mock-model-prices.ts` (boot seed) | ✅     |
 
-### 7.5 Quota: guard, decorators, policy
+### 7.5 Wallets & budgets
 
-| #   | Surface                                               | Demonstrated in                                      | Status |
-| --- | ----------------------------------------------------- | ---------------------------------------------------- | ------ |
-| 53  | `TokenQuotaGuard` (controller-scoped)                 | `workspace` controller                               | ✅     |
-| 54  | `@ConsumeTokens` constant estimator                   | Quota Lab endpoint A                                 | ✅     |
-| 55  | `@ConsumeTokens` body-size estimator                  | Playground commands (chars/4 heuristic)              | ✅     |
-| 56  | `@ConsumeTokens` model-based estimator                | Quota Lab endpoint B                                 | ✅     |
-| 57  | `userIdResolver` / `tenantIdResolver` overrides       | Quota Lab endpoint C (header-based)                  | ✅     |
-| 58  | `@SkipQuota`                                          | balance + read endpoints                             | ✅     |
-| 59  | Unmarked handler passes (guard inert)                 | `GET /workspace/models` under the guarded controller | ✅     |
-| 60  | `quota.no_user` (401)                                 | e2e without `x-demo-user`                            | ✅     |
-| 61  | `quota.below_minimum` (402)                           | Quota Lab (minimumBalance variant)                   | ✅     |
-| 62  | `quota.insufficient_balance` (402, tolerance applied) | scenario §13.5 (drain then blocked)                  | ✅     |
-| 63  | `quota.balanceResolver` (inline)                      | primary wiring (ledger-backed balance)               | ✅     |
-| 64  | `IQuotaPolicy` via token (class-based)                | e2e variant module                                   | ✅     |
-| 65  | `quota.estimationTolerance`                           | Quota Lab tolerance display + e2e boundary test      | ✅     |
-| 66  | `quota.enabled: false` path                           | e2e variant (guard admits without resolver)          | ✅     |
+| #   | Library surface                                                 | Demonstrated in                                                               | Status |
+| --- | --------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------ |
+| 35  | `WalletService.getBalance` / `grant` / `debit` + `WalletRef`    | `usage` balance read, `ledger` credits, seed grants, drain shortcuts          | ✅     |
+| 36  | `WalletEntry` (append-only wallet ledger rows)                  | `ledger` credit views + `errors-demo/trigger-registry.ts`                     | ✅     |
+| 37  | `BudgetService` + `UpsertBudgetInput`                           | `quota/quota-budgets.service.ts` (`POST/GET /quota/budgets`)                  | ✅     |
+| 38  | `Budget` + `BudgetStatus` + `BudgetPolicy` + `BudgetWindowKind` | `quota` budget surface + `apps/web/src/lib/api-types.ts`                      | ✅     |
+| 39  | `AccessStatus` (combined wallet + budget verdict)               | `quota/quota-status.service.ts` (`GET /quota/status`) + web guard inputs card | ✅     |
 
-### 7.6 Aggregations: `UsageAggregatorService`
+### 7.6 Errors, catalogs & money helpers
 
-| #   | Surface                                     | Demonstrated in                                      | Status |
-| --- | ------------------------------------------- | ---------------------------------------------------- | ------ |
-| 67  | `getBalance()`                              | Overview balance card + guard resolver               | ✅     |
-| 68  | `getUsageByPeriod()` (`day`/`week`/`month`) | Usage page time-series chart (granularity switch)    | ✅     |
-| 69  | `getUsageByType()`                          | Usage page donut                                     | ✅     |
-| 70  | `getUsageByModel()`                         | Usage page bar chart                                 | ✅     |
-| 71  | `getSystemCosts()` (byCategory, byType)     | Usage page "system costs" panel (fed by system-jobs) | ✅     |
-| 72  | `getTopConsumers()`                         | Usage page leaderboard (multi-user seed)             | ✅     |
+| #   | Library surface                                                         | Demonstrated in                                                                      | Status |
+| --- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------ |
+| 40  | `AiTokensException` (canonical `{ error: { code, message, details } }`) | `errors-demo` end-to-end envelope walk (26-code catalog)                             | ✅     |
+| 41  | `AI_TOKENS_ERROR_CODES` + `AiTokensErrorCode`                           | `errors-demo/error-catalog.ts` + typed narrowing in `apps/web/src/lib/api-client.ts` | ✅     |
+| 42  | `AI_OPERATIONS` + `AiOperation`                                         | `ledger/dto/list-transactions.query.ts` + web ledger filter chips                    | ✅     |
+| 43  | `SERVICE_TIERS` + `ServiceTier`                                         | `ledger/dto/list-transactions.query.ts` + `apps/web/src/lib/api-types.ts`            | ✅     |
+| 44  | `ProviderId`                                                            | `apps/web/src/lib/api-types.ts` (typed wire shapes)                                  | ✅     |
+| 45  | `formatNanoUsd` + `floatUsdToNanoUsd` + `computeCostNanoUsd`            | `ledger/ledger-credit.service.ts`, web `money.ts`, `ledger-pricing` e2e math         | ✅     |
+| 46  | Shared subpath as the ONLY browser import (`./shared`)                  | `apps/web` imports + the CI `web-import-guard` job                                   | ✅     |
 
-### 7.7 Providers, errors, multi-tenant & shared subpath
+### 7.7 Intentionally not exercised (audited ⛔ justifications)
 
-| #   | Surface                                                                                                                           | Demonstrated in                                                                      | Status |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------ |
-| 73  | `IAiProvider` custom implementation                                                                                               | `MockAiProvider` (§12)                                                               | ✅     |
-| 74  | `NoOpAiProvider`                                                                                                                  | unit-test suites (stub wiring)                                                       | ✅     |
-| 75  | `OpenAiProvider` (`'openai-default'`)                                                                                             | env-gated opt-in config + `provider.api_key_missing` boot error demo; never in CI    | ✅     |
-| 76  | Retry/backoff surface (`rate_limited`, `timeout`)                                                                                 | MockAiProvider failure injection (deterministic, no sleeps in tests via fake timers) | ✅     |
-| 77  | `provider.empty_response`, `provider.content_filter`, `provider.unknown_error`, `provider.api_key_invalid`                        | errors-demo (failure-injection markers)                                              | ✅     |
-| 78  | `AiTokensException` response shape (`error.code/message/details`)                                                                 | errors page renders the canonical envelope for each trigger                          | ✅     |
-| 79  | `AI_TOKENS_ERROR_CODES` constants                                                                                                 | typed error handling in `apps/web` api client                                        | ✅     |
-| 80  | `multiTenant.required: false` (default, null = global)                                                                            | primary wiring                                                                       | ✅     |
-| 81  | `multiTenant.required: true`                                                                                                      | e2e variant module + tenants page callout                                            | ✅     |
-| 82  | `multiTenant.tenantIdResolver`                                                                                                    | header resolver (`x-tenant-id`)                                                      | ✅     |
-| 83  | Tenant isolation (A cannot see B)                                                                                                 | Tenants page switcher + e2e proof                                                    | ✅     |
-| 84  | `metadata` reserved keys (`isSystemCost`, `systemCostCategory`, `decisionId`, `strategy`, `confidence`, `reasoning`, `batchSize`) | system-jobs + agent-assist demo + embeddings batch                                   | ✅     |
-| 85  | `agent_decision_assist` transaction type                                                                                          | system-jobs "agent decision" simulation                                              | ✅     |
-| 86  | `AI_TOKEN_TRANSACTION_TYPES` (shared)                                                                                             | Ledger page type filter chips (imported in the browser bundle)                       | ✅     |
-| 87  | Shared subpath in both apps                                                                                                       | `apps/api` + `apps/web` import `./shared` types                                      | ✅     |
-| 88  | Exported DTOs (`TranslateCommandDto`, ...)                                                                                        | workspace controller reuses the library DTOs                                         | ✅     |
-| 89  | `AuthenticatedRequest` type                                                                                                       | identity middleware + estimators typing                                              | ✅     |
-| 90  | Streaming                                                                                                                         | ⛔ documented as out of scope in v1 (library §13); noted on the Playground           | ⛔     |
+Every name below is a real export of the shipped dist that the example deliberately does not
+import; the audit fails if a name is neither imported nor listed here with a reason.
+
+| #   | Library surface                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Why not exercised                                                                                                                                                                                                                                                                                                              | Status |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 47  | `BYMAX_AI_TOKENS_LEDGER_STORE`, `BYMAX_AI_TOKENS_PRICING_STORE`, `BYMAX_AI_TOKENS_WALLET_STORE`, `BYMAX_AI_TOKENS_BUDGET_STORE`, `BYMAX_AI_TOKENS_BUDGET_COUNTER`, `BYMAX_AI_TOKENS_CONTENT_STORE`, `BYMAX_AI_TOKENS_EVENT_SINK`, `BYMAX_AI_TOKENS_TELEMETRY`, `BYMAX_AI_TOKENS_TOKENIZER`, `ILedgerStore`, `IPricingStore`, `IWalletStore`, `IBudgetStore`, `IBudgetCounterStore`, `IContentStore`, `IEventSink`, `ITelemetrySink`, `ITokenizer`, `IMarkupPolicy` | The example binds the ONE composed `store` object (`IAiTokensStore` via the shipped `PrismaAiTokensStore`); the granular per-port tokens and interfaces are the advanced composition path for hosts assembling a store from parts or adding optional sinks, which a single-adapter reference app cannot honestly duplicate.    | ⛔     |
+| 48  | `AiTokensEvent`, `AiTokensEventType`, `AuditEventData`, `UsageRecordedEventData`, `UsageReversedEventData`, `HoldReleasedEventData`, `PriceMissingEventData`, `WalletGrantedEventData`, `WalletDepletedEventData`, `WalletLowBalanceEventData`, `BudgetExceededEventData`, `BudgetProjectedExceededEventData`, `BudgetThresholdCrossedEventData`                                                                                                                   | Payload types of the optional event sink; meaningless without an `IEventSink` binding (row 47), which the example does not register.                                                                                                                                                                                           | ⛔     |
+| 49  | `RecordInput`, `AdjustInput`, `DebitInput`, `GrantInput`, `RefundInput`, `EstimateCostInput`, `ResolveRateInput`, `LedgerAppendInput`, `NewUsageRecord`, `NewWalletEntry`, `SummarizeInput`, `UsageReportOptions`                                                                                                                                                                                                                                                  | Structural method-input types: the app passes object literals that TypeScript checks against the service signatures, so importing the names would add aliases without demonstrating anything new.                                                                                                                              | ⛔     |
+| 50  | `OpenGrant`, `Wallet`, `WalletBalance`, `WalletEntryFilter`, `WalletEntryPage`, `WalletEntryType`, `BudgetDelta`, `BudgetDimensionSnapshot`, `BudgetLimits`, `BudgetWindowSpend`, `PricedModel`, `CostBreakdown`, `MeterResult`                                                                                                                                                                                                                                    | Structural return/view types consumed through inference from the demonstrated service calls (`getBalance`, `status`, `resolveRate`, the interceptor result); never re-declared, never needed by name.                                                                                                                          | ⛔     |
+| 51  | `BymaxAiTokensModuleAsyncOptions`, `BymaxAiTokensModuleOptionsFactory`, `RequestAiTokens`, `WalletServiceOptions`, `BudgetServiceOptions`, `StreamUsageCollectorOptions`, `FormatNanoUsdOptions`, `ReportExportFormat`, `ReportGroupBy`                                                                                                                                                                                                                            | Option/factory types for registration and call styles the app does not use: the async options are inferred at the `forRootAsync` call site, the `useClass` factory path duplicates the demonstrated `useFactory`, and the optional knobs keep their defaults.                                                                  | ⛔     |
+| 52  | `KnownProviderId`, `PROVIDER_IDS`, `RatingMode`, `ScopeType`, `TokenCategory`, `UsageNormalizer`, `WALLET_ENTRY_TYPES`, `AiTokensErrorResponse`                                                                                                                                                                                                                                                                                                                    | Catalog aliases whose values already flow through the demonstrated unions (`ProviderId`, `MeteringScope`, `TOKEN_CATEGORIES`, `AiTokensErrorCode`); the app types against the narrower demonstrated names.                                                                                                                     | ⛔     |
+| 53  | `normalizeAnthropicUsage`, `normalizeBedrockConverseUsage`, `normalizeGeminiUsage`, `normalizeMistralUsage`, `normalizeOpenAiChatUsage`, `normalizeOpenAiResponsesUsage`, `normalizeOpenRouterUsage`, `normalizeVercelAiSdkUsage`                                                                                                                                                                                                                                  | Each normalizer maps its vendor SDK's real payload shape; the deterministic mock provider emits OpenAI-compatible responses, so the normalizer contract is demonstrated through `normalizeOpenAiCompatibleUsage` and the app's own presets. Exercising the other vendors would require their SDKs and keys (spec §2 non-goal). | ⛔     |
+| 54  | `AMOUNT_FIELDS`, `RELEASE_FIELDS`, `SETTLEMENT_FIELDS`, `SETTLEMENT_PATCH_KEYS`, `REVERSAL_LINKAGE_FIELD`, `isLegalLedgerTransition`, `isLegalTransitionPatchKey`, `applyMarkup`, `perMillion`, `resolveMultiplier4dp`, `deriveIdempotencyKey`                                                                                                                                                                                                                     | Adapter-authoring helpers (field lists, transition guards, rating math) for hosts writing a CUSTOM store; the example consumes the shipped Prisma adapter, which applies them internally.                                                                                                                                      | ⛔     |
+| 55  | `AiFeature`, `AI_FEATURE_METADATA`                                                                                                                                                                                                                                                                                                                                                                                                                                 | The standalone feature-labeling decorator; the app declares features through the demonstrated `@Meter({ feature })` config, the composed path.                                                                                                                                                                                 | ⛔     |
+| 56  | `RedisBudgetCounterStore`, `RedisBudgetCounterStoreOptions`, `CounterValueOutOfRangeError` (`./redis`)                                                                                                                                                                                                                                                                                                                                                             | Distributed budget counters need Redis infrastructure; this example is deliberately Postgres-only (one compose service) and demonstrates the default in-store counter path.                                                                                                                                                    | ⛔     |
 
 ---
 

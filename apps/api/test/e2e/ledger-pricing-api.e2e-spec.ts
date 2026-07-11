@@ -24,6 +24,7 @@ import type { App } from 'supertest/types.js'
 
 import { MODEL_PRICES_SEED } from '@bymax-one/nest-ai-tokens/prices'
 
+import { listenLocal } from './listen-local.js'
 import { buildSeedPlan } from '../../prisma/seed-plan.js'
 import { runSeed } from '../../prisma/seed-runner.js'
 import { createApp } from '../../src/bootstrap.js'
@@ -63,7 +64,7 @@ beforeAll(async () => {
   process.env.PORT = '0'
   app = await createApp()
   await runSeed(app.get(PrismaService))
-  server = app.getHttpServer() as App
+  server = await listenLocal(app)
 })
 
 /** Teardown order matters: app first (pools), then the container. */

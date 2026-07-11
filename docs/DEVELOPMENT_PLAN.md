@@ -29,8 +29,8 @@
 > every phase file mirror this table; when they disagree, this table wins and must be fixed in the
 > same commit.
 >
-> **Overall progress: 49 / 55 tasks (89%) · 9 / 10 phases done**
-> **Active phase:** none · **Blockers:** none
+> **Overall progress: 55 / 55 tasks (100%) · 9 / 10 phases done (phase 09 in review)**
+> **Active phase:** 09 (👀 Review) · **Blockers:** none
 
 | #   | Phase                                | Tasks file                                | Size | Done / Total | %    | Status |
 | --- | ------------------------------------ | ----------------------------------------- | ---- | ------------ | ---- | ------ |
@@ -43,7 +43,7 @@
 | 06  | Multi-Tenant & Error Catalog         | `phase-06-tenants-errors.md`              | M    | 5 / 5        | 100% | ✅     |
 | 07  | Web Skeleton & Design System         | `phase-07-web-skeleton-design.md`         | M    | 5 / 5        | 100% | ✅     |
 | 08  | Dashboard Pages                      | `phase-08-dashboard-pages.md`             | L    | 6 / 6        | 100% | ✅     |
-| 09  | Quality, Docs & Export Audit         | `phase-09-quality-docs-audit.md`          | L    | 0 / 6        | 0%   | 📋     |
+| 09  | Quality, Docs & Export Audit         | `phase-09-quality-docs-audit.md`          | L    | 6 / 6        | 100% | 👀     |
 
 ---
 
@@ -267,13 +267,13 @@
 
 ## Appendix A: Quality Gates
 
-| Gate          | Command                           | Bar                                                   |
-| ------------- | --------------------------------- | ----------------------------------------------------- |
-| Lint / format | `pnpm lint` / `pnpm format:check` | zero warnings, zero suppressions                      |
-| Types         | `pnpm typecheck`                  | strict, no `any`                                      |
-| Unit (api)    | `pnpm --filter api test:cov`      | 100% all four metrics                                 |
-| Unit (web)    | `pnpm --filter web test:cov`      | 100% `lib/**` + components                            |
-| E2E           | `pnpm --filter api test:e2e`      | every route, error code, guard path, module variant   |
-| Web smoke     | `pnpm --filter web test:e2e`      | shell + one live round-trip                           |
-| Export audit  | `pnpm audit:exports`              | every library export demonstrated or ⛔-justified     |
-| CI            | `.github/workflows/ci.yml`        | all of the above, sequential, green from the first PR |
+| Gate          | Command                              | Bar                                                                      |
+| ------------- | ------------------------------------ | ------------------------------------------------------------------------ |
+| Lint / format | `pnpm lint` / `pnpm format:check`    | zero warnings, zero suppressions                                         |
+| Types         | `pnpm typecheck`                     | strict, no `any`                                                         |
+| Unit (api)    | `pnpm --filter api test:cov`         | 100% all four metrics                                                    |
+| Unit (web)    | `pnpm --filter web test:cov`         | 100% `lib/**` + components                                               |
+| E2E           | `pnpm --filter api test:e2e`         | every route, error code, guard path, module variant                      |
+| Web smoke     | `pnpm --filter web test:integration` | the shell round-trip (Vitest integration; no Playwright layer by design) |
+| Export audit  | `pnpm audit:exports`                 | every library export demonstrated or ⛔-justified                        |
+| CI            | `.github/workflows/ci.yml`           | all of the above, sequential, green from the first PR                    |

@@ -9,8 +9,11 @@
  * the budget admin gates (401/403/Zod 400), a count-limited block budget
  * blocking pre-handler with the canonical 429 and no ledger write, the
  * caller-scoped budget listing with live status, and the combined access
- * status read. Crafted balances run through the REAL WalletService and
- * the estimates through the REAL MeteringService.estimateCost.
+ * status read, plus the prompt-less/malformed-body regression contract
+ * (defaults answer 200, rejections are canonical value-free 400s that
+ * never settle a charge). Crafted balances run through the REAL
+ * WalletService and the estimates through the REAL
+ * MeteringService.estimateCost.
  * Mocks: none. One container stack per run; the suite runs single-worker.
  */
 import { execFileSync } from 'node:child_process'
@@ -26,9 +29,12 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
 import type { App } from 'supertest/types.js'
 
+import { listenLocal } from './listen-local.js'
 import { runSeed } from '../../prisma/seed-runner.js'
 import { createApp } from '../../src/bootstrap.js'
 import { PrismaService } from '../../src/prisma/prisma.service.js'
+import { DEFAULT_LAB_PROMPT } from '../../src/quota/dto/lab-run.body.js'
+import { LAB_FEATURES } from '../../src/quota/quota-lab.service.js'
 
 /** The image every tier of this project pins for Postgres. */
 const POSTGRES_IMAGE = 'postgres:17-alpine'
@@ -61,7 +67,7 @@ beforeAll(async () => {
   process.env.PORT = '0'
   app = await createApp()
   await runSeed(app.get(PrismaService))
-  server = app.getHttpServer() as App
+  server = await listenLocal(app)
   ledger = app.get(LedgerService)
   metering = app.get(MeteringService)
   const maybeWallets = app.get<WalletService | null>(WalletService)
@@ -354,3 +360,111 @@ describe('GET /quota/status', () => {
     await request(server).get('/quota/status').expect(401)
   })
 })
+
+describe('prompt-less and malformed lab bodies (regression)', () => {
+  /**
+   * Regression: empty-object body on the constant route.
+   *
+   * A dashboard button with no prompt field naturally posts `{}`. The DTO
+   * defaults must fill both fields so the provider never sees undefined
+   * content: 200, the default prompt echoed, cost headers present.
+   */
+  it('answers a {} constant body 200 with the default prompt', async () => {
+    const response = await request(server)
+      .post('/quota/lab/constant')
+      .set('x-demo-user', 'linus')
+      .send({})
+      .expect(200)
+
+    expect(response.body.choices[0].message.content).toBe(
+      `[mock:mock-chat-lite] ${DEFAULT_LAB_PROMPT}`,
+    )
+    expect(response.headers['x-ai-tokens-cost']).toMatch(/^\d+$/)
+  })
+
+  /**
+   * Regression: empty-object body on the model-based route.
+   *
+   * Same defaulting contract on the programmatic path: 200 with the cheap
+   * model and the default prompt, and a settled transaction id.
+   */
+  it('answers a {} model-based body 200 with the default model and prompt', async () => {
+    const response = await request(server)
+      .post('/quota/lab/model-based')
+      .set('x-demo-user', 'linus')
+      .send({})
+      .expect(200)
+
+    expect(response.body.model).toBe('mock-chat-lite')
+    expect(response.body.content).toBe(`[mock:mock-chat-lite] ${DEFAULT_LAB_PROMPT}`)
+    expect(response.body.transactionId).toEqual(expect.any(String))
+  })
+
+  /**
+   * Regression: a body-less POST is a clean 400, never a 500.
+   *
+   * With no parsed body the pipe rejects with the canonical value-free
+   * validation envelope before the handler runs, on both routes, and no
+   * charge settles: the model-based route (hold placed in-service, after
+   * validation) writes nothing, and the constant route's guard-placed
+   * static hold is RELEASED by the interceptor (an audit row, never a
+   * posted charge).
+   */
+  it('rejects a body-less POST 400 with the value-free envelope and settles no charge', async () => {
+    const postedBefore = await linusLabRows(['posted', 'pending'])
+    const releasedBefore = await linusLabRows(['released'])
+    for (const route of ['/quota/lab/constant', '/quota/lab/model-based']) {
+      const response = await request(server).post(route).set('x-demo-user', 'linus').expect(400)
+      expect(response.body).toEqual({
+        message: 'Validation failed',
+        issues: [expect.objectContaining({ path: '(root)', code: 'invalid_type' })],
+      })
+    }
+    // No settled or in-flight charge; exactly one released-hold audit row
+    // from the constant route's pre-handler static hold.
+    expect(await linusLabRows(['posted', 'pending'])).toBe(postedBefore)
+    expect(await linusLabRows(['released'])).toBe(releasedBefore + 1)
+  })
+
+  /**
+   * Regression: a wrong-typed prompt is a clean 400 naming the field.
+   *
+   * The issue line carries the path and code only (value-free), so a bad
+   * client learns which field failed without its payload echoing back.
+   */
+  it('rejects a non-string prompt 400 with a value-free field issue', async () => {
+    const response = await request(server)
+      .post('/quota/lab/constant')
+      .set('x-demo-user', 'linus')
+      .send({ prompt: 123 })
+      .expect(400)
+
+    expect(response.body).toEqual({
+      message: 'Validation failed',
+      issues: [expect.objectContaining({ path: 'prompt', code: 'invalid_type' })],
+    })
+  })
+})
+
+/**
+ * Linus's lab ledger rows across BOTH lab features.
+ *
+ * @param statuses The lifecycle statuses to count (defaults to all).
+ * @returns The combined row count.
+ */
+async function linusLabRows(statuses: UsageStatus[] = ALL_STATUSES): Promise<number> {
+  const scope = { type: 'user', id: 'linus' } as const
+  const constant = await ledger.query({
+    tenantId: 'globex',
+    scope,
+    feature: LAB_FEATURES.constant,
+    status: statuses,
+  })
+  const modelBased = await ledger.query({
+    tenantId: 'globex',
+    scope,
+    feature: LAB_FEATURES.modelBased,
+    status: statuses,
+  })
+  return constant.length + modelBased.length
+}

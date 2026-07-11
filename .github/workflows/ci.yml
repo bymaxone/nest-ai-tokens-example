@@ -5,11 +5,12 @@
 # shared setup action clones and builds the sibling library beside the
 # workspace so the `file:` dependency resolves. Web unit coverage folds into
 # the reusable's own "unit" job through the root `test:cov` script (no
-# separate "web-test" job exists in the reusable); the Playwright web-e2e
-# stage stays off until a suite ships. Stages whose subjects do not exist in
-# this repo yet (export audit, mutation) are disabled via inputs and get
-# switched on as the apps grow. The reusable's job names are the CI contract
-# for branch protection.
+# separate "web-test" job exists in the reusable); web verification is the
+# web-build job plus the Vitest integration suite (no Playwright layer, so
+# the reusable's web-e2e stage stays off). The export audit runs through the
+# reusable's export-usage job (`pnpm audit:exports`: the gate's node:test
+# proof, then the audit itself). The reusable's job names are the CI
+# contract for branch protection.
 name: CI
 
 on:
@@ -33,9 +34,12 @@ jobs:
     with:
       library-repo: bymaxone/nest-ai-tokens
       has-web: true
-      # No Playwright suite ships this phase; the web-build job alone proves
-      # the production Next.js compile stays green.
+      # No Playwright layer by design; the web-build job plus the Vitest
+      # integration suite prove the production Next.js surface stays green.
       run-e2e-web: false
+      # Library export audit: every real dist export must be imported by the
+      # apps or ⛔-justified in the spec's coverage matrix (spec §7.7).
+      run-export-audit: true
       # The reusable's e2e-api job runs on the runner's Docker daemon via
       # Testcontainers (random mapped ports), so no `services:` block and no
       # fixed host port are involved; the suite provisions its own Postgres.

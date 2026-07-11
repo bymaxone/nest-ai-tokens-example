@@ -17,6 +17,8 @@ node_modules/
 # Build Outputs
 # ============================================
 dist/
+# The export-audit self-test ships a tiny fake dist as a checked-in fixture.
+!scripts/fixtures/**/dist/
 build/
 .next/
 *.tgz

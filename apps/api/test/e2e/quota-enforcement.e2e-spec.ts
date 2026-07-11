@@ -25,6 +25,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
 import type { App } from 'supertest/types.js'
 
+import { listenLocal } from './listen-local.js'
 import { runSeed } from '../../prisma/seed-runner.js'
 import { createApp } from '../../src/bootstrap.js'
 import { PrismaService } from '../../src/prisma/prisma.service.js'
@@ -59,7 +60,7 @@ beforeAll(async () => {
   process.env.PORT = '0'
   app = await createApp()
   await runSeed(app.get(PrismaService))
-  server = app.getHttpServer() as App
+  server = await listenLocal(app)
   ledger = app.get(LedgerService)
   const maybeWallets = app.get<WalletService | null>(WalletService)
   if (maybeWallets === null) throw new Error('wallets must be enabled for this suite')

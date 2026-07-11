@@ -20,6 +20,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
 import type { App } from 'supertest/types.js'
 
+import { listenLocal } from './listen-local.js'
 import { createApp } from '../../src/bootstrap.js'
 
 /** The image every tier of this project pins for Postgres. */
@@ -50,7 +51,7 @@ beforeAll(async () => {
   process.env.DATABASE_URL = databaseUrl
   process.env.PORT = '0'
   app = await createApp()
-  server = app.getHttpServer() as App
+  server = await listenLocal(app)
 })
 
 /**
@@ -132,7 +133,7 @@ describe('health probes', () => {
     let downApp: INestApplication | undefined
     try {
       downApp = await createApp()
-      const response = await request(downApp.getHttpServer() as App)
+      const response = await request(await listenLocal(downApp))
         .get('/health/ready')
         .expect(503)
       expect(response.body).toEqual({ status: 'down', reason: 'database unreachable' })

@@ -26,6 +26,7 @@ import type { StartedPostgreSqlContainer } from '@testcontainers/postgresql'
 import request from 'supertest'
 import type { App } from 'supertest/types.js'
 
+import { listenLocal } from './listen-local.js'
 import { buildSeedPlan } from '../../prisma/seed-plan.js'
 import { runSeed } from '../../prisma/seed-runner.js'
 import { createApp } from '../../src/bootstrap.js'
@@ -64,7 +65,7 @@ let server: App
 async function bootApp(): Promise<INestApplication> {
   const booted = await createApp()
   app = booted
-  server = booted.getHttpServer() as App
+  server = await listenLocal(booted)
   return booted
 }
 
