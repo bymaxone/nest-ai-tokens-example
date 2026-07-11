@@ -46,7 +46,7 @@
     "test": "pnpm -r --workspace-concurrency=1 --if-present run test",
     "test:cov": "pnpm -r --workspace-concurrency=1 --if-present run test:cov",
     "test:e2e": "pnpm -r --workspace-concurrency=1 --if-present run test:e2e",
-    "audit:exports": "node --test scripts/*.test.mjs && node scripts/audit-library-exports.mjs",
+    "audit:exports": "node --test scripts/audit-library-exports.test.mjs && node scripts/audit-library-exports.mjs",
     "infra:up": "docker compose up -d --wait",
     "infra:down": "docker compose down",
     "infra:nuke": "docker compose down -v",
