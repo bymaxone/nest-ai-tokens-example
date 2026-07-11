@@ -11,13 +11,16 @@
  *
  * @layer quota
  */
+import { randomUUID } from 'node:crypto'
+
 import { Inject, Injectable } from '@nestjs/common'
-import { MeteringService } from '@bymax-one/nest-ai-tokens'
+import { MeteringService, WalletService, formatNanoUsd } from '@bymax-one/nest-ai-tokens'
 import type { HoldEstimate } from '@bymax-one/nest-ai-tokens'
 
 import type { LabRunBody } from './dto/lab-run.body.js'
+import { ApiException } from '../common/api-exception.js'
 import { runWithHold } from '../ai/metered-call.js'
-import { buildMeteringContext } from '../ai/metering-context.js'
+import { buildMeteringContext, walletRefOf } from '../ai/metering-context.js'
 import { MOCK_CHAT_LITE, MOCK_CHAT_PRO, MOCK_PROVIDER_ID } from '../ai/mock-models.js'
 import type { MockChatModel } from '../ai/mock-models.js'
 import { MockAiProvider } from '../ai/mock-ai.provider.js'
@@ -75,6 +78,25 @@ export function extractLabUsage(result: unknown): unknown {
   return result
 }
 
+/** The wallet-entry reason stamped on a drain debit and its released hold. */
+export const DRAIN_REASON = 'quota lab drain'
+
+/**
+ * The result of a drain that did NOT reach the wall: with an overdraft floor
+ * configured, the post-drain hold is still allowed, so the endpoint releases
+ * it unbilled and reports the residual balance instead of the canonical 402.
+ */
+export interface DrainResult {
+  /** Amount debited from the wallet by the drain (nano-USD, decimal string). */
+  readonly drainedNanoUsd: string
+  /** Wallet balance after the drain (nano-USD, decimal string). */
+  readonly balanceNanoUsd: string
+  /** The post-drain balance, formatted for display. */
+  readonly balanceFormatted: string
+  /** Always `false` here: reaching the wall throws the canonical 402 instead. */
+  readonly wallReached: boolean
+}
+
 /** The response of a programmatic lab run. */
 export interface LabRunResult {
   /** The model that answered. */
@@ -99,7 +121,64 @@ export class QuotaLabService {
   constructor(
     @Inject(MockAiProvider) private readonly provider: MockAiProvider,
     @Inject(MeteringService) private readonly metering: MeteringService,
+    @Inject(WalletService) private readonly wallets: WalletService | null,
   ) {}
+
+  /**
+   * Drain the caller's wallet to zero, then prove the enforcement wall: the
+   * post-drain constant-estimate hold is rejected with the canonical
+   * `AI_TOKENS_INSUFFICIENT_CREDITS` 402 (thrown straight to the client) when
+   * no overdraft floor is configured. The debit is a real, auditable wallet
+   * entry standing in for prior spend, so a later top-up genuinely unblocks
+   * the estimate (scenario 5). If an overdraft floor lets the post-drain hold
+   * pass, it is released unbilled and the residual balance is reported.
+   *
+   * @param identity The request identity (the wallet owner to drain).
+   * @returns The residual balance, ONLY when the wall was not reached.
+   * @throws {ApiException} `quota.disabled` (503) when wallets are off.
+   * @throws {AiTokensException} `AI_TOKENS_INSUFFICIENT_CREDITS` (402) when
+   *   the drained wallet rejects the hold at the wall (the common path).
+   */
+  async drain(identity: DemoIdentity): Promise<DrainResult> {
+    const wallets = this.requireWallets()
+    const ref = walletRefOf(identity)
+    const before = await wallets.getBalance(ref)
+    let drainedNanoUsd = 0n
+    if (before.nanoUsd > 0n) {
+      await wallets.debit(ref, {
+        amountNanoUsd: before.nanoUsd,
+        idempotencyKey: randomUUID(),
+        reason: DRAIN_REASON,
+      })
+      drainedNanoUsd = before.nanoUsd
+    }
+    // The wallet is now empty; reserving the constant estimate throws the
+    // canonical 402 straight to the client (the default, no-overdraft path).
+    // Only an overdraft floor lets this hold pass, in which case it is
+    // released unbilled and the residual balance is reported below.
+    const context = buildMeteringContext(identity, LAB_FEATURES.constant, [])
+    const hold = await this.metering.hold(context, LAB_CONSTANT_ESTIMATE)
+    await this.metering.release(hold, DRAIN_REASON)
+    const after = await wallets.getBalance(ref)
+    return {
+      drainedNanoUsd: drainedNanoUsd.toString(),
+      balanceNanoUsd: after.nanoUsd.toString(),
+      balanceFormatted: formatNanoUsd(after.nanoUsd),
+      wallReached: false,
+    }
+  }
+
+  /** The wallet service, or the documented 503 when the block is off. */
+  private requireWallets(): WalletService {
+    if (this.wallets === null) {
+      throw new ApiException(
+        'quota.disabled',
+        503,
+        'The quota lab drain requires the wallets feature block (set QUOTA_ENABLED=true).',
+      )
+    }
+    return this.wallets
+  }
 
   /**
    * Run the mock completion behind the CONSTANT lab route. Metering is

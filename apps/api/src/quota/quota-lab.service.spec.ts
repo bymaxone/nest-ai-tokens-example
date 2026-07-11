@@ -10,10 +10,12 @@
  * Mocks: the library MeteringService (hold/capture/release double). The
  * provider is the REAL zero-latency MockAiProvider.
  */
-import { describe, expect, it } from '@jest/globals'
+import { describe, expect, it, jest } from '@jest/globals'
+import type { WalletBalance, WalletEntry, WalletService } from '@bymax-one/nest-ai-tokens'
 
 import { labRunBodySchema } from './dto/lab-run.body.js'
 import {
+  DRAIN_REASON,
   LAB_CONSTANT_ESTIMATE,
   LAB_CONSTANT_TOKENS,
   LAB_FEATURES,
@@ -23,6 +25,7 @@ import {
   extractLabUsage,
   labEstimateTokens,
 } from './quota-lab.service.js'
+import { ApiException } from '../common/api-exception.js'
 import { MockAiProvider } from '../ai/mock-ai.provider.js'
 import { MOCK_CHAT_PRESET } from '../ai/mock-usage.presets.js'
 import type { DemoIdentity } from '../identity/identity.middleware.js'
@@ -31,11 +34,44 @@ import { recordWith } from '../../test/fixtures/usage-record.fixture.js'
 
 const ada: DemoIdentity = { id: 'ada', tenantId: 'acme' }
 
-/** The service under test with a real provider and a metering double. */
-function serviceWith(record = recordWith({ id: 'txn-lab' })) {
+/** A `WalletService` double exposing the getBalance/debit pair `drain` drives. */
+interface WalletDouble {
+  /** The double to inject where `WalletService` is expected. */
+  wallets: WalletService
+  /** The stubbed `getBalance` (resolves the seeded balances in order). */
+  getBalanceFn: jest.Mock<WalletService['getBalance']>
+  /** The stubbed `debit` (resolves a placeholder entry). */
+  debitFn: jest.Mock<WalletService['debit']>
+}
+
+/** A wallet balance with only the fields the drain reads. */
+function balance(nanoUsd: bigint): WalletBalance {
+  return { nanoUsd, credits: Number(nanoUsd) / 1e9 }
+}
+
+/**
+ * Build a `WalletService` double. `getBalance` resolves each queued balance
+ * in turn (before-drain, then after-drain), defaulting to a funded then empty
+ * pair; `debit` resolves a placeholder entry the drain ignores.
+ *
+ * @param balances The balances `getBalance` resolves, in call order.
+ * @returns The double and its observable functions.
+ */
+function walletWith(balances: readonly bigint[] = [60_000_000_000n, 0n]): WalletDouble {
+  const getBalanceFn = jest.fn<WalletService['getBalance']>()
+  for (const value of balances) getBalanceFn.mockResolvedValueOnce(balance(value))
+  const debitFn = jest
+    .fn<WalletService['debit']>()
+    .mockResolvedValue({ id: 'drain-entry' } as WalletEntry)
+  const wallets = { getBalance: getBalanceFn, debit: debitFn } as unknown as WalletService
+  return { wallets, getBalanceFn, debitFn }
+}
+
+/** The service under test with a real provider, a metering double, and a wallet double. */
+function serviceWith(record = recordWith({ id: 'txn-lab' }), wallet: WalletDouble = walletWith()) {
   const double = meteringWith(record)
-  const service = new QuotaLabService(new MockAiProvider({}), double.metering)
-  return { service, ...double }
+  const service = new QuotaLabService(new MockAiProvider({}), double.metering, wallet.wallets)
+  return { service, ...double, ...wallet }
 }
 
 describe('labEstimateTokens', () => {
@@ -178,5 +214,66 @@ describe('runModelBased', () => {
 
     await expect(service.runModelBased(ada, labRunBodySchema.parse({}))).rejects.toBe(blocked)
     expect(captureFn).not.toHaveBeenCalled()
+  })
+})
+
+describe('drain', () => {
+  /**
+   * The common path: a funded wallet is debited to zero and the post-drain
+   * hold is rejected, so the canonical shortfall propagates to the caller.
+   */
+  it('debits the full balance then propagates the wall rejection', async () => {
+    const { service, holdFn, debitFn } = serviceWith(undefined, walletWith([60_000_000_000n]))
+    const wall = new Error('AI_TOKENS_INSUFFICIENT_CREDITS')
+    holdFn.mockReset()
+    holdFn.mockRejectedValueOnce(wall)
+
+    await expect(service.drain(ada)).rejects.toBe(wall)
+    expect(debitFn).toHaveBeenCalledWith(
+      expect.objectContaining({ tenantId: 'acme', ownerId: 'ada' }),
+      expect.objectContaining({ amountNanoUsd: 60_000_000_000n, reason: DRAIN_REASON }),
+    )
+  })
+
+  /**
+   * An already-empty wallet skips the debit (a zero-amount debit is invalid)
+   * and still rejects at the wall.
+   */
+  it('skips the debit when the wallet is already empty', async () => {
+    const { service, holdFn, debitFn } = serviceWith(undefined, walletWith([0n]))
+    const wall = new Error('AI_TOKENS_INSUFFICIENT_CREDITS')
+    holdFn.mockReset()
+    holdFn.mockRejectedValueOnce(wall)
+
+    await expect(service.drain(ada)).rejects.toBe(wall)
+    expect(debitFn).not.toHaveBeenCalled()
+  })
+
+  /**
+   * The overdraft path: the post-drain hold is allowed, so it is released
+   * unbilled and the residual balance is reported instead of the 402.
+   */
+  it('releases the hold and reports the residual balance when the wall is not reached', async () => {
+    const { service, releaseFn, hold } = serviceWith(undefined, walletWith([5_000n, 0n]))
+
+    const result = await service.drain(ada)
+
+    expect(releaseFn).toHaveBeenCalledWith(hold, DRAIN_REASON)
+    expect(result).toEqual({
+      drainedNanoUsd: '5000',
+      balanceNanoUsd: '0',
+      balanceFormatted: expect.any(String),
+      wallReached: false,
+    })
+  })
+
+  /**
+   * Wallets-off guard: the lab drain answers the documented 503 when the
+   * wallet feature block is disabled.
+   */
+  it('throws quota.disabled (503) when wallets are off', async () => {
+    const service = new QuotaLabService(new MockAiProvider({}), meteringWith().metering, null)
+
+    await expect(service.drain(ada)).rejects.toBeInstanceOf(ApiException)
   })
 })
