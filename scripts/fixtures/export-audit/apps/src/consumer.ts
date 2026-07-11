@@ -8,5 +8,8 @@
 import { DemoService } from '@bymax-one/nest-ai-tokens'
 import type { DemoType } from '@bymax-one/nest-ai-tokens/shared'
 
-/** Keeps both imports referenced so the fixture mirrors real usage. */
-export const demo: DemoType | undefined = DemoService
+/** Keeps the value import referenced so the fixture mirrors real usage. */
+export const service = DemoService
+
+/** Keeps the type import referenced, type-correctly. */
+export const demo: DemoType | undefined = undefined
