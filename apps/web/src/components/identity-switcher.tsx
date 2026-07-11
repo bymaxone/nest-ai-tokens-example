@@ -11,12 +11,14 @@
 import { useSyncExternalStore } from 'react'
 import type { ChangeEvent } from 'react'
 
-import { DEMO_USERS, findDemoUser, getIdentity, setIdentity, subscribe } from '@/lib/identity-store'
-
-/** No selection on the very first server-rendered pass. */
-export function getServerSnapshot(): null {
-  return null
-}
+import {
+  DEMO_USERS,
+  findDemoUser,
+  getIdentity,
+  getServerSnapshot,
+  setIdentity,
+  subscribe,
+} from '@/lib/identity-store'
 
 /** The demo identity dropdown, wired to the identity store. */
 export function IdentitySwitcher(): React.JSX.Element {

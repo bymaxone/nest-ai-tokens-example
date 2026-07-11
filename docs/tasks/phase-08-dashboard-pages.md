@@ -1,8 +1,86 @@
 # Phase 08: Dashboard Pages
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-06
+> **Status**: 👀 Review · **Progress**: 6 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 08
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (page-by-page), §13 (Demonstration Scenarios)
+
+## Reconciliation note (endpoint/type surface vs drafted names)
+
+The `apps/web/src/lib/api-client.ts` + `api-types.ts` pair built in phase 07 already models every
+route this phase needs, field for field against the real controllers (`apps/api/src/{workspace,
+ledger,pricing,usage,quota,errors-demo}`); no client/type changes were required to start this
+phase. Two drafted names in the task blocks do not exist on the real surface and are reconciled
+here:
+
+- **"Type chips from `AI_TOKEN_TRANSACTION_TYPES`" (task 8.3).** No such export exists on the
+  library's shared subpath (it exports `WALLET_ENTRY_TYPES` for wallet entries, not ledger usage
+  rows). The Ledger's `GET /ledger/transactions` filter surface (`ListTransactionsQueryDto`) is
+  `status` (`UsageStatus`: pending/posted/reversed/released) and `operation` (`AiOperation`:
+  chat/responses/embeddings/...). The Ledger page builds its filter chips from `UsageStatus` and
+  `AiOperation` (both re-exported by `@bymax-one/nest-ai-tokens/shared`) instead.
+- **Per-field `formatted` money strings (project constraint).** Only `BalanceView`,
+  `WorkspaceUsageView.cost`, and `CreditResponse.balance` carry a pre-formatted USD string.
+  `PriceRowView`, `UsageSummaryView`, and `UsageRecordView` carry only raw nano-USD decimal
+  strings. `apps/web/src/lib/money.ts` formats those the same way the library formats them
+  server-side: it re-exports the library's own `formatNanoUsd` from
+  `@bymax-one/nest-ai-tokens/shared` (exact string-to-bigint parse, no floating-point division) so
+  the web never computes a cost, it only renders an already-settled amount through the library's
+  own formatter.
+- **Ledger "metadata JSON viewer" / "batchSize" / "resourceId" (task 8.3).** `UsageRecord` has no
+  free-form metadata column by design (`apps/api/src/ai/correlation-tags.ts`: "the immutable
+  ledger never stores request payloads"); `resourceId` and an embedding batch's input count travel
+  as `resource:<id>` / `batch-size:<n>` entries in the row's `tags` array, and system-cost rows
+  carry `systemCostCategory` as its own field. The row inspector renders the full `UsageRecordView`
+  verbatim as JSON (so `tags`, `extraUnits`, and `systemCostCategory` are all visible) instead of a
+  non-existent `metadata` sub-object.
+- **Ledger "type chips" / "debit-credit toggle" (task 8.3, continued).** The filterable dimension
+  the real `/ledger/transactions` query exposes is `status` (`UsageStatus`:
+  pending/posted/reversed/released) and `operation` (`AiOperation`); `status=posted` is the debit
+  view and `status=reversed` is the credit/refund view, so the status chip group doubles as the
+  debit/credit toggle rather than a separate control.
+- **Top-up amount conversion.** `POST /ledger/credits` requires `amountNanoUsd` as a positive
+  integer nano-USD decimal string. The TopUpDialog accepts a USD amount and converts it with the
+  library's own `floatUsdToNanoUsd` (from the shared subpath), never a hand-rolled parser: the web
+  still never invents money math, it only calls the library's documented converter.
+- **Pricing "flush cache" button (task 8.4).** `PricingController`'s own JSDoc states the drafted
+  `POST /pricing/cache/flush` route is intentionally absent: v0.1.0 exposes no public
+  cache-invalidation API (`PricingCatalogService`'s resolution cache is internal and every
+  `upsertPrice` clears it automatically). There is nothing for a flush button to call, so
+  `UpdatePricingForm` states this in its callout instead of rendering a dead button.
+- **Usage "system-costs byCategory + byType" (task 8.4).** `GET /usage/system-costs` has exactly
+  one `groupBy` dimension (`systemCostCategory`); there is no second "by type" grouping on that
+  endpoint. `SystemCostsPanel` renders the one dimension the endpoint provides.
+- **Errors-demo catalog field names (task 8.5).** `api-types.ts`'s `ErrorCatalogEntryView` had
+  drifted from the real `ErrorCatalogEntry` (`apps/api/src/errors-demo/error-catalog.ts`): the
+  wire fields are `httpStatus`/`summary`, not `status`/`note`, and `availability` is one of four
+  values (`trigger` / `boot-variant` / `e2e-only` / `reserved`), not three. Fixed in this task.
+- **The "quota wall" code is a library code, not `quota.insufficient_balance`.** That drafted name
+  appears nowhere in `apps/api`; every quota-exhaustion e2e (`quota-lab.e2e-spec.ts`,
+  `quota-enforcement.e2e-spec.ts`) asserts the library code `AI_TOKENS_INSUFFICIENT_CREDITS` (402).
+  The Quota Lab's drain shortcut and every fixture that demonstrates the "hit the wall" outcome use
+  that real code.
+- **Quota Lab "resolver overrides" / `@SkipQuota` (task 8.5).** These are guard-configuration
+  concepts (spec §17), not separate demo endpoints; only two lab routes exist
+  (`POST /quota/lab/constant`, flat 1000-token hold; `POST /quota/lab/model-based`, 5000 tokens for
+  the flagship model / 1000 otherwise, from `apps/api/src/quota/quota-lab.service.ts`). `LabRunner`
+  covers both real variants plus the drain/top-up shortcuts.
+- **Guard tolerance/minimum balance (task 8.5).** No endpoint echoes `QUOTA_TOLERANCE` /
+  `QUOTA_MINIMUM_BALANCE`; `GuardInputsCard` renders the documented `.env` defaults
+  (`apps/api/src/config/env.ts`: tolerance `1.2`, minimum balance `0`) with a note, per the task's
+  own fallback instruction.
+- **Tenants "side-by-side" snapshot (task 8.5).** Rather than two independently-selected identity
+  panels (extra picker UI, a second `ApiClient` instance bypassing the header switcher), the
+  snapshot shows the CURRENTLY selected identity's balance and recent transactions side by side,
+  refetching automatically on every switcher change (the same `useApiQuery` pattern every page
+  uses). Switching the header identity IS the walkthrough; the acceptance criterion is "isolation
+  visible", not simultaneous dual identities.
+- **Quota Lab prompt-less crash (task 8.6, found during the live scenario sweep).**
+  `apps/api/src/quota/quota-lab.service.ts` builds the mock chat message as
+  `{ content: body.prompt }` with no default; `LabRunBody.prompt` is optional on the wire, so
+  omitting it (the natural call shape for a button with no prompt field) crashes the mock
+  provider's marker scan on `undefined` content instead of returning a clean response or a
+  canonical error. The fix belongs in `apps/api`, out of this phase's scope; `LabRunner` works
+  around it by always sending a fixed prompt string on every constant/model-based/drain call.
 
 ## Context
 
@@ -34,18 +112,18 @@ every §13 scenario is walkable end to end in the browser.
 
 | ID  | Task                                                                  | Status | Priority | Size | Depends on |
 | --- | --------------------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 8.1 | Branch + Overview page (stat cards + sparkline)                       | 📋     | P0       | M    | none       |
-| 8.2 | Playground page (5 command cards + embeddings panel + failure helper) | 📋     | P0       | L    | 8.1        |
-| 8.3 | Ledger page (table, filters, inspector, refund/top-up)                | 📋     | P0       | M    | 8.1        |
+| 8.1 | Branch + Overview page (stat cards + sparkline)                       | ✅     | P0       | M    | none       |
+| 8.2 | Playground page (5 command cards + embeddings panel + failure helper) | ✅     | P0       | L    | 8.1        |
+| 8.3 | Ledger page (table, filters, inspector, refund/top-up)                | ✅     | P0       | M    | 8.1        |
 | 8.4 | Pricing + Usage pages (tables, timeline, charts, leaderboard)         | 📋     | P0       | L    | 8.1        |
-| 8.5 | Quota Lab + Tenants + Errors pages                                    | 📋     | P0       | M    | 8.2        |
-| 8.6 | Phase close: audit, dashboards, PR + Copilot review                   | 📋     | P0       | S    | 8.1..8.5   |
+| 8.5 | Quota Lab + Tenants + Errors pages                                    | ✅     | P0       | M    | 8.2        |
+| 8.6 | Phase close: audit, dashboards, PR + Copilot review                   | ✅     | P0       | S    | 8.1..8.5   |
 
 ---
 
 ## Task 8.1: Branch + Overview page
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -55,10 +133,10 @@ default models with pricing badges (`/workspace/models`).
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-08-dashboard-pages` created with `git switch -c`.
-- [ ] All four data blocks live with loading/empty/error states; switcher changes refresh them.
-- [ ] Sparkline renders the seeded history deterministically.
-- [ ] Component tests (mocked client) cover states; 100% on touched `lib/**`.
+- [x] Branch `feat/phase-08-dashboard-pages` created with `git switch -c`.
+- [x] All four data blocks live with loading/empty/error states; switcher changes refresh them.
+- [x] Sparkline renders the seeded history deterministically.
+- [x] Component tests (mocked client) cover states; 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -107,7 +185,7 @@ Completion Protocol: standard steps; commit `feat(web): overview page (8.1)`.
 
 ## Task 8.2: Playground page
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: 8.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: 8.1
 
 #### Description
 
@@ -119,11 +197,11 @@ each demonstrates). A streaming note marks the documented boundary.
 
 #### Acceptance criteria
 
-- [ ] Every command round-trips and renders content + `tokensUsed` + `estimatedCost` + a link to
+- [x] Every command round-trips and renders content + `tokensUsed` + `estimatedCost` + a link to
       `/ledger?focus=<transactionId>`.
-- [ ] Batch embeddings show ONE transaction id for N inputs (scenario 2 walkable).
-- [ ] Failure helper produces the canonical error envelope rendering (e.g. 429 rate_limited).
-- [ ] Component tests per card (mocked client); 100% on touched `lib/**`.
+- [x] Batch embeddings show ONE transaction id for N inputs (scenario 2 walkable).
+- [x] Failure helper produces the canonical error envelope rendering (e.g. 429 rate_limited).
+- [x] Component tests per card (mocked client); 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -174,7 +252,7 @@ Completion Protocol: standard steps; commit `feat(web): playground page (8.2)`.
 
 ## Task 8.3: Ledger page
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 8.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 8.1
 
 #### Description
 
@@ -185,12 +263,12 @@ cost snapshot, `refundOf` links), the refund action, the top-up dialog (credit t
 
 #### Acceptance criteria
 
-- [ ] Filters map 1:1 to the `/ledger/transactions` query contract; pagination works.
-- [ ] Inspector renders metadata verbatim (JSON viewer) including `batchSize`, `resourceId`,
+- [x] Filters map 1:1 to the `/ledger/transactions` query contract; pagination works.
+- [x] Inspector renders metadata verbatim (JSON viewer) including `batchSize`, `resourceId`,
       system-cost keys.
-- [ ] Refund creates the compensating row and refreshes; original row visibly untouched
+- [x] Refund creates the compensating row and refreshes; original row visibly untouched
       (scenario 3 walkable).
-- [ ] Component tests; 100% on touched `lib/**`.
+- [x] Component tests; 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -237,7 +315,7 @@ Completion Protocol: standard steps; commit `feat(web): ledger page (8.3)`.
 
 ## Task 8.4: Pricing + Usage pages
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: 8.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: 8.1
 
 #### Description
 
@@ -248,12 +326,12 @@ top-consumers leaderboard, system-costs panel grouped by category.
 
 #### Acceptance criteria
 
-- [ ] Price update round-trip shows the closed window + successor on the timeline without a
+- [x] Price update round-trip shows the closed window + successor on the timeline without a
       reload (scenario 4 walkable).
-- [ ] All five usage visualizations render the deterministic seed correctly; granularity switch
+- [x] All five usage visualizations render the deterministic seed correctly; granularity switch
       re-queries.
-- [ ] System-costs panel shows the `reindex` category from phase 05 (scenario 7 walkable).
-- [ ] Component tests; 100% on touched `lib/**`.
+- [x] System-costs panel shows the `reindex` category from phase 05 (scenario 7 walkable).
+- [x] Component tests; 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -299,7 +377,7 @@ Completion Protocol: standard steps; commit `feat(web): pricing and usage pages 
 
 ## Task 8.5: Quota Lab + Tenants + Errors pages
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 8.2
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 8.2
 
 #### Description
 
@@ -311,10 +389,10 @@ for each.
 
 #### Acceptance criteria
 
-- [ ] Quota Lab renders the decision inputs and demonstrates pass/402 per estimator (scenario 5).
-- [ ] Tenants page makes isolation visible (scenario 6) and states the honest boundaries.
-- [ ] Errors grid covers every runtime-triggerable code with its rendered envelope (scenario 8).
-- [ ] Component tests; 100% on touched `lib/**`.
+- [x] Quota Lab renders the decision inputs and demonstrates pass/402 per estimator (scenario 5).
+- [x] Tenants page makes isolation visible (scenario 6) and states the honest boundaries.
+- [x] Errors grid covers every runtime-triggerable code with its rendered envelope (scenario 8).
+- [x] Component tests; 100% on touched `lib/**`.
 
 #### Files to create / modify
 
@@ -363,7 +441,7 @@ Completion Protocol: standard steps; commit `feat(web): quota, tenants and error
 
 ## Task 8.6: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: S · **Depends on**: 8.1..8.5
+- **Status**: ✅ Done (implementer scope) · **Priority**: P0 · **Size**: S · **Depends on**: 8.1..8.5
 
 #### Description
 
@@ -371,10 +449,16 @@ Standard phase close plus the scenario sweep: walk all eight §13 scenarios in t
 record the outcome in the PR body. PR `feat(web): phase 08, dashboard pages`, GitHub Copilot
 review, squash-merge on green, delete branch, log.
 
+> Per the autopilot architecture, the implementer's scope for this task ends at opening the PR
+> and requesting the Copilot review; waiting for CI/review, fixing findings, resolving threads,
+> merging, deleting the branch, and this task's final completion-log entry are owned by the
+> orchestrator.
+
 #### Acceptance criteria
 
-- [ ] All eight §13 scenarios walk green (evidence in the PR body).
-- [ ] Gates green; dashboards synced; PR merged with review resolved; branch gone.
+- [x] All eight §13 scenarios walk green (evidence in the PR body).
+- [x] Gates green; dashboards synced. Merge, review-thread resolution, and branch deletion are
+      owned by the orchestrator (architecture override).
 
 #### Agent prompt
 
@@ -413,3 +497,21 @@ Completion Protocol: append `- 8.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 8.1 ✅ 2026-07-10: Overview page (BalanceCard, TotalsStats, UsageSparkline, ModelsBadge) plus
+  the shared `useApiQuery`/`useApiMutation` hooks, `StatCard`, `ErrorBanner`, and `money.ts` that
+  every later task in this phase builds on.
+- 8.2 ✅ 2026-07-10: Playground page (Translate/Summarize/Rewrite/Analyze/Custom command cards,
+  the shared model picker, result panel, and failure-marker helper, plus the embeddings panel
+  proving the batch call settles as one ledger transaction).
+- 8.3 ✅ 2026-07-10: Ledger page (status/operation/date filters doubling as the debit/credit view,
+  paginated table, the `?focus=` deep-linked row inspector with the full-row JSON viewer and the
+  two-step confirm refund, and the top-up dialog using the library's `floatUsdToNanoUsd`).
+- 8.4 ✅ 2026-07-10: Pricing page (current table, per-model history timeline with the open window
+  highlighted, the admin update form) and Usage page (period chart with the granularity switch,
+  type donut, model bars, top-consumers leaderboard, system-costs-by-category panel).
+- 8.5 ✅ 2026-07-10: Quota Lab (guard-decision inputs, the two real estimator variants, drain/top-up
+  shortcuts), Tenants (the identity-switch isolation snapshot plus the honest boundary callouts),
+  and Errors (the catalog grid grouped by source, on-demand triggers rendering the canonical
+  envelope). Fixed a field-name drift in `ErrorCatalogEntryView` and corrected the "quota wall"
+  code to the real `AI_TOKENS_INSUFFICIENT_CREDITS` throughout.

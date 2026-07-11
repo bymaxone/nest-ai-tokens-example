@@ -313,6 +313,108 @@ button {
   background: var(--glass-bg);
 }
 
+/* ── Tabs ── */
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+}
+.tab {
+  border: 0;
+  background: transparent;
+  color: var(--text-55);
+  border-radius: var(--radius-pill);
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+.tab--active {
+  background: var(--primary-15);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ── Toast (inline action feedback; severity left-border, glass) ── */
+.toast {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-border);
+  border-left: 4px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(var(--glass-blur));
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  max-width: 360px;
+}
+.toast--success {
+  border-left-color: var(--green);
+}
+.toast--error {
+  border-left-color: var(--red);
+}
+.toast--info {
+  border-left-color: var(--blue);
+}
+.toast--warning {
+  border-left-color: var(--amber);
+}
+
+/* ── Overlay, drawer & dialog ──
+   No dedicated recipe exists in design_system.html; composed from the
+   documented glass-morphism recipe (§09 Patterns: glass-card-bg + 1px
+   glass-border + backdrop-blur + radius-lg), the same tokens .card uses,
+   so a row inspector or a confirmation dialog reads as the same system. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 300;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+.drawer {
+  width: min(480px, 100vw);
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--glass-card-bg);
+  border-left: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dialog {
+  width: min(420px, 90vw);
+  background: var(--glass-card-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 /* ── Empty state ── */
 .empty {
   text-align: center;

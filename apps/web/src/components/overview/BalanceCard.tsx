@@ -10,11 +10,10 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
-import { getServerSnapshot } from '@/components/identity-switcher'
 import { api } from '@/lib/api'
 import { ApiError } from '@/lib/api-client'
 import type { BalanceView } from '@/lib/api-types'
-import { getIdentity, subscribe } from '@/lib/identity-store'
+import { getIdentity, getServerSnapshot, subscribe } from '@/lib/identity-store'
 
 /** The tile's fetch state. */
 type BalanceState =

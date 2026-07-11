@@ -1,26 +1,20 @@
 /**
- * @fileoverview Errors stub page. The catalog triggers land once the api
- * client can call `/errors-demo/*`.
+ * @fileoverview Errors page: the grouped error-catalog grid with its
+ * on-demand triggers (scenario §13.8).
  *
  * @layer app/(dashboard)/errors
  */
+import { ErrorCatalogGrid } from '@/components/errors/ErrorCatalogGrid'
 import { PageScaffold } from '@/components/shell/PageScaffold'
 import { requireNavItem } from '@/components/shell/nav-items'
 
 const NAV_ITEM = requireNavItem('/errors')
 
-/**
- * The Errors stub page.
- *
- * @returns The page scaffold with a placeholder content area.
- */
+/** The Errors page. */
 export default function ErrorsPage(): React.JSX.Element {
   return (
     <PageScaffold title={NAV_ITEM.label} description={NAV_ITEM.description}>
-      <div className="empty">
-        <div className="empty__title">Content lands next</div>
-        <p>The error catalog triggers wire up once the api client is live.</p>
-      </div>
+      <ErrorCatalogGrid />
     </PageScaffold>
   )
 }
