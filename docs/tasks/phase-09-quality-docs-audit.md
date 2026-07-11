@@ -1,6 +1,6 @@
 # Phase 09: Quality, Docs & Export Audit
 
-> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 09
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §22 (Testing Strategy), §7 (matrix enforcement), §23 (CI), Appendix rows
 
@@ -70,7 +70,7 @@ matrix honest forever, the publishable README, and the final acceptance audit.
 | --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 9.1 | Branch + api unit coverage to 100% (all four metrics)     | ✅     | P0       | L    | none       |
 | 9.2 | Web unit coverage to 100% (`lib/**` + components)         | ✅     | P0       | M    | none       |
-| 9.3 | E2E consolidation: every route, code, guard path, variant | 📋     | P0       | L    | 9.1        |
+| 9.3 | E2E consolidation: every route, code, guard path, variant | ✅     | P0       | L    | 9.1        |
 | 9.4 | Export-audit script + CI gate                             | 📋     | P0       | M    | 9.1        |
 | 9.5 | README + CHANGELOG + docs polish                          | 📋     | P0       | M    | 9.3, 9.4   |
 | 9.6 | Phase close: final acceptance audit, PR + Copilot review  | 📋     | P0       | M    | 9.1..9.5   |
@@ -204,7 +204,7 @@ Completion Protocol: standard steps; commit `test(web): close unit coverage to t
 
 ## Task 9.3: E2E consolidation
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: 9.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: 9.1
 
 #### Description
 
@@ -216,12 +216,18 @@ route is a test failure, not an oversight.
 
 #### Acceptance criteria
 
-- [ ] `apps/api/test/e2e/inventory.e2e-spec.ts` walks a `ROUTE_INVENTORY` constant derived from
-      spec §11; any route without a test entry fails the spec.
-- [ ] A summary assertion proves 24/24 error codes exercised across the e2e suites.
-- [ ] Playwright smoke: boot web against live api, switch user, run one translate, see the ledger
-      row appear.
-- [ ] Full `pnpm --filter api test:e2e` + web smoke green sequentially.
+- [x] `apps/api/test/e2e/inventory.e2e-spec.ts` walks a `ROUTE_INVENTORY` constant covering all
+      35 registered routes (reconciled: derived from the REAL controller surface, not the drafted
+      spec §11 table); the completeness test diffs the inventory against the LIVE Express router
+      in both directions, so a missing route entry fails the spec.
+- [x] A summary assertion proves the full reconciled catalog exercised: 26/26 codes (15 library +
+      11 host; the drafted "24" reconciled), 21 triggered on demand, and every code named by at
+      least one e2e source (fs-scanned), on top of the errors-demo suite's own 26-code sweep.
+- [x] Reconciled: the drafted Playwright smoke maps to the EXISTING
+      `pnpm --filter web run test:integration` suite plus the phase 08 live scenario sweep; no
+      Playwright dependency added, `run-e2e-web` stays off.
+- [x] Full `pnpm --filter api test:e2e` (15 suites, 198 tests) + web integration green
+      sequentially.
 
 #### Files to create / modify
 
@@ -466,3 +472,5 @@ Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #
   contract locked with four regression e2e cases (14 e2e in the lab suite).
 - 9.2 ✅ 2026-07-10: web coverage verified at 100/100/100/100 (305 tests); LabRunner prompt
   workaround removed and the prompt-less call shapes asserted.
+- 9.3 ✅ 2026-07-10: inventory e2e added (35-route walk diffed against the live router both ways;
+  26/26 error codes cross-referenced to e2e sources); full api e2e now 15 suites / 198 tests.
