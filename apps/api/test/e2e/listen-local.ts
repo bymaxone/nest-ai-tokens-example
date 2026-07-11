@@ -28,8 +28,17 @@ import type { App } from 'supertest/types.js'
 export async function listenLocal(app: INestApplication): Promise<App> {
   const server = app.getHttpServer() as Server
   await new Promise<void>((resolve, reject) => {
-    server.once('error', reject)
-    server.listen(0, '127.0.0.1', resolve)
+    // The startup error listener is removed on success so repeated boots
+    // never accumulate dangling handlers and a late error can never invoke
+    // the settled promise's reject.
+    const onError = (error: Error): void => {
+      reject(error)
+    }
+    server.once('error', onError)
+    server.listen(0, '127.0.0.1', () => {
+      server.removeListener('error', onError)
+      resolve()
+    })
   })
   return server
 }
