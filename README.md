@@ -61,7 +61,7 @@ It is a sibling of [`nest-auth-example`](https://github.com/bymaxone/nest-auth-e
 blueprint, voice, and quality bar: **100% test coverage** on both apps, English-only, and
 Conventional Commits.
 
-![Dashboard shell](docs/screenshots/phase-07-overview.png)
+![Dashboard shell](docs/screenshots/dashboard-shell.png)
 
 ---
 
