@@ -23,16 +23,6 @@ import { useApiMutation } from '@/lib/use-api-mutation'
 /** Hard cap on drain iterations, in case the balance never runs out. */
 const MAX_DRAIN_CALLS = 50
 
-/**
- * The lab prompt every call sends. `LabRunBody.prompt` is optional on the
- * wire, but the api's mock chat completion always echoes it as message
- * content with no default; omitting it crashes the provider on the
- * `content: undefined` case. Always supplying a prompt is the defensive,
- * web-side workaround for that api-side edge case (the fix belongs in
- * `apps/api`, out of this phase's scope).
- */
-const LAB_PROMPT = 'Quota Lab demo call.'
-
 /** The fixed top-up amount the shortcut credits (10 USD, nano-USD). */
 const TOP_UP_AMOUNT_NANO_USD = '10000000000'
 
@@ -107,10 +97,10 @@ function DrainOutcome(props: {
 
 /** The Quota Lab's estimator buttons and drain/top-up shortcuts. */
 export function LabRunner({ onBalanceChanged }: LabRunnerProps): React.JSX.Element {
-  const constant = useApiMutation(() => api.runLabConstant({ prompt: LAB_PROMPT }))
-  const modelBased = useApiMutation(() =>
-    api.runLabModelBased({ model: 'mock-chat-pro', prompt: LAB_PROMPT }),
-  )
+  // Prompt-less bodies are the natural button shape: the api's lab DTO
+  // defaults the prompt server-side and answers deterministically.
+  const constant = useApiMutation(() => api.runLabConstant())
+  const modelBased = useApiMutation(() => api.runLabModelBased({ model: 'mock-chat-pro' }))
   const topUp = useApiMutation(() =>
     api.credit({ amountNanoUsd: TOP_UP_AMOUNT_NANO_USD, type: 'purchase' }),
   )
@@ -125,7 +115,7 @@ export function LabRunner({ onBalanceChanged }: LabRunnerProps): React.JSX.Eleme
     let calls = 0
     for (; calls < MAX_DRAIN_CALLS; calls += 1) {
       try {
-        await api.runLabConstant({ prompt: LAB_PROMPT })
+        await api.runLabConstant()
       } catch (error) {
         setDrainOutcome(toApiError(error))
         break

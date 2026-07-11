@@ -1,6 +1,6 @@
 # Phase 09: Quality, Docs & Export Audit
 
-> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 2 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 09
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §22 (Testing Strategy), §7 (matrix enforcement), §23 (CI), Appendix rows
 
@@ -69,7 +69,7 @@ matrix honest forever, the publishable README, and the final acceptance audit.
 | ID  | Task                                                      | Status | Priority | Size | Depends on |
 | --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
 | 9.1 | Branch + api unit coverage to 100% (all four metrics)     | ✅     | P0       | L    | none       |
-| 9.2 | Web unit coverage to 100% (`lib/**` + components)         | 📋     | P0       | M    | none       |
+| 9.2 | Web unit coverage to 100% (`lib/**` + components)         | ✅     | P0       | M    | none       |
 | 9.3 | E2E consolidation: every route, code, guard path, variant | 📋     | P0       | L    | 9.1        |
 | 9.4 | Export-audit script + CI gate                             | 📋     | P0       | M    | 9.1        |
 | 9.5 | README + CHANGELOG + docs polish                          | 📋     | P0       | M    | 9.3, 9.4   |
@@ -145,7 +145,7 @@ Completion Protocol: standard steps; commit `test(api): close unit coverage to 1
 
 ## Task 9.2: Web unit coverage to 100%
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: none
 
 #### Description
 
@@ -154,9 +154,12 @@ state (loading/empty/error/success) and interaction (filters, forms, switcher).
 
 #### Acceptance criteria
 
-- [ ] `pnpm --filter web test:cov` passes thresholds with zero exclusions added.
-- [ ] Interaction paths (refund confirm, top-up submit, granularity switch, failure helper) all
+- [x] `pnpm --filter web test:cov` passes thresholds with zero exclusions added (305 tests, 100%
+      on all four metrics; the baseline already held, verified and kept through this phase).
+- [x] Interaction paths (refund confirm, top-up submit, granularity switch, failure helper) all
       exercised.
+- [x] Reconciled extra: the LabRunner's always-send-a-prompt workaround is removed (the api's DTO
+      default makes it unnecessary); tests lock the prompt-less call shapes.
 
 #### Files to create / modify
 
@@ -461,3 +464,5 @@ Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #
 
 - 9.1 ✅ 2026-07-10: api coverage verified at 100/100/100/100 (424 tests); prompt-less quota-lab
   contract locked with four regression e2e cases (14 e2e in the lab suite).
+- 9.2 ✅ 2026-07-10: web coverage verified at 100/100/100/100 (305 tests); LabRunner prompt
+  workaround removed and the prompt-less call shapes asserted.

@@ -37,6 +37,9 @@ describe('LabRunner', () => {
       expect(screen.getByText('Constant estimate settled: 1000 tokens.')).toBeInTheDocument(),
     )
     expect(onBalanceChanged).toHaveBeenCalledOnce()
+    // Prompt-less contract: the api defaults the prompt server-side, so the
+    // button sends no body at all (the former web-side prompt workaround).
+    expect(api.runLabConstant).toHaveBeenCalledWith()
   })
 
   // scenario: a constant-estimate rejection renders the canonical envelope.
@@ -67,6 +70,9 @@ describe('LabRunner', () => {
         screen.getByText('Model-based estimate settled: 5000 tokens, billed 5000000 nano-USD.'),
       ).toBeInTheDocument(),
     )
+    // Prompt-less contract: only the model pick travels; the api defaults
+    // the prompt server-side.
+    expect(api.runLabModelBased).toHaveBeenCalledWith({ model: 'mock-chat-pro' })
   })
 
   // scenario: a model-based rejection renders the canonical envelope.
