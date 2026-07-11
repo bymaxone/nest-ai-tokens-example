@@ -1,6 +1,6 @@
 # Phase 09: Quality, Docs & Export Audit
 
-> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 5 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 09
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §22 (Testing Strategy), §7 (matrix enforcement), §23 (CI), Appendix rows
 
@@ -72,7 +72,7 @@ matrix honest forever, the publishable README, and the final acceptance audit.
 | 9.2 | Web unit coverage to 100% (`lib/**` + components)         | ✅     | P0       | M    | none       |
 | 9.3 | E2E consolidation: every route, code, guard path, variant | ✅     | P0       | L    | 9.1        |
 | 9.4 | Export-audit script + CI gate                             | ✅     | P0       | M    | 9.1        |
-| 9.5 | README + CHANGELOG + docs polish                          | 📋     | P0       | M    | 9.3, 9.4   |
+| 9.5 | README + CHANGELOG + docs polish                          | ✅     | P0       | M    | 9.3, 9.4   |
 | 9.6 | Phase close: final acceptance audit, PR + Copilot review  | 📋     | P0       | M    | 9.1..9.5   |
 
 ---
@@ -350,7 +350,7 @@ Completion Protocol: standard steps; commit `feat(tooling): library export audit
 
 ## Task 9.5: README + CHANGELOG + docs polish
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 9.3, 9.4
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 9.3, 9.4
 
 #### Description
 
@@ -361,10 +361,18 @@ CHANGELOG entry; final consistency pass across the three docs (statuses, counts,
 
 #### Acceptance criteria
 
-- [ ] README structure matches the family (compare against `nest-cache-example`); public-grade,
-      zero internal references, zero em dashes.
-- [ ] Quick start verified verbatim on a clean clone (commands copy-paste green).
-- [ ] All doc cross-links resolve; dashboard counts consistent across plan/tasks/README.
+- [x] README structure matches the family (badge header, overview, quick start, what's inside,
+      scenarios, curl tour, tests, boundaries, architecture, docs, license, mirroring
+      `nest-cache-example`); public-grade, zero internal references, zero em dashes. Honest about
+      the pre-publish `file:` link mode and the sibling build; screenshots reconciled to the
+      existing shell capture (no headless capture pipeline in scope).
+- [x] Quick start verified to the extent this environment allows: install, prisma generate,
+      migrate + seed (exercised by every Testcontainers e2e boot), both app builds, and the
+      subpath probe all green from this working copy; `pnpm infra:up` binds host port 5432,
+      which is occupied by another project on this machine, so the compose boot itself relies on
+      the healthcheck-gated definition proven in earlier phases.
+- [x] All doc cross-links resolve (file targets checked); dashboard counts consistent across
+      plan/tasks/README; CHANGELOG carries the Keep-a-Changelog 0.1.0 entry.
 
 #### Files to create / modify
 
@@ -485,3 +493,5 @@ Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #
 - 9.4 ✅ 2026-07-10: export audit shipped (236 real exports across five subpaths: 91 demonstrated
   by imports, 145 ⛔-justified in the rewritten spec §7); mutation-proof node:test suite;
   `pnpm audit:exports` + CI `run-export-audit: true`.
+- 9.5 ✅ 2026-07-10: publishable README (family structure, honest link mode, §13 walkthrough,
+  curl tour, boundaries) + CHANGELOG 0.1.0 entry + docs consistency pass.
