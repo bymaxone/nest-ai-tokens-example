@@ -13,6 +13,7 @@
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
 import { StatCard } from '@/components/stat-card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { useApiQuery } from '@/lib/use-api-query'
 
@@ -27,32 +28,36 @@ export function GuardInputsCard(): React.JSX.Element {
   const { state } = useApiQuery(() => api.getBalance())
 
   return (
-    <div className="card">
-      <div className="card__title">Guard decision inputs</div>
-      <p className="card__desc">
-        The enforcement guard compares the estimated cost, scaled by tolerance, against (balance +
-        overdraft from the minimum balance). Tolerance and minimum are configured, not queryable, so
-        these are the documented `.env` defaults.
-      </p>
-      <div className="grid-2" style={{ marginTop: 10 }}>
-        {state.status === 'error' ? (
-          <ErrorBanner error={state.error} />
-        ) : (
+    <Card>
+      <CardHeader accent>
+        <CardTitle>Guard decision inputs</CardTitle>
+        <CardDescription>
+          The enforcement guard compares the estimated cost, scaled by tolerance, against (balance +
+          overdraft from the minimum balance). Tolerance and minimum are configured, not queryable,
+          so these are the documented `.env` defaults.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid-2">
+          {state.status === 'error' ? (
+            <ErrorBanner error={state.error} />
+          ) : (
+            <StatCard
+              label="Balance"
+              state={
+                state.status === 'loading'
+                  ? { status: 'loading' }
+                  : { status: 'ready', value: state.data.formatted }
+              }
+            />
+          )}
+          <StatCard label="Tolerance" state={{ status: 'ready', value: `${DEFAULT_TOLERANCE}x` }} />
           <StatCard
-            label="Balance"
-            state={
-              state.status === 'loading'
-                ? { status: 'loading' }
-                : { status: 'ready', value: state.data.formatted }
-            }
+            label="Minimum balance"
+            state={{ status: 'ready', value: `$${DEFAULT_MINIMUM_BALANCE_USD.toFixed(2)}` }}
           />
-        )}
-        <StatCard label="Tolerance" state={{ status: 'ready', value: `${DEFAULT_TOLERANCE}x` }} />
-        <StatCard
-          label="Minimum balance"
-          state={{ status: 'ready', value: `$${DEFAULT_MINIMUM_BALANCE_USD.toFixed(2)}` }}
-        />
-      </div>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

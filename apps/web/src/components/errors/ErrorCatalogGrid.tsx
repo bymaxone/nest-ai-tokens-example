@@ -13,6 +13,9 @@
 import { useState } from 'react'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { ApiError } from '@/lib/api-client'
 import type { ErrorCatalogEntryView } from '@/lib/api-types'
@@ -31,20 +34,23 @@ function CatalogEntryRow(props: {
 }): React.JSX.Element {
   const { entry } = props
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span className="chip mono">{entry.code}</span>
-      <span className="chip">{entry.httpStatus}</span>
+    <div className="flex items-center gap-2">
+      <Badge variant="outline" className="font-mono">
+        {entry.code}
+      </Badge>
+      <Badge variant="outline">{entry.httpStatus}</Badge>
       {entry.availability === 'trigger' ? (
-        <button
+        <Button
           type="button"
-          className="btn btn--outline btn--sm"
+          variant="outline"
+          size="sm"
           disabled={props.pendingCode === entry.code}
           onClick={() => props.onTrigger(entry.code)}
         >
           {props.pendingCode === entry.code ? 'Triggering…' : 'Trigger'}
-        </button>
+        </Button>
       ) : (
-        <span className="card__desc">
+        <span className="text-[13px] text-muted-foreground">
           {entry.availability}: {entry.summary}
         </span>
       )}
@@ -60,9 +66,11 @@ function CatalogGroup(props: {
   readonly onTrigger: (code: string) => void
 }): React.JSX.Element {
   return (
-    <div className="card">
-      <div className="card__title">{props.group}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+    <Card>
+      <CardHeader accent>
+        <CardTitle>{props.group}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
         {props.entries.map((entry) => (
           <CatalogEntryRow
             key={entry.code}
@@ -71,8 +79,8 @@ function CatalogGroup(props: {
             onTrigger={props.onTrigger}
           />
         ))}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -114,7 +122,7 @@ export function ErrorCatalogGrid(): React.JSX.Element {
     <>
       {outcome !== undefined && (
         <div>
-          <div className="card__desc">Last trigger: {outcome.code}</div>
+          <div className="text-[13px] text-muted-foreground">Last trigger: {outcome.code}</div>
           <ErrorBanner error={outcome.error} />
         </div>
       )}

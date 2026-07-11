@@ -5,6 +5,16 @@
  *
  * @layer components/ledger
  */
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import type { UsageRecordView } from '@/lib/api-types'
 import { formatMoney } from '@/lib/money'
 
@@ -49,24 +59,24 @@ function TransactionRow(props: {
     }
   }
   return (
-    <tr
+    <TableRow
       onClick={() => props.onSelect(item.id)}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       aria-label={`Inspect transaction ${shortId(item.id)}`}
-      style={{ cursor: 'pointer' }}
+      className="cursor-pointer"
     >
-      <td>{new Date(item.occurredAt).toLocaleString()}</td>
-      <td>
-        <span className="chip">{item.status}</span>
-      </td>
-      <td>{item.model}</td>
-      <td style={{ color: isCredit(item.status) ? 'var(--green)' : 'var(--red)' }}>
+      <TableCell>{new Date(item.occurredAt).toLocaleString()}</TableCell>
+      <TableCell>
+        <Badge variant="outline">{item.status}</Badge>
+      </TableCell>
+      <TableCell>{item.model}</TableCell>
+      <TableCell style={{ color: isCredit(item.status) ? 'var(--green)' : 'var(--red)' }}>
         {isCredit(item.status) ? '+' : '-'}
         {formatMoney(item.billedCostNanoUsd)}
-      </td>
-      <td title={item.id}>{shortId(item.id)}</td>
-    </tr>
+      </TableCell>
+      <TableCell title={item.id}>{shortId(item.id)}</TableCell>
+    </TableRow>
   )
 }
 
@@ -87,26 +97,28 @@ function PaginationFooter(props: {
         marginTop: 12,
       }}
     >
-      <span className="card__desc">
+      <span className="text-[13px] text-muted-foreground">
         Page {page} of {pageCount} ({props.total} total)
       </span>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button
+        <Button
           type="button"
-          className="btn btn--outline btn--sm"
+          variant="outline"
+          size="sm"
           disabled={props.offset === 0}
           onClick={() => props.onOffsetChange(Math.max(0, props.offset - LEDGER_PAGE_SIZE))}
         >
           Previous
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="btn btn--outline btn--sm"
+          variant="outline"
+          size="sm"
           disabled={props.offset + LEDGER_PAGE_SIZE >= props.total}
           onClick={() => props.onOffsetChange(props.offset + LEDGER_PAGE_SIZE)}
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -131,22 +143,22 @@ export function TransactionsTable({
 
   return (
     <div>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>date</th>
-            <th>status</th>
-            <th>model</th>
-            <th>amount</th>
-            <th>id</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>date</TableHead>
+            <TableHead>status</TableHead>
+            <TableHead>model</TableHead>
+            <TableHead>amount</TableHead>
+            <TableHead>id</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {items.map((item) => (
             <TransactionRow key={item.id} item={item} onSelect={onSelect} />
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
       <PaginationFooter offset={offset} total={total} onOffsetChange={onOffsetChange} />
     </div>
   )

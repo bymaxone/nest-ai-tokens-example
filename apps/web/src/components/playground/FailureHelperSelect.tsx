@@ -8,6 +8,9 @@
  */
 import { useState } from 'react'
 
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import { FAILURE_MARKERS } from '@/lib/failure-markers'
 
 /** The catalog's first marker, the picker's initial selection and non-null fallback. */
@@ -30,40 +33,38 @@ export function FailureHelperSelect({ onInsert, id }: FailureHelperSelectProps):
   const marker = FAILURE_MARKERS.find((entry) => entry.token === selected)!
 
   return (
-    <div className="card">
-      <div className="card__title">Failure-marker helper</div>
-      <div className="card__desc">
-        Append a marker to trigger a documented failure path deterministically.
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'flex-end' }}>
-        <div style={{ flex: 1 }}>
-          <label className="label" htmlFor={id}>
-            Marker
-          </label>
-          <select
-            id={id}
-            className="input"
-            value={selected}
-            onChange={(event) => setSelected(event.target.value)}
-          >
-            {FAILURE_MARKERS.map((entry) => (
-              <option key={entry.token} value={entry.token}>
-                {entry.token}
-              </option>
-            ))}
-          </select>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Failure-marker helper</CardTitle>
+        <CardDescription>
+          Append a marker to trigger a documented failure path deterministically.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <Label htmlFor={id} className="mb-1.5 block text-muted-foreground">
+              Marker
+            </Label>
+            <select
+              id={id}
+              className="input"
+              value={selected}
+              onChange={(event) => setSelected(event.target.value)}
+            >
+              {FAILURE_MARKERS.map((entry) => (
+                <option key={entry.token} value={entry.token}>
+                  {entry.token}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={() => onInsert(selected)}>
+            Insert into input
+          </Button>
         </div>
-        <button
-          type="button"
-          className="btn btn--outline btn--sm"
-          onClick={() => onInsert(selected)}
-        >
-          Insert into input
-        </button>
-      </div>
-      <p className="card__desc" style={{ marginTop: 8 }}>
-        {marker.explanation}
-      </p>
-    </div>
+        <p className="mt-2 text-[13px] text-muted-foreground">{marker.explanation}</p>
+      </CardContent>
+    </Card>
   )
 }

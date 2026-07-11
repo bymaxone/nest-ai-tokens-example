@@ -13,6 +13,7 @@
 import { Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { useApiQuery } from '@/lib/use-api-query'
 
@@ -26,52 +27,55 @@ export function TypeDonut(): React.JSX.Element {
   const { state } = useApiQuery(() => api.getUsageByType())
 
   return (
-    <div className="card">
-      <div className="card__title">Spend by type</div>
-      <div className="card__desc">Billed cost per feature label</div>
+    <Card>
+      <CardHeader accent>
+        <CardTitle>Spend by type</CardTitle>
+        <CardDescription>Billed cost per feature label</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {state.status === 'loading' && (
+          <div role="status" aria-label="Loading spend by type">
+            <div className="skeleton" style={{ height: 200, marginTop: 12 }} />
+          </div>
+        )}
 
-      {state.status === 'loading' && (
-        <div role="status" aria-label="Loading spend by type">
-          <div className="skeleton" style={{ height: 200, marginTop: 12 }} />
-        </div>
-      )}
+        {state.status === 'error' && <ErrorBanner error={state.error} />}
 
-      {state.status === 'error' && <ErrorBanner error={state.error} />}
+        {state.status === 'ready' && state.data.items.length === 0 && (
+          <div className="empty">
+            <div className="empty__title">No usage yet</div>
+            <p>Run a command in the Playground to populate this chart.</p>
+          </div>
+        )}
 
-      {state.status === 'ready' && state.data.items.length === 0 && (
-        <div className="empty">
-          <div className="empty__title">No usage yet</div>
-          <p>Run a command in the Playground to populate this chart.</p>
-        </div>
-      )}
-
-      {state.status === 'ready' && state.data.items.length > 0 && (
-        <div style={{ height: 200, marginTop: 12 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Tooltip
-                contentStyle={{
-                  background: 'rgba(15,15,15,0.95)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 8,
-                }}
-              />
-              <Pie
-                data={state.data.items.map((item, index) => ({
-                  name: item.group.feature ?? 'unknown',
-                  usd: Number(item.billedCostNanoUsd) / NANO_PER_USD,
-                  fill: seriesColor(index),
-                }))}
-                dataKey="usd"
-                nameKey="name"
-                innerRadius={48}
-                outerRadius={80}
-                isAnimationActive={false}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-    </div>
+        {state.status === 'ready' && state.data.items.length > 0 && (
+          <div style={{ height: 200, marginTop: 12 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Tooltip
+                  contentStyle={{
+                    background: 'rgba(15,15,15,0.95)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 8,
+                  }}
+                />
+                <Pie
+                  data={state.data.items.map((item, index) => ({
+                    name: item.group.feature ?? 'unknown',
+                    usd: Number(item.billedCostNanoUsd) / NANO_PER_USD,
+                    fill: seriesColor(index),
+                  }))}
+                  dataKey="usd"
+                  nameKey="name"
+                  innerRadius={48}
+                  outerRadius={80}
+                  isAnimationActive={false}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

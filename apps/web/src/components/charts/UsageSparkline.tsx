@@ -14,6 +14,7 @@
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { useApiQuery } from '@/lib/use-api-query'
 
@@ -43,7 +44,7 @@ function trailingWindow(): { from: string; to: string } {
 /** The area chart itself: gradient fill, tooltip, and the billed-cost area. */
 function SparklineChart(props: { readonly points: readonly SparklinePoint[] }): React.JSX.Element {
   return (
-    <div style={{ height: 140, marginTop: 8 }}>
+    <div style={{ height: 140 }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={[...props.points]} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <defs>
@@ -84,31 +85,43 @@ export function UsageSparkline(): React.JSX.Element {
 
   if (state.status === 'loading') {
     return (
-      <div className="card" role="status" aria-label="Loading usage sparkline">
-        <div className="card__title">30-day spend</div>
-        <div className="skeleton" style={{ height: 120, marginTop: 8 }} />
-      </div>
+      <Card role="status" aria-label="Loading usage sparkline">
+        <CardHeader accent>
+          <CardTitle>30-day spend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="skeleton" style={{ height: 120 }} />
+        </CardContent>
+      </Card>
     )
   }
 
   if (state.status === 'error') {
     return (
-      <div className="card">
-        <div className="card__title">30-day spend</div>
-        <ErrorBanner error={state.error} />
-      </div>
+      <Card>
+        <CardHeader accent>
+          <CardTitle>30-day spend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ErrorBanner error={state.error} />
+        </CardContent>
+      </Card>
     )
   }
 
   if (state.data.items.length === 0) {
     return (
-      <div className="card">
-        <div className="card__title">30-day spend</div>
-        <div className="empty">
-          <div className="empty__title">No usage yet</div>
-          <p>Run a command in the Playground to start the trend.</p>
-        </div>
-      </div>
+      <Card>
+        <CardHeader accent>
+          <CardTitle>30-day spend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="empty">
+            <div className="empty__title">No usage yet</div>
+            <p>Run a command in the Playground to start the trend.</p>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -118,10 +131,14 @@ export function UsageSparkline(): React.JSX.Element {
   }))
 
   return (
-    <div className="card">
-      <div className="card__title">30-day spend</div>
-      <div className="card__desc">Billed cost per day, {points.length} day(s) with usage</div>
-      <SparklineChart points={points} />
-    </div>
+    <Card>
+      <CardHeader accent>
+        <CardTitle>30-day spend</CardTitle>
+        <CardDescription>Billed cost per day, {points.length} day(s) with usage</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <SparklineChart points={points} />
+      </CardContent>
+    </Card>
   )
 }

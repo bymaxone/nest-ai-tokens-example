@@ -9,6 +9,15 @@
 'use client'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { api } from '@/lib/api'
 import { formatMoney } from '@/lib/money'
 import { useApiQuery } from '@/lib/use-api-query'
@@ -18,47 +27,50 @@ export function TopConsumers(): React.JSX.Element {
   const { state } = useApiQuery(() => api.getTopConsumers())
 
   return (
-    <div className="card">
-      <div className="card__title">Top consumers</div>
-      <div className="card__desc">Tenant-wide spend, ranked highest first</div>
+    <Card>
+      <CardHeader accent>
+        <CardTitle>Top consumers</CardTitle>
+        <CardDescription>Tenant-wide spend, ranked highest first</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {state.status === 'loading' && (
+          <div role="status" aria-label="Loading top consumers">
+            <div className="skeleton" style={{ height: 120, marginTop: 12 }} />
+          </div>
+        )}
 
-      {state.status === 'loading' && (
-        <div role="status" aria-label="Loading top consumers">
-          <div className="skeleton" style={{ height: 120, marginTop: 12 }} />
-        </div>
-      )}
+        {state.status === 'error' && <ErrorBanner error={state.error} />}
 
-      {state.status === 'error' && <ErrorBanner error={state.error} />}
+        {state.status === 'ready' && state.data.items.length === 0 && (
+          <div className="empty">
+            <div className="empty__title">No consumers yet</div>
+            <p>Run a command in the Playground to populate the leaderboard.</p>
+          </div>
+        )}
 
-      {state.status === 'ready' && state.data.items.length === 0 && (
-        <div className="empty">
-          <div className="empty__title">No consumers yet</div>
-          <p>Run a command in the Playground to populate the leaderboard.</p>
-        </div>
-      )}
-
-      {state.status === 'ready' && state.data.items.length > 0 && (
-        <table className="table" style={{ marginTop: 8 }}>
-          <thead>
-            <tr>
-              <th>scope</th>
-              <th>calls</th>
-              <th>tokens</th>
-              <th>cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            {state.data.items.map((item, index) => (
-              <tr key={`${item.group.scope ?? 'unknown'}-${index}`}>
-                <td>{item.group.scope ?? 'unknown'}</td>
-                <td>{item.records}</td>
-                <td>{item.totalTokens.toLocaleString('en-US')}</td>
-                <td>{formatMoney(item.billedCostNanoUsd)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+        {state.status === 'ready' && state.data.items.length > 0 && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>scope</TableHead>
+                <TableHead>calls</TableHead>
+                <TableHead>tokens</TableHead>
+                <TableHead>cost</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {state.data.items.map((item, index) => (
+                <TableRow key={`${item.group.scope ?? 'unknown'}-${index}`}>
+                  <TableCell>{item.group.scope ?? 'unknown'}</TableCell>
+                  <TableCell>{item.records}</TableCell>
+                  <TableCell>{item.totalTokens.toLocaleString('en-US')}</TableCell>
+                  <TableCell>{formatMoney(item.billedCostNanoUsd)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
   )
 }

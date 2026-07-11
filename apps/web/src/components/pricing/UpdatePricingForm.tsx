@@ -15,6 +15,8 @@ import { AI_OPERATIONS, SERVICE_TIERS } from '@bymax-one/nest-ai-tokens/shared'
 import { useId, useState } from 'react'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import type { PriceRowView } from '@/lib/api-types'
 import { useApiMutation } from '@/lib/use-api-mutation'
@@ -218,15 +220,12 @@ function PricingFormBody(props: {
 }): React.JSX.Element {
   return (
     <>
-      <p className="card__desc">
+      <p className="text-[13px] text-muted-foreground">
         History is immutable: an update closes the current window and opens a new one; older windows
         are never rewritten. Rates take integer nano-USD per 1,000,000 units (no cache flush
         endpoint exists; every update clears the resolution cache automatically).
       </p>
-      <form
-        onSubmit={props.onSubmit}
-        style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}
-      >
+      <form onSubmit={props.onSubmit} className="mt-2.5 flex flex-col gap-2.5">
         <ModelProviderFields
           model={props.model}
           onModelChange={props.onModelChange}
@@ -251,9 +250,9 @@ function PricingFormBody(props: {
           inputId={props.ids.input}
           outputId={props.ids.output}
         />
-        <button type="submit" className="btn btn--primary btn--sm" disabled={props.submitDisabled}>
+        <Button type="submit" size="sm" disabled={props.submitDisabled}>
           {props.submitLabel}
-        </button>
+        </Button>
       </form>
     </>
   )
@@ -287,27 +286,31 @@ export function UpdatePricingForm({ onUpdated }: UpdatePricingFormProps): React.
   }
 
   return (
-    <div className="card">
-      <div className="card__title">Update pricing</div>
-      <PricingFormBody
-        model={model}
-        onModelChange={setModel}
-        provider={provider}
-        onProviderChange={setProvider}
-        operation={operation}
-        onOperationChange={setOperation}
-        serviceTier={serviceTier}
-        onServiceTierChange={setServiceTier}
-        inputRate={inputRate}
-        onInputRateChange={setInputRate}
-        outputRate={outputRate}
-        onOutputRateChange={setOutputRate}
-        ids={ids}
-        onSubmit={handleSubmit}
-        submitDisabled={mutation.state.status === 'pending' || !validRates}
-        submitLabel={mutation.state.status === 'pending' ? 'Updating…' : 'Update pricing'}
-      />
-      <SubmitOutcome mutationState={mutation.state} />
-    </div>
+    <Card>
+      <CardHeader accent>
+        <CardTitle>Update pricing</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <PricingFormBody
+          model={model}
+          onModelChange={setModel}
+          provider={provider}
+          onProviderChange={setProvider}
+          operation={operation}
+          onOperationChange={setOperation}
+          serviceTier={serviceTier}
+          onServiceTierChange={setServiceTier}
+          inputRate={inputRate}
+          onInputRateChange={setInputRate}
+          outputRate={outputRate}
+          onOutputRateChange={setOutputRate}
+          ids={ids}
+          onSubmit={handleSubmit}
+          submitDisabled={mutation.state.status === 'pending' || !validRates}
+          submitLabel={mutation.state.status === 'pending' ? 'Updating…' : 'Update pricing'}
+        />
+        <SubmitOutcome mutationState={mutation.state} />
+      </CardContent>
+    </Card>
   )
 }

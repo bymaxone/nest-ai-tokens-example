@@ -24,7 +24,7 @@ describe('BalanceCard', () => {
   it('renders a loading state while the balance is in flight', () => {
     vi.mocked(api.getBalance).mockReturnValue(new Promise(() => {}))
     render(<BalanceCard />)
-    expect(screen.getByRole('status', { name: 'Loading balance' })).toBeInTheDocument()
+    expect(screen.getByRole('status', { name: 'Loading Balance' })).toBeInTheDocument()
   })
 
   // scenario: a successful fetch renders the formatted balance.

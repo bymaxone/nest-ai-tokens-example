@@ -10,6 +10,8 @@
 'use client'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import type { RefundResponse, UsageRecordView } from '@/lib/api-types'
 import type { UseApiMutationResult } from '@/lib/use-api-mutation'
@@ -47,29 +49,33 @@ function RowInspectorBody(props: {
 
   return (
     <>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <span className="chip">{data.status}</span>
-        <span className="chip mono">{data.model}</span>
-        {data.isSystemCost && <span className="badge">system cost</span>}
+      <div className="flex flex-wrap gap-2">
+        <Badge variant="outline">{data.status}</Badge>
+        <Badge variant="outline" className="font-mono">
+          {data.model}
+        </Badge>
+        {data.isSystemCost && <Badge>system cost</Badge>}
       </div>
 
       {reversesId !== undefined && (
-        <button
+        <Button
           type="button"
-          className="btn btn--outline btn--sm"
+          variant="outline"
+          size="sm"
           onClick={() => props.onNavigate(reversesId)}
         >
           View refunded transaction
-        </button>
+        </Button>
       )}
       {reversedById !== undefined && (
-        <button
+        <Button
           type="button"
-          className="btn btn--outline btn--sm"
+          variant="outline"
+          size="sm"
           onClick={() => props.onNavigate(reversedById)}
         >
           View refund
-        </button>
+        </Button>
       )}
 
       <pre className="mono" style={{ fontSize: 11, whiteSpace: 'pre-wrap', overflow: 'auto' }}>
@@ -111,11 +117,11 @@ export function RowInspector({
         aria-label="Transaction detail"
         onClick={(event) => event.stopPropagation()}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="card__title">Transaction detail</div>
-          <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>
+        <div className="flex items-center justify-between">
+          <div className="font-mono text-base font-bold">Transaction detail</div>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
 
         {state.status === 'loading' && (

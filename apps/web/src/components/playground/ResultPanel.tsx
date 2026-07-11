@@ -6,6 +6,9 @@
  *
  * @layer components/playground
  */
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { WorkspaceUsageView } from '@/lib/api-types'
 
 /** ResultPanel props. */
@@ -19,26 +22,28 @@ export interface ResultPanelProps {
 /** The result panel: content, token split, cost breakdown, and the Ledger deep link. */
 export function ResultPanel({ content, usage }: ResultPanelProps): React.JSX.Element {
   return (
-    <div className="card" data-testid="result-panel">
-      <div className="card__title">Result</div>
-      <pre className="mono" style={{ whiteSpace: 'pre-wrap', fontSize: 13, margin: '8px 0' }}>
-        {content}
-      </pre>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <span className="chip mono">model: {usage.model}</span>
-        <span className="chip mono">
-          tokens: {usage.tokensUsed.input} in / {usage.tokensUsed.output} out /{' '}
-          {usage.tokensUsed.total} total
-        </span>
-        <span className="chip mono">cost: {usage.cost.formatted}</span>
-      </div>
-      <a
-        href={`/ledger?focus=${encodeURIComponent(usage.transactionId)}`}
-        className="btn btn--outline btn--sm"
-        style={{ marginTop: 12 }}
-      >
-        View in Ledger
-      </a>
-    </div>
+    <Card data-testid="result-panel">
+      <CardHeader>
+        <CardTitle className="text-base">Result</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        <pre className="mono whitespace-pre-wrap text-[13px]">{content}</pre>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline" className="font-mono">
+            model: {usage.model}
+          </Badge>
+          <Badge variant="outline" className="font-mono">
+            tokens: {usage.tokensUsed.input} in / {usage.tokensUsed.output} out /{' '}
+            {usage.tokensUsed.total} total
+          </Badge>
+          <Badge variant="outline" className="font-mono">
+            cost: {usage.cost.formatted}
+          </Badge>
+        </div>
+        <Button asChild variant="outline" size="sm" className="mt-2 self-start">
+          <a href={`/ledger?focus=${encodeURIComponent(usage.transactionId)}`}>View in Ledger</a>
+        </Button>
+      </CardContent>
+    </Card>
   )
 }

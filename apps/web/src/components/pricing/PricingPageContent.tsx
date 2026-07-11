@@ -11,6 +11,7 @@
 import { useState } from 'react'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import type { PriceRowView } from '@/lib/api-types'
 import { useApiQuery } from '@/lib/use-api-query'
@@ -26,18 +27,22 @@ export function PricingPageContent(): React.JSX.Element {
 
   return (
     <>
-      <div className="card">
-        <div className="card__title">Current pricing</div>
-        {state.status === 'loading' && (
-          <div role="status" aria-label="Loading current pricing">
-            <div className="skeleton" style={{ height: 160, marginTop: 12 }} />
-          </div>
-        )}
-        {state.status === 'error' && <ErrorBanner error={state.error} />}
-        {state.status === 'ready' && (
-          <CurrentPricingTable items={state.data.items} onSelect={setSelected} />
-        )}
-      </div>
+      <Card>
+        <CardHeader accent>
+          <CardTitle>Current pricing</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {state.status === 'loading' && (
+            <div role="status" aria-label="Loading current pricing">
+              <div className="skeleton" style={{ height: 160 }} />
+            </div>
+          )}
+          {state.status === 'error' && <ErrorBanner error={state.error} />}
+          {state.status === 'ready' && (
+            <CurrentPricingTable items={state.data.items} onSelect={setSelected} />
+          )}
+        </CardContent>
+      </Card>
 
       {selected !== undefined && <HistoryTimeline row={selected} />}
 

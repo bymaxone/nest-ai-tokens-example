@@ -8,6 +8,7 @@
  * @layer components/playground
  */
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Button } from '@/components/ui/button'
 import type { ApiMutationState } from '@/lib/use-api-mutation'
 import type { WorkspaceUsageView } from '@/lib/api-types'
 
@@ -32,13 +33,9 @@ export function CommandCardFooter(props: {
         onChange={props.onModelChange}
         id={props.modelId}
       />
-      <button
-        type="submit"
-        className="btn btn--primary btn--sm"
-        disabled={props.pending || props.models.length === 0}
-      >
+      <Button type="submit" size="sm" disabled={props.pending || props.models.length === 0}>
         {props.pending ? props.pendingLabel : props.idleLabel}
-      </button>
+      </Button>
     </>
   )
 }

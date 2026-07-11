@@ -13,13 +13,17 @@ export function BoundaryCallouts(): React.JSX.Element {
   return (
     <div className="grid-2">
       <div className="toast toast--info" style={{ maxWidth: 'none' }}>
-        Pricing is intentionally shared across tenants: the price catalog carries no tenant id, so
-        every tenant resolves the same rate for a given model.
+        <div style={{ width: '100%' }}>
+          Pricing is intentionally shared across tenants: the price catalog carries no tenant id, so
+          every tenant resolves the same rate for a given model.
+        </div>
       </div>
       <div className="toast toast--info" style={{ maxWidth: 'none' }}>
-        Default tenancy mode is <code>required: false</code> (the "root" identity is the global,
-        null-tenant admin). A <code>required: true</code> variant exists and is proven by an
-        e2e-only boot; it is not reachable from this demo's identity switcher.
+        <div style={{ width: '100%' }}>
+          Default tenancy mode is <code>required: false</code> (the "root" identity is the global,
+          null-tenant admin). A <code>required: true</code> variant exists and is proven by an
+          e2e-only boot; it is not reachable from this demo's identity switcher.
+        </div>
       </div>
     </div>
   )

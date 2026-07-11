@@ -12,6 +12,9 @@
 import { useId, useState } from 'react'
 
 import { ErrorBanner } from '@/components/common/ErrorBanner'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { useApiMutation } from '@/lib/use-api-mutation'
 
@@ -36,6 +39,11 @@ function parseLines(raw: string): string[] {
     .filter((line) => line.length > 0)
 }
 
+/** A sub-section heading inside the embeddings card. */
+function SectionTitle({ children }: { readonly children: React.ReactNode }): React.JSX.Element {
+  return <div className="mb-1 font-mono text-base font-bold">{children}</div>
+}
+
 /** The single-text embedding half of the panel. */
 function SingleEmbed(): React.JSX.Element {
   const [text, setText] = useState('')
@@ -44,13 +52,13 @@ function SingleEmbed(): React.JSX.Element {
 
   return (
     <div>
-      <div className="card__title">Single embed</div>
+      <SectionTitle>Single embed</SectionTitle>
       <form
         onSubmit={(event) => {
           event.preventDefault()
           void mutation.run({ text, resourceId: 'playground-embed' })
         }}
-        style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+        className="flex flex-col gap-2.5"
       >
         <textarea
           id={id}
@@ -61,20 +69,23 @@ function SingleEmbed(): React.JSX.Element {
           onChange={(event) => setText(event.target.value)}
           required
         />
-        <button
+        <Button
           type="submit"
-          className="btn btn--outline btn--sm"
+          variant="outline"
+          size="sm"
           disabled={mutation.state.status === 'pending'}
         >
           {mutation.state.status === 'pending' ? 'Embedding…' : 'Embed'}
-        </button>
+        </Button>
       </form>
       {mutation.state.status === 'error' && <ErrorBanner error={mutation.state.error} />}
       {mutation.state.status === 'success' && (
-        <ResultPanel
-          content={formatPreview(mutation.state.data.vector)}
-          usage={mutation.state.data.usage}
-        />
+        <div className="mt-2.5">
+          <ResultPanel
+            content={formatPreview(mutation.state.data.vector)}
+            usage={mutation.state.data.usage}
+          />
+        </div>
       )}
     </div>
   )
@@ -93,14 +104,16 @@ function BatchEmbed(): React.JSX.Element {
 
   return (
     <div>
-      <div className="card__title">Batch embed</div>
-      <div className="card__desc">One text per line, up to 50 inputs, ONE ledger transaction.</div>
+      <SectionTitle>Batch embed</SectionTitle>
+      <p className="text-[13px] text-muted-foreground">
+        One text per line, up to 50 inputs, ONE ledger transaction.
+      </p>
       <form
         onSubmit={(event) => {
           event.preventDefault()
           void mutation.run({ texts: lines, resourceId: 'playground-embed-batch' })
         }}
-        style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}
+        className="mt-2 flex flex-col gap-2.5"
       >
         <textarea
           id={id}
@@ -111,33 +124,32 @@ function BatchEmbed(): React.JSX.Element {
           onChange={(event) => setLinesRaw(event.target.value)}
           required
         />
-        <button
+        <Button
           type="submit"
-          className="btn btn--outline btn--sm"
+          variant="outline"
+          size="sm"
           disabled={mutation.state.status === 'pending'}
         >
           {mutation.state.status === 'pending' ? 'Embedding…' : `Embed ${lines.length} text(s)`}
-        </button>
+        </Button>
       </form>
       {mutation.state.status === 'error' && <ErrorBanner error={mutation.state.error} />}
       {batchResult !== undefined && (
-        <div className="card" style={{ marginTop: 8 }}>
-          <div className="badge">
-            {batchResult.batchSize} inputs, ONE transaction: {batchResult.usage.transactionId}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-            {batchResult.embeddings.map((vector, index) => (
-              <div
-                key={`${batchResult.usage.transactionId}-${index}`}
-                className="mono"
-                style={{ fontSize: 12 }}
-              >
-                {formatPreview(vector)}
-              </div>
-            ))}
-          </div>
-          <ResultPanel content={`batch of ${batchResult.batchSize}`} usage={batchResult.usage} />
-        </div>
+        <Card className="mt-2">
+          <CardContent className="flex flex-col gap-2 pt-6">
+            <Badge className="self-start">
+              {batchResult.batchSize} inputs, ONE transaction: {batchResult.usage.transactionId}
+            </Badge>
+            <div className="flex flex-col gap-1.5">
+              {batchResult.embeddings.map((vector, index) => (
+                <div key={`${batchResult.usage.transactionId}-${index}`} className="mono text-xs">
+                  {formatPreview(vector)}
+                </div>
+              ))}
+            </div>
+            <ResultPanel content={`batch of ${batchResult.batchSize}`} usage={batchResult.usage} />
+          </CardContent>
+        </Card>
       )}
     </div>
   )
@@ -146,12 +158,16 @@ function BatchEmbed(): React.JSX.Element {
 /** The Playground's embeddings panel: single and batch embed side by side. */
 export function EmbeddingsPanel(): React.JSX.Element {
   return (
-    <div className="card">
-      <div className="card__title">Embeddings</div>
-      <div className="grid-2" style={{ marginTop: 8 }}>
-        <SingleEmbed />
-        <BatchEmbed />
-      </div>
-    </div>
+    <Card>
+      <CardHeader accent>
+        <CardTitle>Embeddings</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid-2">
+          <SingleEmbed />
+          <BatchEmbed />
+        </div>
+      </CardContent>
+    </Card>
   )
 }

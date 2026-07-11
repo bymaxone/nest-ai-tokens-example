@@ -370,6 +370,12 @@ describe('ApiClient', () => {
         path: '/quota/lab/model-based',
       },
       {
+        name: 'drainWallet',
+        call: (c) => c.drainWallet(),
+        httpMethod: 'POST',
+        path: '/quota/lab/drain',
+      },
+      {
         name: 'getQuotaStatus',
         call: (c) => c.getQuotaStatus(),
         httpMethod: 'GET',

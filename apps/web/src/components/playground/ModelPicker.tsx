@@ -6,6 +6,7 @@
  *
  * @layer components/playground
  */
+import { Label } from '@/components/ui/label'
 
 /** ModelPicker props. */
 export interface ModelPickerProps {
@@ -23,9 +24,9 @@ export interface ModelPickerProps {
 export function ModelPicker({ models, value, onChange, id }: ModelPickerProps): React.JSX.Element {
   return (
     <div>
-      <label className="label" htmlFor={id}>
+      <Label htmlFor={id} className="mb-1.5 block text-muted-foreground">
         Model
-      </label>
+      </Label>
       <select
         id={id}
         className="input"

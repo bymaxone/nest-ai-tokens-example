@@ -8,6 +8,7 @@
 
 import { useId, useState } from 'react'
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import type { SummarizeBody } from '@/lib/api-types'
 import { useApiMutation } from '@/lib/use-api-mutation'
@@ -43,55 +44,61 @@ export function SummarizeCard({ models }: SummarizeCardProps): React.JSX.Element
   }
 
   return (
-    <div className="card">
-      <div className="card__title">Summarize</div>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div>
-          <label className="label" htmlFor="summarize-text">
-            Text
-          </label>
-          <textarea
-            id="summarize-text"
-            className="input"
-            style={{ height: 80 }}
-            value={form.text}
-            onChange={(event) => form.setText(event.target.value)}
-            required
+    <Card className="flex h-full flex-col">
+      <CardHeader accent>
+        <CardTitle>Summarize</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-3.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div>
+            <label className="label" htmlFor="summarize-text">
+              Text
+            </label>
+            <textarea
+              id="summarize-text"
+              className="input"
+              style={{ height: 80 }}
+              value={form.text}
+              onChange={(event) => form.setText(event.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="summarize-style">
+              Style
+            </label>
+            <select
+              id="summarize-style"
+              className="input"
+              value={style}
+              onChange={(event) =>
+                setStyle(event.target.value as NonNullable<SummarizeBody['style']>)
+              }
+            >
+              {STYLES.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+          <CommandCardFooter
+            models={models}
+            model={form.model}
+            onModelChange={form.setModel}
+            modelId={modelId}
+            pending={mutation.state.status === 'pending'}
+            idleLabel="Summarize"
+            pendingLabel="Summarizing…"
           />
-        </div>
-        <div>
-          <label className="label" htmlFor="summarize-style">
-            Style
-          </label>
-          <select
-            id="summarize-style"
-            className="input"
-            value={style}
-            onChange={(event) =>
-              setStyle(event.target.value as NonNullable<SummarizeBody['style']>)
-            }
-          >
-            {STYLES.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <CommandCardFooter
-          models={models}
-          model={form.model}
-          onModelChange={form.setModel}
-          modelId={modelId}
-          pending={mutation.state.status === 'pending'}
-          idleLabel="Summarize"
-          pendingLabel="Summarizing…"
-        />
-      </form>
+        </form>
 
-      <CommandCardOutcome mutationState={mutation.state} renderContent={(data) => data.summary} />
+        <CommandCardOutcome mutationState={mutation.state} renderContent={(data) => data.summary} />
 
-      <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
-    </div>
+        <div className="mt-auto">
+          <FailureHelperSelect onInsert={form.appendMarker} id={`${modelId}-marker`} />
+        </div>
+      </CardContent>
+    </Card>
   )
 }
