@@ -1,6 +1,6 @@
 # Phase 08: Dashboard Pages
 
-> **Status**: 👀 Review · **Progress**: 6 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: ✅ Done · **Progress**: 6 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 08
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §14 (page-by-page), §13 (Demonstration Scenarios)
 
@@ -441,7 +441,7 @@ Completion Protocol: standard steps; commit `feat(web): quota, tenants and error
 
 ## Task 8.6: Phase close: audit, dashboards, PR + Copilot review
 
-- **Status**: ✅ Done (implementer scope) · **Priority**: P0 · **Size**: S · **Depends on**: 8.1..8.5
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: S · **Depends on**: 8.1..8.5
 
 #### Description
 
@@ -515,3 +515,9 @@ Completion Protocol: append `- 8.6 ✅ YYYY-MM-DD: phase merged in PR #<n>`; com
   and Errors (the catalog grid grouped by source, on-demand triggers rendering the canonical
   envelope). Fixed a field-name drift in `ErrorCatalogEntryView` and corrected the "quota wall"
   code to the real `AI_TOKENS_INSUFFICIENT_CREDITS` throughout.
+- 8.6 ✅ 2026-07-10: acceptance audit and full §13 scenario sweep recorded in the PR body; PR #20
+  carried the Copilot review through one 8-finding remediation round (unmount-guard cleanup,
+  lib-layer server snapshot, omission-shape assertions, keyboard-operable ledger rows, dialog
+  roles on the drawer and panel, guarded ResizeObserver stub) plus a flaky sibling-library dts
+  build rerun; squash-merged as `0129d7c`, branch deleted, CI green with the web stages (305 web
+  tests at 100% after the remediation specs, up from 304 at PR-open).
