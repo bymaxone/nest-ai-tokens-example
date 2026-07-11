@@ -1,8 +1,42 @@
 # Phase 09: Quality, Docs & Export Audit
 
-> **Status**: 📋 ToDo · **Progress**: 0 / 6 tasks · **Last updated**: 2026-07-06
+> **Status**: 🔄 In Progress · **Progress**: 1 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 09
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §22 (Testing Strategy), §7 (matrix enforcement), §23 (CI), Appendix rows
+
+> **Reconciliation (2026-07-10):** the real repo state after phases 00-08 supersedes several
+> drafted assumptions here (same rule as the phase 01-08 notes). Mappings applied:
+>
+> - **Coverage baseline.** Both suites already sit at 100% on all four metrics (api 424 unit
+>   tests, web 305 tests); tasks 9.1/9.2 verify and KEEP that bar through this phase's changes
+>   rather than "raise" it. The prompt-less quota-lab crash the phase 08 sweep documented is NOT
+>   reproducible on the current api: `labRunBodySchema` defaults the missing prompt
+>   (`DEFAULT_LAB_PROMPT`) and the global `ZodValidationPipe` rejects a missing or malformed body
+>   with the canonical value-free 400, so `{}` answers 200 deterministically and nothing reaches
+>   the provider with `undefined` content (verified live against a Testcontainers boot). Task 9.1
+>   therefore locks the contract with regression e2e cases instead of changing api code, and 9.2
+>   removes the now-unnecessary web-side always-send-a-prompt workaround.
+> - **E2E consolidation (9.3).** The route inventory asserts against the REAL controller surface
+>   (the phase 07 note's module map), not the drafted spec §11 table; the error-code summary
+>   asserts the REAL reachable catalog (the phase 06 note: 15 library codes, of which 13 are
+>   runtime-reachable plus 2 boot/reserved, and the 11 host `ApiException` codes), not the drafted
+>   "24 dot-namespaced codes". The drafted Playwright web smoke maps to the EXISTING
+>   `pnpm --filter web run test:integration` suite plus the phase 08 live §13 scenario sweep; no
+>   Playwright dependency is added and the reusable CI's `run-e2e-web` stays `false` (the
+>   `web-build` job plus the integration suite are the web gates).
+> - **Export audit (9.4).** The audited truth is the library dist (`package.json` exports map +
+>   d.ts named exports for `.` and `./shared`), never the drafted spec lists; spec §7 matrix rows
+>   citing drafted names are updated to the shipped surface in the same commit. The CI switch is
+>   the reusable caller input `run-export-audit: true` (verified against
+>   `bymaxone/.github/.github/workflows/node-ci.yml`), driving the conventional root
+>   `pnpm audit:exports` script.
+> - **README (9.5).** The quick start is honest about link mode: the library resolves via
+>   `file:../../../nest-ai-tokens` and needs the sibling checkout built first. Screenshots are
+>   out of scope for this phase (no headless capture pipeline); the §13 walkthrough is
+>   command-driven with curl examples instead.
+> - **Phase close (9.6).** Executed up to opening the PR and requesting the Copilot review; the
+>   merge, branch deletion, and the final "plan complete" flip are owned by the orchestrating
+>   session, per the recorded operating mode in `docs/AUTOPILOT.md`.
 
 ## Context
 
@@ -34,7 +68,7 @@ matrix honest forever, the publishable README, and the final acceptance audit.
 
 | ID  | Task                                                      | Status | Priority | Size | Depends on |
 | --- | --------------------------------------------------------- | ------ | -------- | ---- | ---------- |
-| 9.1 | Branch + api unit coverage to 100% (all four metrics)     | 📋     | P0       | L    | none       |
+| 9.1 | Branch + api unit coverage to 100% (all four metrics)     | ✅     | P0       | L    | none       |
 | 9.2 | Web unit coverage to 100% (`lib/**` + components)         | 📋     | P0       | M    | none       |
 | 9.3 | E2E consolidation: every route, code, guard path, variant | 📋     | P0       | L    | 9.1        |
 | 9.4 | Export-audit script + CI gate                             | 📋     | P0       | M    | 9.1        |
@@ -45,7 +79,7 @@ matrix honest forever, the publishable README, and the final acceptance audit.
 
 ## Task 9.1: Branch + api unit coverage to 100%
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: L · **Depends on**: none
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: L · **Depends on**: none
 
 #### Description
 
@@ -55,10 +89,13 @@ edge cases). Thresholds already sit at 100%; this task makes them pass with zero
 
 #### Acceptance criteria
 
-- [ ] Branch `feat/phase-09-quality-docs-audit` created with `git switch -c`.
-- [ ] `pnpm --filter api test:cov` passes at 100/100/100/100 with no `coveragePathIgnorePatterns`
-      additions and no istanbul-ignore comments.
-- [ ] Every new `it()` carries a scenario comment naming the branch it kills.
+- [x] Branch `feat/phase-09-quality-docs-audit` created with `git switch -c`.
+- [x] `pnpm --filter api test:cov` passes at 100/100/100/100 with no `coveragePathIgnorePatterns`
+      additions and no istanbul-ignore comments (424 tests; the baseline already held, verified).
+- [x] Every new `it()` carries a scenario comment naming the branch it kills.
+- [x] Reconciled extra: the prompt-less quota-lab contract is locked by four regression e2e cases
+      in `quota-lab.e2e-spec.ts` (`{}` answers 200 via DTO defaults; body-less and wrong-typed
+      bodies answer the canonical value-free 400 and never settle a charge).
 
 #### Files to create / modify
 
@@ -421,3 +458,6 @@ Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #
 ## Completion log
 
 <!-- append: - <id> ✅ YYYY-MM-DD: <one-line summary> -->
+
+- 9.1 ✅ 2026-07-10: api coverage verified at 100/100/100/100 (424 tests); prompt-less quota-lab
+  contract locked with four regression e2e cases (14 e2e in the lab suite).
