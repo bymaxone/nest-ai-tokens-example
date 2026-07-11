@@ -39,6 +39,7 @@ describe('parseEnv', () => {
       TENANT_REQUIRED: false,
       PRICING_CACHE_TTL_MS: 300_000,
       MOCK_LATENCY_MS: 0,
+      WEB_ORIGIN: ['http://localhost:3000'],
     })
   })
 
@@ -59,6 +60,7 @@ describe('parseEnv', () => {
       TENANT_REQUIRED: 'true',
       PRICING_CACHE_TTL_MS: '60000',
       MOCK_LATENCY_MS: '250',
+      WEB_ORIGIN: 'https://app.example.com',
     })
 
     expect(env).toEqual({
@@ -71,7 +73,48 @@ describe('parseEnv', () => {
       TENANT_REQUIRED: true,
       PRICING_CACHE_TTL_MS: 60_000,
       MOCK_LATENCY_MS: 250,
+      WEB_ORIGIN: ['https://app.example.com'],
     })
+  })
+
+  /**
+   * Multi-origin allow-list.
+   *
+   * A comma-separated list is split, trimmed, and each entry normalized to
+   * its URL origin (path, trailing slash, and surrounding whitespace dropped)
+   * so the CORS check compares bare origins.
+   */
+  it('parses WEB_ORIGIN as a normalized, comma-separated origin list', () => {
+    const env = parseEnv({
+      DATABASE_URL: VALID_URL,
+      WEB_ORIGIN: 'http://localhost:3000, https://app.example.com/dashboard ',
+    })
+
+    expect(env.WEB_ORIGIN).toEqual(['http://localhost:3000', 'https://app.example.com'])
+  })
+
+  /**
+   * Empty allow-list rejection.
+   *
+   * A blank or comma-only WEB_ORIGIN would grant CORS to nobody by accident;
+   * it must fail validation instead of silently disabling the dashboard.
+   */
+  it('rejects a WEB_ORIGIN that lists no origin', () => {
+    expect(() => parseEnv({ DATABASE_URL: VALID_URL, WEB_ORIGIN: ' , ' })).toThrow(
+      EnvValidationError,
+    )
+  })
+
+  /**
+   * Malformed origin rejection.
+   *
+   * A non-URL entry must fail fast rather than surface later as a silently
+   * dropped CORS grant.
+   */
+  it('rejects a WEB_ORIGIN entry that is not a valid origin', () => {
+    expect(() => parseEnv({ DATABASE_URL: VALID_URL, WEB_ORIGIN: 'not a url' })).toThrow(
+      EnvValidationError,
+    )
   })
 
   /**

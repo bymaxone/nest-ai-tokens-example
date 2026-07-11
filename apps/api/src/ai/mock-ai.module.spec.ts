@@ -31,6 +31,7 @@ describe('mockAiProviderOptionsFactory', () => {
       TENANT_REQUIRED: false,
       PRICING_CACHE_TTL_MS: 300_000,
       MOCK_LATENCY_MS: 125,
+      WEB_ORIGIN: ['http://localhost:3000'],
     }
 
     expect(mockAiProviderOptionsFactory(env)).toEqual({ latencyMs: 125 })

@@ -28,6 +28,16 @@ const logger = new Logger('Bootstrap')
 export async function createApp(): Promise<INestApplication> {
   const app = await NestFactory.create(AppModule, { abortOnError: false })
   app.useGlobalPipes(new ZodValidationPipe())
+  // The dashboard is served from a different origin than the API (web on one
+  // port, API on another), so the browser's client-side fetches are
+  // cross-origin. Grant CORS only to the configured origin allow-list;
+  // identity travels in plain custom headers, never cookies, so credentials
+  // are not reflected and only the demo identity headers are allowed.
+  const env = app.get<EnvConfig>(ENV_CONFIG)
+  app.enableCors({
+    origin: env.WEB_ORIGIN,
+    allowedHeaders: ['content-type', 'x-demo-user', 'x-tenant-id'],
+  })
   app.enableShutdownHooks()
   // Initialize explicitly: listen() would do it lazily, but the e2e harness
   // drives the HTTP server without listening on a port.

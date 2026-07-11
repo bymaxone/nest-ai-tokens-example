@@ -46,6 +46,7 @@ function envFor(databaseUrl: string): EnvConfig {
     TENANT_REQUIRED: false,
     PRICING_CACHE_TTL_MS: 300_000,
     MOCK_LATENCY_MS: 0,
+    WEB_ORIGIN: ['http://localhost:3000'],
   }
 }
 

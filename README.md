@@ -244,9 +244,9 @@ What this example deliberately does **not** do, and where the escape hatch is:
 ```
 apps/web (Next.js 16, port 3000)
   └─ typed api client  ── imports ONLY @bymax-one/nest-ai-tokens/shared (CI-enforced)
-       │  x-demo-user / x-tenant-id headers
+       │  x-demo-user / x-tenant-id headers · cross-origin fetch (CSP connect-src)
        ▼
-apps/api (NestJS 11, port 3001)
+apps/api (NestJS 11, port 3001)  ── CORS allow-list from WEB_ORIGIN (default :3000)
   ├─ identity middleware (demo users)          ── simulation, not auth
   ├─ workspace / quota  ── MockAiProvider + MeteringService (hold -> capture/release, record)
   ├─ ledger / usage     ── LedgerService · WalletService · UsageReportService
