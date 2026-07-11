@@ -1,0 +1,12 @@
+{
+  "name": "@bymax-one/nest-ai-tokens",
+  "version": "0.0.0-fixture",
+  "exports": {
+    ".": {
+      "types": "./dist/server/index.d.ts"
+    },
+    "./shared": {
+      "types": "./dist/shared/index.d.ts"
+    }
+  }
+}

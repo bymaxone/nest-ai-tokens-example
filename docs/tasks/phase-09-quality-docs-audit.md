@@ -1,6 +1,6 @@
 # Phase 09: Quality, Docs & Export Audit
 
-> **Status**: 🔄 In Progress · **Progress**: 3 / 6 tasks · **Last updated**: 2026-07-10
+> **Status**: 🔄 In Progress · **Progress**: 4 / 6 tasks · **Last updated**: 2026-07-10
 > **Source roadmap**: [`../DEVELOPMENT_PLAN.md`](../DEVELOPMENT_PLAN.md#per-phase-detail) §Phase 09
 > **Source spec**: [`../TECHNICAL_SPECIFICATION.md`](../TECHNICAL_SPECIFICATION.md) §22 (Testing Strategy), §7 (matrix enforcement), §23 (CI), Appendix rows
 
@@ -71,7 +71,7 @@ matrix honest forever, the publishable README, and the final acceptance audit.
 | 9.1 | Branch + api unit coverage to 100% (all four metrics)     | ✅     | P0       | L    | none       |
 | 9.2 | Web unit coverage to 100% (`lib/**` + components)         | ✅     | P0       | M    | none       |
 | 9.3 | E2E consolidation: every route, code, guard path, variant | ✅     | P0       | L    | 9.1        |
-| 9.4 | Export-audit script + CI gate                             | 📋     | P0       | M    | 9.1        |
+| 9.4 | Export-audit script + CI gate                             | ✅     | P0       | M    | 9.1        |
 | 9.5 | README + CHANGELOG + docs polish                          | 📋     | P0       | M    | 9.3, 9.4   |
 | 9.6 | Phase close: final acceptance audit, PR + Copilot review  | 📋     | P0       | M    | 9.1..9.5   |
 
@@ -277,7 +277,7 @@ Completion Protocol: standard steps; commit `test(e2e): exhaustive inventory and
 
 ## Task 9.4: Export-audit script + CI gate
 
-- **Status**: 📋 ToDo · **Priority**: P0 · **Size**: M · **Depends on**: 9.1
+- **Status**: ✅ Done · **Priority**: P0 · **Size**: M · **Depends on**: 9.1
 
 #### Description
 
@@ -288,10 +288,18 @@ matrix. Wired as `pnpm audit:exports` + a CI step.
 
 #### Acceptance criteria
 
-- [ ] The script is zero-dep Node ESM; deterministic output table (export, status, evidence path).
-- [ ] Mutating the matrix (removing a row) makes the script fail (proven by a unit test of the
-      script itself).
-- [ ] CI runs it after the build; currently green.
+- [x] The script is zero-dep Node ESM; deterministic output table (subpath, export, status,
+      evidence). Reconciled: it audits ALL FIVE subpaths of the real exports map (`.`, `./shared`,
+      `./prices`, `./prisma`, `./redis`), treats an app import as demonstration, and requires a
+      spec §7.7 ⛔ row with a non-empty reason for everything else (236 exports: 91 demonstrated,
+      145 justified, 0 missing). Spec §7 was rewritten against the shipped surface in the same
+      commit (the drafted rows cited pre-release names).
+- [x] Mutating the matrix makes the script fail, proven by `scripts/audit-library-exports.test.mjs`
+      (node:test): fixture green run, removed-row and blanked-reason mutations exit 1, and a
+      mutation of a TEMP COPY of the REAL spec (redis row removed) fails against the real repo.
+- [x] CI runs it via the reusable's `export-usage` job (`run-export-audit: true`, verified against
+      `bymaxone/.github` `node-ci.yml`); `pnpm audit:exports` runs the proof tests then the audit,
+      currently green.
 
 #### Files to create / modify
 
@@ -474,3 +482,6 @@ Completion Protocol: append `- 9.6 ✅ YYYY-MM-DD: project plan complete in PR #
   workaround removed and the prompt-less call shapes asserted.
 - 9.3 ✅ 2026-07-10: inventory e2e added (35-route walk diffed against the live router both ways;
   26/26 error codes cross-referenced to e2e sources); full api e2e now 15 suites / 198 tests.
+- 9.4 ✅ 2026-07-10: export audit shipped (236 real exports across five subpaths: 91 demonstrated
+  by imports, 145 ⛔-justified in the rewritten spec §7); mutation-proof node:test suite;
+  `pnpm audit:exports` + CI `run-export-audit: true`.

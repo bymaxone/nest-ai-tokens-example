@@ -5,7 +5,15 @@ import globals from 'globals'
 
 export default tseslint.config(
   {
-    ignores: ['**/dist', '**/.next', '**/coverage', '**/node_modules', '**/*.d.ts'],
+    // scripts/fixtures holds inert audit-test fixtures outside any tsconfig.
+    ignores: [
+      '**/dist',
+      '**/.next',
+      '**/coverage',
+      '**/node_modules',
+      '**/*.d.ts',
+      'scripts/fixtures',
+    ],
   },
   js.configs.recommended,
   {
