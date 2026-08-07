@@ -2,6 +2,10 @@
 # visibility check so it runs only once the repository is public; while private
 # it reports as skipped, not failed, and activates automatically on the
 # visibility flip with zero workflow edits.
+#
+# The check asks the API rather than reading `github.event.repository.private`.
+# This workflow also runs on a schedule, and the event payload is not the same
+# shape on every trigger; one API call answers identically on all of them.
 name: Scorecard
 
 on:
@@ -15,10 +19,33 @@ permissions:
   contents: read
 
 jobs:
+  visibility:
+    name: Repository visibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      public: ${{ steps.check.outputs.public }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          visibility=$(gh api "repos/$REPO" --jq .visibility)
+          echo "visibility: $visibility"
+          if [ "$visibility" = "public" ]; then
+            echo "public=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "public=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Scorecard is skipped on a $visibility repository."
+          fi
+
   scorecard:
     name: OpenSSF Scorecard
+    needs: visibility
+    if: needs.visibility.outputs.public == 'true'
     runs-on: ubuntu-latest
-    if: ${{ !github.event.repository.private }}
     permissions:
       contents: read
       id-token: write
@@ -32,7 +59,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Scorecard analysis
-        uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
+        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
         with:
           results_file: results.sarif
           results_format: sarif
