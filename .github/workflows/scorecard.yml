@@ -64,7 +64,6 @@ jobs:
             echo "::notice::Skipped on a $visibility repository: uploading results needs a GitHub Code Security licence, which is only free on public repositories."
           fi
 
-
   scorecard:
     name: OpenSSF Scorecard
     needs: visibility
