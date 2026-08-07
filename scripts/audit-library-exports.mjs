@@ -92,7 +92,7 @@ function readLibraryExports(libDir) {
   const exportsMap = manifest.exports ?? {}
   const inventory = []
   for (const [subpath, target] of Object.entries(exportsMap)) {
-    const types = typeof target === 'object' && target !== null ? target.types : undefined
+    const types = resolveTypesTarget(target)
     if (typeof types !== 'string') continue
     for (const name of parseDtsExports(path.join(libDir, types))) {
       inventory.push(new LibraryExport(subpath, name))
@@ -273,3 +273,44 @@ function main() {
 }
 
 process.exitCode = main()
+
+/**
+ * True when a value names a declaration file rather than a runtime entry.
+ *
+ * @param {unknown} value A candidate export target.
+ * @returns {boolean} Whether the value is a `.d.ts` / `.d.cts` / `.d.mts` path.
+ */
+function isDeclarationPath(value) {
+  return typeof value === 'string' && /\.d\.[cm]?ts$/.test(value)
+}
+
+/**
+ * Resolve the declaration target of one `exports` entry.
+ *
+ * An entry may be a bare string, a flat object carrying `types`, or a
+ * conditional object where `types` sits under `import` / `require`. TypeScript
+ * resolves through the conditions, so reading only the top level reports the
+ * library as unbuilt the moment it ships dual ESM/CJS. That is what this audit
+ * did: every subpath failed with "Reinstall or rebuild the library" while the
+ * declaration files were present all along.
+ *
+ * Only declaration paths are accepted, at any depth. A bare `./dist/index.mjs`
+ * is a runtime entry, and taking it as the declaration would have this script
+ * parsing JavaScript in place of the types it exists to audit.
+ *
+ * @param {unknown} entry The value of one subpath in the exports map.
+ * @returns {string | undefined} The declaration path, when one resolves.
+ */
+function resolveTypesTarget(entry) {
+  if (isDeclarationPath(entry)) return entry
+  if (entry === null || typeof entry !== 'object') return undefined
+  if (isDeclarationPath(entry.types)) return entry.types
+  // Order mirrors what a consumer hits first; `default` last so a more specific
+  // condition wins. Nested values recurse, so a declaration written as a plain
+  // string under a condition resolves the same as one written as `types`.
+  for (const condition of ['import', 'require', 'node', 'default']) {
+    const resolved = resolveTypesTarget(entry[condition])
+    if (resolved !== undefined) return resolved
+  }
+  return undefined
+}
