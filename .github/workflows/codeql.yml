@@ -1,7 +1,8 @@
-# CodeQL static analysis for JavaScript/TypeScript. Guarded by a visibility check
-# so it runs only once the repository is public: while private it reports as
-# skipped, not failed, and activates automatically on the visibility flip with
-# zero workflow edits.
+# CodeQL — thin caller of the org-wide reusable analysis (bymaxone/.github).
+#
+# The whole definition, including the public-repository gate that decides
+# whether scanning may run at all, lives in bymaxone/.github so the licensing
+# rule exists once rather than in every repository that copies it.
 name: CodeQL
 
 on:
@@ -9,34 +10,18 @@ on:
     branches: [main]
   pull_request:
   schedule:
-    # Weekly on Sunday 03:00 UTC, to catch newly published CVEs.
     - cron: '0 3 * * 0'
 
-permissions:
-  contents: read
-
 jobs:
-  analyze:
-    name: CodeQL analyze
-    runs-on: ubuntu-latest
-    if: ${{ !github.event.repository.private }}
+  # Job id is the convention across the org: it prefixes the reported check,
+  # so every repo shows `codeql / Analyze (<language>)` under the same name.
+  codeql:
+    # Declared on the calling job, which is the only place that reaches the
+    # called workflow: a job that sets its own permissions replaces the
+    # workflow-level set rather than intersecting with it, and a called
+    # workflow cannot be granted more than its caller holds.
     permissions:
       contents: read
       security-events: write
       actions: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
-        with:
-          languages: javascript-typescript
-          build-mode: none
-
-      - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
-        with:
-          category: '/language:javascript-typescript'
+    uses: bymaxone/.github/.github/workflows/codeql.yml@v1
