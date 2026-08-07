@@ -277,8 +277,8 @@ process.exitCode = main()
 /**
  * True when a value names a declaration file rather than a runtime entry.
  *
- * @param value - A candidate export target.
- * @returns Whether the value is a `.d.ts` / `.d.cts` / `.d.mts` path.
+ * @param {unknown} value A candidate export target.
+ * @returns {boolean} Whether the value is a `.d.ts` / `.d.cts` / `.d.mts` path.
  */
 function isDeclarationPath(value) {
   return typeof value === 'string' && /\.d\.[cm]?ts$/.test(value)
@@ -298,8 +298,8 @@ function isDeclarationPath(value) {
  * is a runtime entry, and taking it as the declaration would have this script
  * parsing JavaScript in place of the types it exists to audit.
  *
- * @param entry - The value of one subpath in the exports map.
- * @returns The relative path of the declaration file, or undefined.
+ * @param {unknown} entry The value of one subpath in the exports map.
+ * @returns {string | undefined} The declaration path, when one resolves.
  */
 function resolveTypesTarget(entry) {
   if (isDeclarationPath(entry)) return entry
